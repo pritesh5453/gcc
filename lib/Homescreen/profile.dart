@@ -10,7 +10,10 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Profile',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B3B1F)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1B3B1F),
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -55,11 +58,17 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'pritesh@gmail.com',
-                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(20),
@@ -81,7 +90,11 @@ class ProfileScreen extends StatelessWidget {
               // KYC Status
               const Text(
                 'KYC Status',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B3B1F)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B3B1F),
+                ),
               ),
               const SizedBox(height: 12),
               Container(
@@ -103,15 +116,25 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     const Text(
                       'KYC Verified',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.verified, color: Color(0xFF2E7D32), size: 20),
+                        const Icon(
+                          Icons.verified,
+                          color: Color(0xFF2E7D32),
+                          size: 20,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Your identity has been verified',
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                       ],
                     ),
@@ -123,7 +146,11 @@ class ProfileScreen extends StatelessWidget {
               // Bank Details
               const Text(
                 'Bank Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B3B1F)),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B3B1F),
+                ),
               ),
               const SizedBox(height: 12),
               Container(
@@ -148,16 +175,26 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         const Text(
                           'HDFC Bank',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'XXXX XXXX XXXX 1234',
-                          style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                          ),
                         ),
                       ],
                     ),
-                    const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 20),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF2E7D32),
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -217,7 +254,11 @@ class ProfileScreen extends StatelessWidget {
           title,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF9E9E9E)),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Color(0xFF9E9E9E),
+        ),
         onTap: () {},
       ),
     );
