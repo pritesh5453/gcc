@@ -6,261 +6,389 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9F5),
+      backgroundColor: const Color(0xFFF8FBF8),
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1B3B1F),
-          ),
-        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2E7D32)),
-          onPressed: () => Navigator.pop(context),
+        centerTitle: true,
+        title: const Column(
+          children: [
+            Text(
+              'Profile',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            Text(
+              'Manage your account and preferences',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User info section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pritesh Pawar',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B3B1F),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'pritesh@gmail.com',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Verified User',
-                        style: TextStyle(
-                          color: Color(0xFF2E7D32),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // KYC Status
-              const Text(
-                'KYC Status',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B3B1F),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'KYC Verified',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.verified,
-                          color: Color(0xFF2E7D32),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Your identity has been verified',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Bank Details
-              const Text(
-                'Bank Details',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B3B1F),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'HDFC Bank',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'XXXX XXXX XXXX 1234',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF2E7D32),
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Menu items
-              _buildMenuItem(Icons.security, 'Security & Privacy'),
-              _buildMenuItem(Icons.description, 'Terms & Conditions'),
-              _buildMenuItem(Icons.help, 'Help & Support'),
-              _buildMenuItem(Icons.info, 'About GCC Platform'),
-              const SizedBox(height: 30),
-
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFD32F2F),
-                    side: const BorderSide(color: Color(0xFFD32F2F)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                  child: const Text(
-                    'Logout',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuItem(IconData icon, String title) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none_outlined),
           ),
         ],
       ),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF2E7D32)),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildProfileHeader(),
+            const SizedBox(height: 20),
+            _buildImpactStats(),
+            const SizedBox(height: 20),
+            _buildContributorBanner(),
+            const SizedBox(height: 20),
+            _buildMenuSection([
+              _MenuAction(
+                Icons.person_outline,
+                'Edit Profile',
+                'Update your personal information',
+              ),
+              _MenuAction(
+                Icons.security_outlined,
+                'Account & Security',
+                'Manage password and security settings',
+              ),
+              _MenuAction(
+                Icons.card_giftcard,
+                'My Rewards',
+                'View your points, rewards and withdrawals',
+              ),
+              _MenuAction(
+                Icons.eco_outlined,
+                'My Impact',
+                'See your contribution and environmental impact',
+              ),
+              _MenuAction(
+                Icons.history,
+                'Transaction History',
+                'View all your transactions and payments',
+              ),
+            ]),
+            const SizedBox(height: 16),
+            _buildMenuSection([
+              _MenuAction(
+                Icons.notifications_none,
+                'Notifications',
+                'Manage your notification preferences',
+              ),
+              _MenuAction(
+                Icons.help_outline,
+                'Help & Support',
+                'Get help and find answers',
+              ),
+              _MenuAction(
+                Icons.info_outline,
+                'About GreenChain',
+                'Learn more about our mission',
+              ),
+              _MenuAction(
+                Icons.logout,
+                'Log Out',
+                'Sign out from your account',
+                isDestructive: true,
+              ),
+            ]),
+            const SizedBox(height: 16),
+            _buildInviteCard(),
+            const SizedBox(height: 80), // Space for BottomNav
+          ],
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Color(0xFF9E9E9E),
-        ),
-        onTap: () {},
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 3,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.green[700],
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.eco_outlined),
+            label: 'Earn',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.card_giftcard),
+            label: 'Rewards',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }
+
+  Widget _buildProfileHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 40,
+            backgroundImage: NetworkImage(
+              'https://via.placeholder.com/150',
+            ), // Replace with actual asset
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Rahul Sharma',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const Text(
+                  'rahulsharma@gmail.com',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const Text(
+                  '+91 98765 43210',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.eco, size: 14, color: Colors.green),
+                      SizedBox(width: 4),
+                      Text(
+                        'Eco Warrior',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.grey),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImpactStats() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStatItem(Icons.park_outlined, '55', 'Trees Supported'),
+          _buildStatItem(Icons.co2_outlined, '12 kg', 'CO₂ Offset'),
+          _buildStatItem(Icons.park_rounded, '1,850', 'Eco-Points'),
+          _buildStatItem(
+            Icons.verified_user_outlined,
+            'May 2024',
+            'Member Since',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.green[700], size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildContributorBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B5E20),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Text('👑', style: TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "You're a Green Contributor! 🌿",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "Keep going! Your small actions create a big impact.",
+                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.2),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Text('View Progress', style: TextStyle(fontSize: 12)),
+                Icon(Icons.chevron_right, size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuSection(List<_MenuAction> actions) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children:
+            actions.map((action) {
+              final isLast = actions.indexOf(action) == actions.length - 1;
+              return Column(
+                children: [
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          action.isDestructive
+                              ? Colors.red[50]
+                              : Colors.green[50],
+                      child: Icon(
+                        action.icon,
+                        color:
+                            action.isDestructive
+                                ? Colors.red
+                                : Colors.green[700],
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      action.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      action.subtitle,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
+                    onTap: () {},
+                  ),
+                  if (!isLast)
+                    Divider(height: 1, indent: 70, color: Colors.grey.shade100),
+                ],
+              );
+            }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildInviteCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.public, color: Colors.blue, size: 40),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Invite Friends, Grow More Trees! 🌳',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                Text(
+                  'Invite your friends and earn exciting rewards.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.share_outlined, size: 14),
+            label: const Text('Invite Now', style: TextStyle(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green[700],
+              side: BorderSide(color: Colors.green[700]!),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuAction {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isDestructive;
+
+  _MenuAction(
+    this.icon,
+    this.title,
+    this.subtitle, {
+    this.isDestructive = false,
+  });
 }

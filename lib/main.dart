@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Auth/login.dart';
+import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Onboarding/onboarding.dart';
 
 void main() {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      // theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       home: const WelcomeScreen(),
     );
   }
