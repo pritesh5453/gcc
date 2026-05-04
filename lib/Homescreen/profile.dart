@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/profile/my_impacts.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -60,6 +62,18 @@ class ProfileScreen extends StatelessWidget {
                 Icons.eco_outlined,
                 'My Impact',
                 'See your contribution and environmental impact',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => const MainScreen(
+                            child: MyImpactScreen(),
+                            initialIndex: 3, // current tab index (Profile)
+                          ),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.history,
@@ -97,27 +111,28 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.green[700],
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.eco_outlined),
-            label: 'Earn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard),
-            label: 'Rewards',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+
+      // bottomNavigationBar: BottomNavigationBar(
+      //   currentIndex: 3,
+      //   type: BottomNavigationBarType.fixed,
+      //   selectedItemColor: Colors.green[700],
+      //   unselectedItemColor: Colors.grey,
+      //   items: const [
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.home_outlined),
+      //       label: 'Home',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.eco_outlined),
+      //       label: 'Earn',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.card_giftcard),
+      //       label: 'Rewards',
+      //     ),
+      //     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      //   ],
+      // ),
     );
   }
 
@@ -323,7 +338,7 @@ class ProfileScreen extends StatelessWidget {
                       size: 20,
                       color: Colors.grey,
                     ),
-                    onTap: () {},
+                    onTap: action.onTap,
                   ),
                   if (!isLast)
                     Divider(height: 1, indent: 70, color: Colors.grey.shade100),
@@ -384,11 +399,13 @@ class _MenuAction {
   final String title;
   final String subtitle;
   final bool isDestructive;
+  final VoidCallback? onTap;
 
   _MenuAction(
     this.icon,
     this.title,
     this.subtitle, {
     this.isDestructive = false,
+    this.onTap,
   });
 }
