@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Homescreen/profile.dart';
 import 'package:gcc/earn_rewards_screen.dart';
 import 'package:gcc/gcc_home_screen.dart';
 import 'package:gcc/rewards_store_screen.dart';
@@ -17,15 +18,13 @@ class _MainScreenState extends State<MainScreen> {
     GCCHomeScreen(),
     EarnRewardsScreen(),
     RewardsStoreScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -53,10 +52,15 @@ class _MainScreenState extends State<MainScreen> {
               activeIcon: Icon(Icons.stars),
               label: 'Earn',
             ),
-             BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.reviews),
               activeIcon: Icon(Icons.reviews),
               label: 'Rewards',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
             ),
           ],
         ),
@@ -64,4 +68,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
