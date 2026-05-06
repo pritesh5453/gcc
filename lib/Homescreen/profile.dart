@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/profile/edit_profile.dart';
 import 'package:gcc/profile/my_impacts.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -25,12 +26,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_outlined),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -47,6 +42,18 @@ class ProfileScreen extends StatelessWidget {
                 Icons.person_outline,
                 'Edit Profile',
                 'Update your personal information',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => const MainScreen(
+                            child: EditProfileScreen(),
+                            initialIndex: 3, // current tab index (Profile)
+                          ),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.security_outlined,

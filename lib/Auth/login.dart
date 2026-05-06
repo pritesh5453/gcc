@@ -20,7 +20,7 @@ class MobileLoginScreen extends StatelessWidget {
             // Welcome heading
             Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
                     'Welcome to',
@@ -39,9 +39,36 @@ class MobileLoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Your contribution \n creates a better planet.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+
+                  // 👇 Image add here
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/tree.png',
+                        height: 20,
+                        width: 20,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 100),
+                      Text(
+                        'Your contribution ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  Center(
+                    child: Text(
+                      'creates a better planet.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                   ),
                 ],
               ),
