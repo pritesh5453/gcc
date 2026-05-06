@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/profile/account_security_screen.dart';
 import 'package:gcc/profile/edit_profile.dart';
+import 'package:gcc/profile/green_chain.dart';
+import 'package:gcc/profile/help_n_support.dart';
 import 'package:gcc/profile/my_impacts.dart';
+import 'package:gcc/profile/transaction_record_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -59,11 +63,27 @@ class ProfileScreen extends StatelessWidget {
                 Icons.security_outlined,
                 'Account & Security',
                 'Manage password and security settings',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AccountSecurityScreen(),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.card_giftcard,
                 'My Rewards',
                 'View your points, rewards and withdrawals',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MainScreen(initialIndex: 2),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.eco_outlined,
@@ -86,6 +106,14 @@ class ProfileScreen extends StatelessWidget {
                 Icons.history,
                 'Transaction History',
                 'View all your transactions and payments',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TransactionHistoryScreen(),
+                    ),
+                  );
+                },
               ),
             ]),
             const SizedBox(height: 16),
@@ -99,11 +127,27 @@ class ProfileScreen extends StatelessWidget {
                 Icons.help_outline,
                 'Help & Support',
                 'Get help and find answers',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HelpSupportScreen(),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.info_outline,
                 'About GreenChain',
                 'Learn more about our mission',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AboutGreenChainScreen(),
+                    ),
+                  );
+                },
               ),
               _MenuAction(
                 Icons.logout,
