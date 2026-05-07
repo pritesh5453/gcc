@@ -115,34 +115,42 @@ class TransactionHistoryScreen extends StatelessWidget {
   }
 
   Widget _buildFilterChips() {
-    final List<String> filters = ['All', 'Rewards', 'Redeemed', 'Donations', 'Deposits'];
+    final List<String> filters = [
+      'All',
+      'Rewards',
+      'Redeemed',
+      'Donations',
+      'Deposits',
+    ];
     int selectedIndex = 0; // For demo, can be stateful if needed
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: filters.asMap().entries.map((entry) {
-          int idx = entry.key;
-          String label = entry.value;
-          bool isSelected = idx == selectedIndex;
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilterChip(
-              label: Text(label),
-              selected: isSelected,
-              onSelected: (selected) {
-                // Update state in a StatefulWidget if needed
-              },
-              backgroundColor: Colors.white,
-              selectedColor: Colors.green[100],
-              checkmarkColor: Colors.green[700],
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.green[700] : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-              side: BorderSide(color: Colors.grey.shade300),
-            ),
-          );
-        }).toList(),
+        children:
+            filters.asMap().entries.map((entry) {
+              int idx = entry.key;
+              String label = entry.value;
+              bool isSelected = idx == selectedIndex;
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: FilterChip(
+                  label: Text(label),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    // Update state in a StatefulWidget if needed
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: Colors.green[100],
+                  checkmarkColor: Colors.green[700],
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.green[700] : Colors.grey[600],
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+              );
+            }).toList(),
       ),
     );
   }
@@ -215,76 +223,102 @@ class TransactionHistoryScreen extends StatelessWidget {
     // Group by date
     Map<String, List<_Transaction>> grouped = {};
     for (var tx in transactions) {
-      String groupKey = tx.date.contains('Today')
-          ? 'Today'
-          : tx.date.contains('Yesterday')
-          ? 'Yesterday'
-          : 'December 2024';
+      String groupKey =
+          tx.date.contains('Today')
+              ? 'Today'
+              : tx.date.contains('Yesterday')
+              ? 'Yesterday'
+              : 'December 2024';
       if (!grouped.containsKey(groupKey)) grouped[groupKey] = [];
       grouped[groupKey]!.add(tx);
     }
 
     return Column(
-      children: grouped.entries.map((entry) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                entry.key,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.grey[700],
+      children:
+          grouped.entries.map((entry) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    entry.key,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: entry.value.map((tx) {
-                  final isLast = entry.value.last == tx;
-                  return Column(
-                    children: [
-                      ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: tx.iconColor.withOpacity(0.1),
-                          child: Icon(tx.icon, color: tx.iconColor, size: 20),
-                        ),
-                        title: Text(
-                          tx.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                        subtitle: Text(
-                          '${tx.date} • ${tx.category}',
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
-                        ),
-                        trailing: Text(
-                          tx.amount,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: tx.type == 'credit' ? Colors.green[700] : Colors.red,
-                          ),
-                        ),
-                        onTap: () => _showTransactionDetails(context, tx), // ✅ context now available
-                      ),
-                      if (!isLast)
-                        Divider(height: 1, indent: 70, color: Colors.grey.shade100),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        );
-      }).toList(),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    children:
+                        entry.value.map((tx) {
+                          final isLast = entry.value.last == tx;
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: tx.iconColor.withOpacity(
+                                    0.1,
+                                  ),
+                                  child: Icon(
+                                    tx.icon,
+                                    color: tx.iconColor,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  tx.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${tx.date} • ${tx.category}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                trailing: Text(
+                                  tx.amount,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color:
+                                        tx.type == 'credit'
+                                            ? Colors.green[700]
+                                            : Colors.red,
+                                  ),
+                                ),
+                                onTap:
+                                    () => _showTransactionDetails(
+                                      context,
+                                      tx,
+                                    ), // ✅ context now available
+                              ),
+                              if (!isLast)
+                                Divider(
+                                  height: 1,
+                                  indent: 70,
+                                  color: Colors.grey.shade100,
+                                ),
+                            ],
+                          );
+                        }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }).toList(),
     );
   }
 
@@ -294,78 +328,90 @@ class TransactionHistoryScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
+      builder:
+          (ctx) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: tx.iconColor.withOpacity(0.1),
-                  child: Icon(tx.icon, color: tx.iconColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tx.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      Text(
-                        tx.category,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ],
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                Text(
-                  tx.amount,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: tx.type == 'credit' ? Colors.green[700] : Colors.red,
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: tx.iconColor.withOpacity(0.1),
+                      child: Icon(tx.icon, color: tx.iconColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tx.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          Text(
+                            tx.category,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      tx.amount,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            tx.type == 'credit'
+                                ? Colors.green[700]
+                                : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                _detailRow('Transaction ID', tx.id),
+                _detailRow('Date & Time', tx.date),
+                _detailRow('Status', 'Completed'),
+                _detailRow('Payment Method', 'GreenChain Wallet'),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Close'),
                   ),
                 ),
+                const SizedBox(height: 10),
               ],
             ),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 12),
-            _detailRow('Transaction ID', tx.id),
-            _detailRow('Date & Time', tx.date),
-            _detailRow('Status', 'Completed'),
-            _detailRow('Payment Method', 'GreenChain Wallet'),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Close'),
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -376,7 +422,10 @@ class TransactionHistoryScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          ),
         ],
       ),
     );

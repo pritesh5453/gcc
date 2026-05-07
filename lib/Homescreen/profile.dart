@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Auth/login.dart';
 import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/profile/account_security_screen.dart';
 import 'package:gcc/profile/edit_profile.dart';
@@ -154,6 +155,14 @@ class ProfileScreen extends StatelessWidget {
                 'Log Out',
                 'Sign out from your account',
                 isDestructive: true,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MobileLoginScreen(),
+                    ),
+                  );
+                },
               ),
             ]),
             const SizedBox(height: 16),

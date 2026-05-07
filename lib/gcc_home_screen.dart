@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Homescreen/Redeem_screen.dart';
 import 'package:gcc/buy_gcc_units_screen.dart';
 import 'package:gcc/daily_streak_card.dart';
 import 'package:gcc/earn_rewards_screen.dart';
-
-
 
 class GCCHomeScreen extends StatefulWidget {
   const GCCHomeScreen({super.key});
@@ -39,7 +38,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 12),
                     _buildGCCUnitsCard(),
                     const SizedBox(height: 12),
-                   DailyStreakCard(),
+                    DailyStreakCard(),
                     const SizedBox(height: 16),
                     _buildHowItWorksSection(),
                     const SizedBox(height: 16),
@@ -51,7 +50,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                 ),
               ),
             ),
-          //  _buildBottomNavBar(),
+            //  _buildBottomNavBar(),
           ],
         ),
       ),
@@ -66,7 +65,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.menu, color: Colors.black87, size: 26),
+          // const Icon(Icons.menu, color: Colors.black87, size: 26),
           Column(
             children: [
               Row(
@@ -96,7 +95,11 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
           ),
           Stack(
             children: [
-              const Icon(Icons.notifications_outlined, size: 28, color: Colors.black87),
+              const Icon(
+                Icons.notifications_outlined,
+                size: 28,
+                color: Colors.black87,
+              ),
               Positioned(
                 right: 0,
                 top: 0,
@@ -108,7 +111,14 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Text('3', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -138,10 +148,14 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome, Rahul!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              Text('Let\'s start your green journey today.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                'Welcome, Rahul!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              Text(
+                'Let\'s start your green journey today.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ],
@@ -157,7 +171,9 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+        ],
       ),
       child: Row(
         children: [
@@ -174,10 +190,14 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Take your first step!',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text('Buy GCC Units to grow your Digital Forest.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  'Take your first step!',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  'Buy GCC Units to grow your Digital Forest.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ],
             ),
           ),
@@ -186,10 +206,15 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            child: const Text('Get Started', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Get Started',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -214,7 +239,9 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
                 child: Container(
                   height: 160,
                   decoration: const BoxDecoration(
@@ -246,19 +273,21 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                       Positioned(
                         bottom: 0,
                         left: 20,
-                        child: _TreeWidget(height: 60, color: const Color(0xFF1B6B2F)),
+                        child: _TreeWidget(
+                          height: 60,
+                          color: const Color(0xFF1B6B2F),
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
                         left: 60,
-                        child: _TreeWidget(height: 80, color: const Color(0xFF2E7D32)),
+                        child: _TreeWidget(
+                          height: 80,
+                          color: const Color(0xFF2E7D32),
+                        ),
                       ),
                       // Main big sprout center-right
-                      Positioned(
-                        bottom: 0,
-                        right: 20,
-                        child: _SproutWidget(),
-                      ),
+                      Positioned(bottom: 0, right: 20, child: _SproutWidget()),
                       // Text overlay
                       const Positioned(
                         top: 16,
@@ -281,7 +310,10 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                             ),
                             Text(
                               'Start today, create a greener tomorrow.',
-                              style: TextStyle(color: Colors.white70, fontSize: 11),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
@@ -292,9 +324,24 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                         left: 16,
                         child: Row(
                           children: [
-                            _ForestStat(label: 'Trees Supported', value: '0', emoji: '🌳'),
-                            Container(width: 1, height: 40, color: Colors.white38, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                            _ForestStat(label: 'CO₂ Offset', value: '0 kg', emoji: '☁️'),
+                            _ForestStat(
+                              label: 'Trees Supported',
+                              value: '0',
+                              emoji: '🌳',
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.white38,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                            ),
+                            _ForestStat(
+                              label: 'CO₂ Offset',
+                              value: '0 kg',
+                              emoji: '☁️',
+                            ),
                           ],
                         ),
                       ),
@@ -315,8 +362,10 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Next Milestone: 10 Trees',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text(
+                  'Next Milestone: 10 Trees',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -332,12 +381,17 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('0%', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    const Text(
+                      '0%',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Text('Complete your first contribution to unlock this milestone.',
-                    style: TextStyle(fontSize: 10, color: Colors.grey)),
+                const Text(
+                  'Complete your first contribution to unlock this milestone.',
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                ),
               ],
             ),
           ),
@@ -354,7 +408,9 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+        ],
       ),
       child: Column(
         children: [
@@ -370,15 +426,35 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                         color: primaryGreen.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.shopping_bag_outlined, color: primaryGreen, size: 22),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        color: primaryGreen,
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('GCC Units', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        Text('0', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                        Text('Units', style: TextStyle(fontSize: 11, color: primaryGreen, fontWeight: FontWeight.w600)),
+                        Text(
+                          'GCC Units',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        Text(
+                          '0',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Units',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: primaryGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -398,15 +474,35 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                           color: Colors.orange.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.card_giftcard, color: Colors.orange, size: 22),
+                        child: const Icon(
+                          Icons.card_giftcard,
+                          color: Colors.orange,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Eco-Rewards', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text('0', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                          Text('Points', style: TextStyle(fontSize: 11, color: primaryGreen, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Eco-Rewards',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            '0',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Points',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -422,12 +518,19 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyGCCUnitsScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BuyGCCUnitsScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Row(
@@ -435,12 +538,25 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     children: [
                       Icon(Icons.chevron_left, size: 16),
                       SizedBox(width: 4),
-                      Icon(Icons.shopping_bag_outlined, size: 18,color: Colors.white,),
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 18,
+                        color: Colors.white,
+                      ),
                       SizedBox(width: 8),
                       Column(
                         children: [
-                          Text('Buy GCC Units', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text('Start your impact', style: TextStyle(fontSize: 10)),
+                          Text(
+                            'Buy GCC Units',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'Start your impact',
+                            style: TextStyle(fontSize: 10),
+                          ),
                         ],
                       ),
                       SizedBox(width: 4),
@@ -453,11 +569,20 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               // Redeem Rewards
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RedeemRewardsScreen(),
+                      ),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryGreen,
                     side: const BorderSide(color: primaryGreen),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Column(
@@ -465,14 +590,26 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.card_giftcard_outlined, size: 18, color: primaryGreen),
+                          Icon(
+                            Icons.card_giftcard_outlined,
+                            size: 18,
+                            color: primaryGreen,
+                          ),
                           SizedBox(width: 6),
-                          Text('Redeem Rewards',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: primaryGreen)),
+                          Text(
+                            'Redeem Rewards',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: primaryGreen,
+                            ),
+                          ),
                         ],
                       ),
-                      Text('Use points for exciting offers',
-                          style: TextStyle(fontSize: 9, color: Colors.grey)),
+                      Text(
+                        'Use points for exciting offers',
+                        style: TextStyle(fontSize: 9, color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -507,10 +644,17 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Daily Action Streak',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text('Complete 1 action today & earn 50 Eco-Rewards',
-                            style: TextStyle(fontSize: 10, color: Colors.grey)),
+                        Text(
+                          'Daily Action Streak',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          'Complete 1 action today & earn 50 Eco-Rewards',
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
                       ],
                     ),
                   ],
@@ -518,7 +662,10 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    ...List.generate(5, (i) => _StreakDot(index: i + 1, active: i == 0)),
+                    ...List.generate(
+                      5,
+                      (i) => _StreakDot(index: i + 1, active: i == 0),
+                    ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: () {},
@@ -526,10 +673,21 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                         backgroundColor: const Color(0xFFD4EDDA),
                         foregroundColor: primaryGreen,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                       ),
-                      child: const Text('Start Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Start Now',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -556,220 +714,215 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
 
   // ─── HOW IT WORKS ──────────────────────────────────────────────────────────
   Widget _buildHowItWorksSection() {
-  final steps = [
-    {'icon': Icons.shopping_bag_outlined, 'label': 'Buy GCC\nUnits'},
-    {'icon': Icons.eco_outlined, 'label': 'Grow Your\nDigital Forest'},
-    {'icon': Icons.workspace_premium_outlined, 'label': 'Earn\nEco-Rewards'},
-    {'icon': Icons.card_giftcard, 'label': 'Redeem\nExciting Offers'},
-  ];
+    final steps = [
+      {'icon': Icons.shopping_bag_outlined, 'label': 'Buy GCC\nUnits'},
+      {'icon': Icons.eco_outlined, 'label': 'Grow Your\nDigital Forest'},
+      {'icon': Icons.workspace_premium_outlined, 'label': 'Earn\nEco-Rewards'},
+      {'icon': Icons.card_giftcard, 'label': 'Redeem\nExciting Offers'},
+    ];
 
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 14),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "New Here? Here's how it works",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 18),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "New Here? Here's how it works",
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          const SizedBox(height: 18),
 
-        Row(
-          children: List.generate(steps.length, (i) {
-            return Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8F5E9), // light green
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                steps[i]['icon'] as IconData,
-                                color: primaryGreen,
-                                size: 26,
-                              ),
-                            ),
-
-                            Positioned(
-                              bottom: -2,
-                              left: -2,
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: const BoxDecoration(
-                                  color: primaryGreen,
+          Row(
+            children: List.generate(steps.length, (i) {
+              return Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9), // light green
                                   shape: BoxShape.circle,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    '${i + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                                child: Icon(
+                                  steps[i]['icon'] as IconData,
+                                  color: primaryGreen,
+                                  size: 26,
+                                ),
+                              ),
+
+                              Positioned(
+                                bottom: -2,
+                                left: -2,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: primaryGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${i + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          steps[i]['label'] as String,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            height: 1.3,
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  if (i < steps.length - 1)
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: Colors.grey,
+                          const SizedBox(height: 8),
+
+                          Text(
+                            steps[i]['label'] as String,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 11, height: 1.3),
+                          ),
+                        ],
+                      ),
                     ),
-                ],
+
+                    if (i < steps.length - 1)
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Quick Actions",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _quickCard(
+                  icon: Icons.eco,
+                  title: "My Impact",
+                  subtitle: "",
+                ),
               ),
-            );
-          }),
-        ),
-      ],
-    ),
-  );
-}
- Widget _buildQuickActionsSection() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 15),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Quick Actions",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: _quickCard(
+                  icon: Icons.swap_horiz,
+                  title: "Resell / Exchange",
+                  subtitle: "GCC Units",
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: _quickCard(
+                  icon: Icons.group,
+                  title: "Invite Friends",
+                  subtitle: "Earn Rewards",
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: _quickCard(
+                  icon: Icons.headset_mic,
+                  title: "Help & Support",
+                  subtitle: "",
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-    
-        Row(
-          children: [
-            Expanded(child: _quickCard(
-              icon: Icons.eco,
-              title: "My Impact",
-              subtitle: "",
-            )),
-    
-            const SizedBox(width: 10),
-    
-            Expanded(child: _quickCard(
-              icon: Icons.swap_horiz,
-              title: "Resell / Exchange",
-              subtitle: "GCC Units",
-            )),
-    
-            const SizedBox(width: 10),
-    
-            Expanded(child: _quickCard(
-              icon: Icons.group,
-              title: "Invite Friends",
-              subtitle: "Earn Rewards",
-            )),
-    
-            const SizedBox(width: 10),
-    
-            Expanded(child: _quickCard(
-              icon: Icons.headset_mic,
-              title: "Help & Support",
-              subtitle: "",
-            )),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-Widget _quickCard({
-  required IconData icon,
-  required String title,
-  required String subtitle,
-}) {
-  return Container(
-    height: 110, // 👈 SAME HEIGHT for all cards
-    padding: const EdgeInsets.symmetric(horizontal: 8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: Colors.green, size: 26),
-        const SizedBox(height: 6),
-
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+  Widget _quickCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      height: 110, // 👈 SAME HEIGHT for all cards
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.green, size: 26),
+          const SizedBox(height: 6),
 
-        if (subtitle.isNotEmpty) ...[
-          const SizedBox(height: 2),
           Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade600,
-            ),
+            title,
             textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
-        ]
-      ],
-    ),
-  );
-}
+
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   // ─── DISCLAIMER CARD ───────────────────────────────────────────────────────
   Widget _buildDisclaimerCard() {
     return Container(
@@ -782,7 +935,11 @@ Widget _quickCard({
       ),
       child: Row(
         children: [
-          const Icon(Icons.verified_user_outlined, color: primaryGreen, size: 18),
+          const Icon(
+            Icons.verified_user_outlined,
+            color: primaryGreen,
+            size: 18,
+          ),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
@@ -793,7 +950,14 @@ Widget _quickCard({
           const SizedBox(width: 8),
           Row(
             children: [
-              const Text('Know More', style: TextStyle(color: primaryGreen, fontSize: 11, fontWeight: FontWeight.w600)),
+              const Text(
+                'Know More',
+                style: TextStyle(
+                  color: primaryGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Icon(Icons.chevron_right, color: primaryGreen, size: 16),
             ],
           ),
@@ -814,7 +978,13 @@ Widget _quickCard({
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -826,15 +996,15 @@ Widget _quickCard({
               final selected = _selectedIndex == i;
               return GestureDetector(
                 onTap: () {
-                   setState(() => _selectedIndex = i);
-                    if (i == 1) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const EarnRewardsScreen(),
-      ),
-    );
-  }
+                  setState(() => _selectedIndex = i);
+                  if (i == 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EarnRewardsScreen(),
+                      ),
+                    );
+                  }
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -850,7 +1020,8 @@ Widget _quickCard({
                       style: TextStyle(
                         fontSize: 10,
                         color: selected ? primaryGreen : Colors.grey,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -871,7 +1042,10 @@ class _BirdIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text('~', style: TextStyle(color: Colors.black45, fontSize: 10));
+    return const Text(
+      '~',
+      style: TextStyle(color: Colors.black45, fontSize: 10),
+    );
   }
 }
 
@@ -907,7 +1081,12 @@ class _TreePainter extends CustomPainter {
     // Trunk
     final trunkPaint = Paint()..color = const Color(0xFF5D4037);
     canvas.drawRect(
-      Rect.fromLTWH(size.width * 0.4, size.height * 0.6, size.width * 0.2, size.height * 0.4),
+      Rect.fromLTWH(
+        size.width * 0.4,
+        size.height * 0.6,
+        size.width * 0.2,
+        size.height * 0.4,
+      ),
       trunkPaint,
     );
   }
@@ -929,18 +1108,32 @@ class _ForestStat extends StatelessWidget {
   final String label;
   final String value;
   final String emoji;
-  const _ForestStat({required this.label, required this.value, required this.emoji});
+  const _ForestStat({
+    required this.label,
+    required this.value,
+    required this.emoji,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
         const SizedBox(height: 2),
         Row(
           children: [
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(width: 4),
             Text(emoji, style: const TextStyle(fontSize: 14)),
           ],
@@ -963,7 +1156,9 @@ class _StreakDot extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         color: active ? const Color(0xFF1B6B2F) : Colors.transparent,
-        border: Border.all(color: active ? const Color(0xFF1B6B2F) : Colors.grey.shade300),
+        border: Border.all(
+          color: active ? const Color(0xFF1B6B2F) : Colors.grey.shade300,
+        ),
         shape: BoxShape.circle,
       ),
       child: Center(
