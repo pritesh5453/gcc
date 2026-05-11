@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Homescreen/Redeem_screen.dart';
+import 'package:gcc/Homescreen/resell_exchange_screen.dart';
 import 'package:gcc/buy_gcc_units_screen.dart';
 import 'package:gcc/daily_streak_card.dart';
 import 'package:gcc/earn_rewards_screen.dart';
@@ -846,10 +847,20 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               const SizedBox(width: 10),
 
               Expanded(
-                child: _quickCard(
-                  icon: Icons.swap_horiz,
-                  title: "Resell / Exchange",
-                  subtitle: "GCC Units",
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ResellExchangeScreen(),
+                      ),
+                    );
+                  },
+                  child: _quickCard(
+                    icon: Icons.swap_horiz,
+                    title: "Resell / Exchange",
+                    subtitle: "GCC Units",
+                  ),
                 ),
               ),
 
