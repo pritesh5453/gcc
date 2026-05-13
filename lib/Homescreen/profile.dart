@@ -7,6 +7,7 @@ import 'package:gcc/profile/green_chain.dart';
 import 'package:gcc/profile/help_n_support.dart';
 import 'package:gcc/profile/my_impacts.dart';
 import 'package:gcc/profile/transaction_record_screen.dart';
+import 'package:gcc/profile/wallet.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -133,6 +134,19 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const HelpSupportScreen(),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.account_balance_wallet,
+                'Wallet',
+                'Account and Wallet balance details',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WalletScreen(),
                     ),
                   );
                 },

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Auth/OTP_screen.dart';
+import 'package:gcc/Auth/signup.dart';
 import 'package:gcc/Navbar/navbar.dart';
 
 class MobileLoginScreen extends StatelessWidget {
@@ -121,7 +123,9 @@ class MobileLoginScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const OtpScreen(mobileNumber: ''),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -135,6 +139,33 @@ class MobileLoginScreen extends StatelessWidget {
                 child: const Text(
                   'Continue with OTP',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            // Continue with OTP button
+            SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SignupScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 2, 49, 4),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  "Don't have an account? Sign Up",
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w300),
                 ),
               ),
             ),

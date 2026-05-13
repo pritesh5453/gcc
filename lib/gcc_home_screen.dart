@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Homescreen/Redeem_screen.dart';
-import 'package:gcc/Homescreen/resell_exchange_screen.dart';
+import 'package:gcc/Homescreen/resell_&_exchange.dart';
 import 'package:gcc/buy_gcc_units_screen.dart';
 import 'package:gcc/daily_streak_card.dart';
 import 'package:gcc/earn_rewards_screen.dart';
@@ -852,7 +852,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ResellExchangeScreen(),
+                        builder: (context) => const ExchangeGCCScreen(),
                       ),
                     );
                   },
