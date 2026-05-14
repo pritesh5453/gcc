@@ -33,180 +33,156 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildProfileHeader(),
-            const SizedBox(height: 20),
-            _buildImpactStats(),
-            const SizedBox(height: 20),
-            _buildContributorBanner(),
-            const SizedBox(height: 20),
-            _buildMenuSection([
-              _MenuAction(
-                Icons.person_outline,
-                'Edit Profile',
-                'Update your personal information',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => const MainScreen(
-                            child: EditProfileScreen(),
-                            initialIndex: 3, // current tab index (Profile)
-                          ),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.security_outlined,
-                'Account & Security',
-                'Manage password and security settings',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AccountSecurityScreen(),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.card_giftcard,
-                'My Rewards',
-                'View your points, rewards and withdrawals',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MainScreen(initialIndex: 2),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.eco_outlined,
-                'My Impact',
-                'See your contribution and environmental impact',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => const MainScreen(
-                            child: MyImpactScreen(),
-                            initialIndex: 3, // current tab index (Profile)
-                          ),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.history,
-                'Transaction History',
-                'View all your transactions and payments',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TransactionHistoryScreen(),
-                    ),
-                  );
-                },
-              ),
-            ]),
-            const SizedBox(height: 16),
-            _buildMenuSection([
-              _MenuAction(
-                Icons.notifications_none,
-                'Notifications',
-                'Manage your notification preferences',
-              ),
-              _MenuAction(
-                Icons.help_outline,
-                'Help & Support',
-                'Get help and find answers',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HelpSupportScreen(),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.account_balance_wallet,
-                'Wallet',
-                'Account and Wallet balance details',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WalletScreen(),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.info_outline,
-                'About GreenChain',
-                'Learn more about our mission',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AboutGreenChainScreen(),
-                    ),
-                  );
-                },
-              ),
-              _MenuAction(
-                Icons.logout,
-                'Log Out',
-                'Sign out from your account',
-                isDestructive: true,
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MobileLoginScreen(),
-                    ),
-                  );
-                },
-              ),
-            ]),
-            const SizedBox(height: 16),
-            _buildInviteCard(),
-            const SizedBox(height: 80), // Space for BottomNav
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildProfileHeader(),
+              const SizedBox(height: 20),
+              _buildImpactStats(),
+              const SizedBox(height: 20),
+              _buildContributorBanner(),
+              const SizedBox(height: 20),
+              _buildMenuSection([
+                _MenuAction(
+                  Icons.person_outline,
+                  'Edit Profile',
+                  'Update your personal information',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.security_outlined,
+                  'Account & Security',
+                  'Manage password and security settings',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AccountSecurityScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.card_giftcard,
+                  'My Rewards',
+                  'View your points, rewards and withdrawals',
+                  onTap: () {
+                    // Navigate to Rewards tab in MainScreen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => const MainScreen(
+                              initialIndex: 3,
+                            ), // 3 = RewardsStoreScreen
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.eco_outlined,
+                  'My Impact',
+                  'See your contribution and environmental impact',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyImpactScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.history,
+                  'Transaction History',
+                  'View all your transactions and payments',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TransactionHistoryScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ]),
+              const SizedBox(height: 16),
+              _buildMenuSection([
+                _MenuAction(
+                  Icons.notifications_none,
+                  'Notifications',
+                  'Manage your notification preferences',
+                ),
+                _MenuAction(
+                  Icons.help_outline,
+                  'Help & Support',
+                  'Get help and find answers',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpSupportScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.account_balance_wallet,
+                  'Wallet',
+                  'Account and Wallet balance details',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WalletScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.info_outline,
+                  'About GreenChain',
+                  'Learn more about our mission',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutGreenChainScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _MenuAction(
+                  Icons.logout,
+                  'Log Out',
+                  'Sign out from your account',
+                  isDestructive: true,
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MobileLoginScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ]),
+              const SizedBox(height: 16),
+              _buildInviteCard(),
+              const SizedBox(height: 20), // Adjusted for better spacing
+            ],
+          ),
         ),
       ),
-
-      // bottomNavigationBar: BottomNavigationBar(
-      //   currentIndex: 3,
-      //   type: BottomNavigationBarType.fixed,
-      //   selectedItemColor: Colors.green[700],
-      //   unselectedItemColor: Colors.grey,
-      //   items: const [
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home_outlined),
-      //       label: 'Home',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.eco_outlined),
-      //       label: 'Earn',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.card_giftcard),
-      //       label: 'Rewards',
-      //     ),
-      //     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      //   ],
-      // ),
     );
   }
 
@@ -222,9 +198,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 40,
-            backgroundImage: NetworkImage(
-              'https://via.placeholder.com/150',
-            ), // Replace with actual asset
+            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
           ),
           const SizedBox(width: 16),
           Expanded(

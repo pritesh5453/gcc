@@ -1,116 +1,941 @@
 import 'package:flutter/material.dart';
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+import 'package:gcc/Homescreen/Redeem_screen.dart';
+import 'package:gcc/Homescreen/resell_&_exchange.dart';
+import 'package:gcc/buy_gcc_units_screen.dart';
+import 'package:gcc/daily_streak_card.dart';
+import 'package:gcc/earn_rewards_screen.dart';
+import 'package:gcc/profile/help_n_support.dart';
+import 'package:gcc/profile/my_impacts.dart';
+import 'package:gcc/profile/referral_screen.dart';
+
+class GCCHomeScreen extends StatefulWidget {
+  const GCCHomeScreen({super.key});
+
+  @override
+  State<GCCHomeScreen> createState() => _GCCHomeScreenState();
+}
+
+class _GCCHomeScreenState extends State<GCCHomeScreen> {
+  int _selectedIndex = 0;
+
+  static const Color primaryGreen = Color(0xFF1B6B2F);
+  static const Color lightGreen = Color(0xFF4CAF50);
+  static const Color bgColor = Color(0xFFF5F5F5);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: bgColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Section
-              const _HeaderSection(),
-              const SizedBox(height: 24),
-
-              // Digital Forest Level Section
-              const _ForestLevelSection(),
-              const SizedBox(height: 24),
-
-              // Total Contribution Card
-              const _TotalContributionCard(),
-              const SizedBox(height: 24),
-
-              // Environmental Impact Section
-              const _EnvironmentalImpact(),
-              const SizedBox(height: 16),
-
-              // View Full Impact Details Link
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                  ),
-                  child: const Text(
-                    'View Full Impact Details →',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+        child: Column(
+          children: [
+            _buildTopBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildWelcomeBanner(),
+                    const SizedBox(height: 12),
+                    _buildGetStartedCard(),
+                    const SizedBox(height: 12),
+                    _buildDigitalForestCard(),
+                    const SizedBox(height: 12),
+                    _buildGCCUnitsCard(),
+                    const SizedBox(height: 12),
+                    DailyStreakCard(),
+                    const SizedBox(height: 16),
+                    _buildHowItWorksSection(),
+                    const SizedBox(height: 16),
+                    _buildQuickActionsSection(),
+                    const SizedBox(height: 12),
+                    _buildDisclaimerCard(),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              const _ActionButtons(),
-              const SizedBox(height: 24),
-
-              // Eco Rewards Card
-              const _EcoRewardsCard(),
-              const SizedBox(height: 24),
-
-              // Recent Activity Section
-              const _RecentActivitySection(),
-              const SizedBox(height: 16),
-
-              // Bottom placeholder spacing (no navbar)
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+            //  _buildBottomNavBar(),
+          ],
         ),
       ),
     );
   }
-}
 
-// Header: Hi, John! + subtitle
-class _HeaderSection extends StatelessWidget {
-  const _HeaderSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Hi, John! 👋',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1B3B1F),
+  // ─── TOP BAR ───────────────────────────────────────────────────────────────
+  Widget _buildTopBar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // const Icon(Icons.menu, color: Colors.black87, size: 26),
+          Column(
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'GCC',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: primaryGreen,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  // Leaf icon next to GCC
+                  Transform.rotate(
+                    angle: -0.3,
+                    child: const Icon(Icons.eco, color: lightGreen, size: 18),
+                  ),
+                ],
+              ),
+              const Text(
+                'Green Contribution Certificate',
+                style: TextStyle(fontSize: 9, color: Colors.grey),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Welcome to GCC Platform',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
+          Stack(
+            children: [
+              const Icon(
+                Icons.notifications_outlined,
+                size: 28,
+                color: Colors.black87,
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: primaryGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
 
-// Digital Forest Level with progress indicator
-class _ForestLevelSection extends StatelessWidget {
-  const _ForestLevelSection();
-
-  @override
-  Widget build(BuildContext context) {
+  // ─── WELCOME BANNER ────────────────────────────────────────────────────────
+  Widget _buildWelcomeBanner() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.eco, color: primaryGreen, size: 22),
+          ),
+          const SizedBox(width: 10),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome, Rahul!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              Text(
+                'Let\'s start your green journey today.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── GET STARTED CARD ──────────────────────────────────────────────────────
+  Widget _buildGetStartedCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFFE8F5E9), const Color(0xFFC8E6C9)],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.park, color: primaryGreen, size: 22),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Take your first step!',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  'Buy GCC Units to grow your Digital Forest.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            child: const Text(
+              'Get Started',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── DIGITAL FOREST CARD ───────────────────────────────────────────────────
+  Widget _buildDigitalForestCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [Color(0xFF1B6B2F), Color(0xFF2E8B57), Color(0xFF4CAF50)],
         ),
-        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          // Forest illustration area
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: Container(
+                  height: 160,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF2E8B57), Color(0xFF4CAF50)],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Sky
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xFF87CEEB), Color(0xFFB8E4A3)],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Birds (simple dots)
+                      const Positioned(top: 20, right: 60, child: _BirdIcon()),
+                      const Positioned(top: 30, right: 40, child: _BirdIcon()),
+                      const Positioned(top: 15, right: 100, child: _BirdIcon()),
+                      // Trees in background
+                      Positioned(
+                        bottom: 0,
+                        left: 20,
+                        child: _TreeWidget(
+                          height: 60,
+                          color: const Color(0xFF1B6B2F),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 60,
+                        child: _TreeWidget(
+                          height: 80,
+                          color: const Color(0xFF2E7D32),
+                        ),
+                      ),
+                      // Main big sprout center-right
+                      Positioned(bottom: 0, right: 20, child: _SproutWidget()),
+                      // Text overlay
+                      const Positioned(
+                        top: 16,
+                        left: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Your Digital Forest ',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text('🌳', style: TextStyle(fontSize: 16)),
+                              ],
+                            ),
+                            Text(
+                              'Start today, create a greener tomorrow.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Stats row
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        child: Row(
+                          children: [
+                            _ForestStat(
+                              label: 'Trees Supported',
+                              value: '0',
+                              emoji: '🌳',
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: Colors.white38,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                            ),
+                            _ForestStat(
+                              label: 'CO₂ Offset',
+                              value: '0 kg',
+                              emoji: '☁️',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Milestone card
+          Container(
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Next Milestone: 10 Trees',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: 0,
+                          backgroundColor: Colors.grey[200],
+                          color: primaryGreen,
+                          minHeight: 6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '0%',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Complete your first contribution to unlock this milestone.',
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── GCC UNITS CARD ────────────────────────────────────────────────────────
+  Widget _buildGCCUnitsCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // GCC Units
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: primaryGreen.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        color: primaryGreen,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'GCC Units',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        Text(
+                          '0',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Units',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: primaryGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Divider
+              Container(width: 1, height: 60, color: Colors.grey[200]),
+              // Eco-Rewards
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.card_giftcard,
+                          color: Colors.orange,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Eco-Rewards',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            '0',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Points',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              // Buy GCC Units
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BuyGCCUnitsScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chevron_left, size: 16),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 8),
+                      Column(
+                        children: [
+                          Text(
+                            'Buy GCC Units',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'Start your impact',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ],
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Redeem Rewards
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RedeemRewardsScreen(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryGreen,
+                    side: const BorderSide(color: primaryGreen),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.card_giftcard_outlined,
+                            size: 18,
+                            color: primaryGreen,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Redeem Rewards',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Use points for exciting offers',
+                        style: TextStyle(fontSize: 9, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── DAILY STREAK CARD ─────────────────────────────────────────────────────
+  Widget _buildDailyStreakCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Text('🔥', style: TextStyle(fontSize: 22)),
+                    SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daily Action Streak',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          'Complete 1 action today & earn 50 Eco-Rewards',
+                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ...List.generate(
+                      5,
+                      (i) => _StreakDot(index: i + 1, active: i == 0),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4EDDA),
+                        foregroundColor: primaryGreen,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        'Start Now',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Gift box illustration
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Text('🎁', style: TextStyle(fontSize: 38)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── HOW IT WORKS ──────────────────────────────────────────────────────────
+  Widget _buildHowItWorksSection() {
+    final steps = [
+      {'icon': Icons.shopping_bag_outlined, 'label': 'Buy GCC\nUnits'},
+      {'icon': Icons.eco_outlined, 'label': 'Grow Your\nDigital Forest'},
+      {'icon': Icons.workspace_premium_outlined, 'label': 'Earn\nEco-Rewards'},
+      {'icon': Icons.card_giftcard, 'label': 'Redeem\nExciting Offers'},
+    ];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "New Here? Here's how it works",
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          const SizedBox(height: 18),
+
+          Row(
+            children: List.generate(steps.length, (i) {
+              return Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9), // light green
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  steps[i]['icon'] as IconData,
+                                  color: primaryGreen,
+                                  size: 26,
+                                ),
+                              ),
+
+                              Positioned(
+                                bottom: -2,
+                                left: -2,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: primaryGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${i + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            steps[i]['label'] as String,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 11, height: 1.3),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (i < steps.length - 1)
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Quick Actions",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyImpactScreen(),
+                      ),
+                    );
+                  },
+                  child: _quickCard(
+                    icon: Icons.eco,
+                    title: "My Impact",
+                    subtitle: "",
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ExchangeGCCScreen(),
+                      ),
+                    );
+                  },
+                  child: _quickCard(
+                    icon: Icons.swap_horiz,
+                    title: "Resell / Exchange",
+                    subtitle: "GCC Units",
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ReferralGrowthScreen(),
+                      ),
+                    );
+                  },
+                  child: _quickCard(
+                    icon: Icons.group,
+                    title: "Invite Friends",
+                    subtitle: "Earn Rewards",
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpSupportScreen(),
+                      ),
+                    );
+                  },
+                  child: GestureDetector(
+                    child: _quickCard(
+                      icon: Icons.headset_mic,
+                      title: "Help & Support",
+                      subtitle: "",
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      height: 110, // 👈 SAME HEIGHT for all cards
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -120,492 +945,277 @@ class _ForestLevelSection extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.forest, color: Color(0xFF2E7D32), size: 28),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Digital Forest Level',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C5E2E),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Level 3',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+          Icon(icon, color: Colors.green, size: 26),
+          const SizedBox(height: 6),
+
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Keep growing your impact!',
-            style: TextStyle(fontSize: 14, color: Color(0xFF4E6E4F)),
+
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─── DISCLAIMER CARD ───────────────────────────────────────────────────────
+  Widget _buildDisclaimerCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.verified_user_outlined,
+            color: primaryGreen,
+            size: 18,
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: LinearProgressIndicator(
-              value: 0.68,
-              minHeight: 10,
-              backgroundColor: Colors.white.withOpacity(0.6),
-              color: const Color(0xFF2E7D32),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'GCC Units are digital eco-vouchers for ecosystem contribution.\nNo investment. No guaranteed returns. Not a financial instrument.',
+              style: TextStyle(fontSize: 10, color: Colors.grey, height: 1.4),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(width: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '🌱 1,280 / 2,500 points',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              const Text(
+                'Know More',
+                style: TextStyle(
+                  color: primaryGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              Text(
-                '🏆 Next: Level 4',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-              ),
+              const Icon(Icons.chevron_right, color: primaryGreen, size: 16),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // ─── BOTTOM NAV BAR ────────────────────────────────────────────────────────
+  Widget _buildBottomNavBar() {
+    final items = [
+      {'icon': Icons.home, 'label': 'Home'},
+      {'icon': Icons.stars_outlined, 'label': 'Earn Rewards'},
+      {'icon': Icons.card_giftcard_outlined, 'label': 'Rewards Store'},
+      {'icon': Icons.person_outline, 'label': 'Profile'},
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (i) {
+              final selected = _selectedIndex == i;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selectedIndex = i);
+                  if (i == 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EarnRewardsScreen(),
+                      ),
+                    );
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      items[i]['icon'] as IconData,
+                      color: selected ? primaryGreen : Colors.grey,
+                      size: 24,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      items[i]['label'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: selected ? primaryGreen : Colors.grey,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 }
 
-// Total contribution card with All Time / Current Value / GCC Units
-class _TotalContributionCard extends StatelessWidget {
-  const _TotalContributionCard();
+// ─── HELPER WIDGETS ──────────────────────────────────────────────────────────
+
+class _BirdIcon extends StatelessWidget {
+  const _BirdIcon();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+    return const Text(
+      '~',
+      style: TextStyle(color: Colors.black45, fontSize: 10),
+    );
+  }
+}
+
+class _TreeWidget extends StatelessWidget {
+  final double height;
+  final Color color;
+  const _TreeWidget({required this.height, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(height * 0.6, height),
+      painter: _TreePainter(color: color),
+    );
+  }
+}
+
+class _TreePainter extends CustomPainter {
+  final Color color;
+  const _TreePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    // Triangle top
+    final path = Path();
+    path.moveTo(size.width / 2, 0);
+    path.lineTo(0, size.height * 0.6);
+    path.lineTo(size.width, size.height * 0.6);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // Trunk
+    final trunkPaint = Paint()..color = const Color(0xFF5D4037);
+    canvas.drawRect(
+      Rect.fromLTWH(
+        size.width * 0.4,
+        size.height * 0.6,
+        size.width * 0.2,
+        size.height * 0.4,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Total Contribution',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF6B6B6B),
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Text(
-                  '₹6,240.00',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C5E2E),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.trending_up,
-                        size: 16,
-                        color: Color(0xFF2E7D32),
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '+18.83%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D32),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildMetricColumn('All Time', '₹8,240'),
-                _buildMetricColumn('Current Value', '₹6,240.00'),
-                _buildMetricColumn('GCC Units', '142 units'),
-              ],
-            ),
-          ],
-        ),
-      ),
+      trunkPaint,
     );
   }
 
-  Widget _buildMetricColumn(String label, String value) {
+  @override
+  bool shouldRepaint(_TreePainter old) => old.color != color;
+}
+
+class _SproutWidget extends StatelessWidget {
+  const _SproutWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('🌱', style: TextStyle(fontSize: 70));
+  }
+}
+
+class _ForestStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final String emoji;
+  const _ForestStat({
+    required this.label,
+    required this.value,
+    required this.emoji,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF8A8A8A)),
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF264A27),
-          ),
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+          ],
         ),
       ],
     );
   }
 }
 
-// Environmental Impact: 3 stats in a row
-class _EnvironmentalImpact extends StatelessWidget {
-  const _EnvironmentalImpact();
+class _StreakDot extends StatelessWidget {
+  final int index;
+  final bool active;
+  const _StreakDot({required this.index, required this.active});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(right: 6),
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildImpactItem(
-            Icons.park,
-            'Trees Supported',
-            '48 Trees',
-            const Color(0xFF388E3C),
-          ),
-          Container(height: 40, width: 1, color: Colors.grey.shade200),
-          _buildImpactItem(
-            Icons.cloud,
-            'CO₂ Offset',
-            '120 kg',
-            const Color(0xFF0288D1),
-          ),
-          Container(height: 40, width: 1, color: Colors.grey.shade200),
-          _buildImpactItem(
-            Icons.water_drop,
-            'Water Saved',
-            '2,300 Liters',
-            const Color(0xFF0077B6),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImpactItem(
-    IconData icon,
-    String label,
-    String value,
-    Color iconColor,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, color: iconColor, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF616161),
-          ),
+        color: active ? const Color(0xFF1B6B2F) : Colors.transparent,
+        border: Border.all(
+          color: active ? const Color(0xFF1B6B2F) : Colors.grey.shade300,
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$index',
+          style: TextStyle(
+            fontSize: 11,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Color(0xFF1B3B1F),
+            color: active ? Colors.white : Colors.grey,
           ),
         ),
-      ],
-    );
-  }
-}
-
-// Contribute & Exchange buttons
-class _ActionButtons extends StatelessWidget {
-  const _ActionButtons();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(40),
-              ),
-              elevation: 2,
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Contribute',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF2E7D32),
-              side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(40),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.swap_horiz, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Exchange',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Eco Rewards Card
-class _EcoRewardsCard extends StatelessWidget {
-  const _EcoRewardsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFFFFF8E1), const Color(0xFFFFECB3)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFD54F).withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC107).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.celebration,
-              color: Color(0xFFF4A261),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Eco Rewards',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF79553D),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Next reward distribution in',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8D6E63)),
-                ),
-                Text(
-                  '24 Days',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE65100),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 18,
-            color: Color(0xFFBCAAA4),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Recent Activity Section
-class _RecentActivitySection extends StatelessWidget {
-  const _RecentActivitySection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              'Recent Activity',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C5E2E),
-              ),
-            ),
-          ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFEFEFEF)),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.add, color: Color(0xFF2E7D32), size: 20),
-            ),
-            title: const Text(
-              'Contributed 100 GCC Units',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: const Text('28 Apr 2026'),
-            trailing: const Text(
-              '- ₹1,197.61',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFD32F2F),
-              ),
-            ),
-          ),
-          const Divider(
-            height: 1,
-            thickness: 1,
-            indent: 72,
-            color: Color(0xFFF5F5F5),
-          ),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.swap_horiz,
-                color: Color(0xFFF4A261),
-                size: 20,
-              ),
-            ),
-            title: const Text(
-              'Liquidated 50 GCC Units',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: const Text('25 Apr 2026'),
-            trailing: const Text(
-              '- ₹585.00',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFD32F2F),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
       ),
     );
   }

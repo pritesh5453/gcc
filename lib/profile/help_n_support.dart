@@ -257,7 +257,10 @@ class HelpSupportScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child: const Text('Report', style: TextStyle(fontSize: 12)),
+            child: const Text(
+              'Report',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
           ),
         ],
       ),

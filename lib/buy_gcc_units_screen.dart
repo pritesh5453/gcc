@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/payment_screen.dart';
 
-
 class BuyGCCUnitsScreen extends StatefulWidget {
   const BuyGCCUnitsScreen({super.key});
 
@@ -36,7 +35,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             _buildTrustBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 child: Column(
                   children: [
                     _buildHeroBanner(),
@@ -76,13 +78,21 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.chevron_left, color: Colors.black87, size: 22),
+            child: const Icon(
+              Icons.chevron_left,
+              color: Colors.black87,
+              size: 22,
+            ),
           ),
           const Expanded(
             child: Center(
               child: Text(
                 'Buy GCC Units',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -93,7 +103,11 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               border: Border.all(color: Colors.grey.shade300),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.help_outline, color: Colors.black87, size: 20),
+            child: const Icon(
+              Icons.help_outline,
+              color: Colors.black87,
+              size: 20,
+            ),
           ),
         ],
       ),
@@ -110,20 +124,29 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         children: [
           const Icon(Icons.verified_user, color: Color(0xFF1B6B2F), size: 14),
           const SizedBox(width: 4),
-          const Text('Secure', style: TextStyle(fontSize: 12, color: Colors.black87)),
+          const Text(
+            'Secure',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
           _divider(),
-          const Text('Trusted', style: TextStyle(fontSize: 12, color: Colors.black87)),
+          const Text(
+            'Trusted',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
           _divider(),
-          const Text('Transparent', style: TextStyle(fontSize: 12, color: Colors.black87)),
+          const Text(
+            'Transparent',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
         ],
       ),
     );
   }
 
   Widget _divider() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Text('|', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8),
+    child: Text('|', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+  );
 
   // ── Hero Banner ───────────────────────────────────────────────────────────
   Widget _buildHeroBanner() {
@@ -138,7 +161,9 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         children: [
           // Green gradient bg right side
           Positioned(
-            right: 0, top: 0, bottom: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
             width: 200,
             child: Container(
               decoration: const BoxDecoration(
@@ -151,15 +176,35 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             ),
           ),
           // Birds
-          const Positioned(top: 18, right: 60,
-            child: Text('✓', style: TextStyle(color: Color(0xFF4CAF50), fontSize: 10))),
-          const Positioned(top: 30, right: 80,
-            child: Text('✓', style: TextStyle(color: Color(0xFF4CAF50), fontSize: 8))),
-          const Positioned(top: 14, right: 110,
-            child: Text('✓', style: TextStyle(color: Color(0xFF4CAF50), fontSize: 10))),
+          const Positioned(
+            top: 18,
+            right: 60,
+            child: Text(
+              '✓',
+              style: TextStyle(color: Color(0xFF4CAF50), fontSize: 10),
+            ),
+          ),
+          const Positioned(
+            top: 30,
+            right: 80,
+            child: Text(
+              '✓',
+              style: TextStyle(color: Color(0xFF4CAF50), fontSize: 8),
+            ),
+          ),
+          const Positioned(
+            top: 14,
+            right: 110,
+            child: Text(
+              '✓',
+              style: TextStyle(color: Color(0xFF4CAF50), fontSize: 10),
+            ),
+          ),
           // Big plant + hand on right
           const Positioned(
-            right: 10, top: 10, bottom: 10,
+            right: 10,
+            top: 10,
+            bottom: 10,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -170,18 +215,38 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
           // Text left
           const Positioned(
-            left: 18, top: 28,
+            left: 18,
+            top: 28,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Every Unit', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
-                Text('Creates Impact',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B6B2F))),
+                Text(
+                  'Every Unit',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  'Creates Impact',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B6B2F),
+                  ),
+                ),
                 SizedBox(height: 14),
                 Row(
                   children: [
-                    Text('You buy. We plant.\nThe planet grows. ',
-                        style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.5)),
+                    Text(
+                      'You buy. We plant.\nThe planet grows. ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
                     Text('🌿', style: TextStyle(fontSize: 13)),
                   ],
                 ),
@@ -206,44 +271,78 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.monetization_on_outlined, color: Color(0xFF1B6B2F), size: 18),
+              const Icon(
+                Icons.monetization_on_outlined,
+                color: Color(0xFF1B6B2F),
+                size: 18,
+              ),
               const SizedBox(width: 6),
-              const Text('Current Unit Price',
-                  style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500)),
+              const Text(
+                'Current Unit Price',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('₹10.00',
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black87)),
+              const Text(
+                '₹10.00',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
               const SizedBox(width: 4),
               const Padding(
                 padding: EdgeInsets.only(bottom: 4),
-                child: Text('/ Unit', style: TextStyle(fontSize: 14, color: Colors.black54)),
+                child: Text(
+                  '/ Unit',
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF0FAF2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.lock_outline, color: Color(0xFF1B6B2F), size: 16),
+                    Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFF1B6B2F),
+                      size: 16,
+                    ),
                     SizedBox(width: 4),
-                    Text('100% Secure\nPayments',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF1B6B2F), fontWeight: FontWeight.w600)),
+                    Text(
+                      '100% Secure\nPayments',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF1B6B2F),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Price is fixed and not an investment.',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
+          const Text(
+            'Price is fixed and not an investment.',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -261,26 +360,45 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.shopping_basket_outlined, color: Color(0xFF1B6B2F), size: 18),
+              const Icon(
+                Icons.shopping_basket_outlined,
+                color: Color(0xFF1B6B2F),
+                size: 18,
+              ),
               const SizedBox(width: 6),
-              const Text('Choose Your Pack',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              const Text(
+                'Choose Your Pack',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
               const Spacer(),
-              const Icon(Icons.edit_outlined, color: Color(0xFF1B6B2F), size: 16),
+              const Icon(
+                Icons.edit_outlined,
+                color: Color(0xFF1B6B2F),
+                size: 16,
+              ),
               const SizedBox(width: 4),
-              const Text('Custom Amount',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF1B6B2F), fontWeight: FontWeight.w600)),
+              const Text(
+                'Custom Amount',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF1B6B2F),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: List.generate(packs.length, (i) => _PackCard(
-                pack: packs[i],
-                isSelected: selectedIndex == i,
-                onTap: () => setState(() => selectedIndex = i),
-              )),
+              children: List.generate(
+                packs.length,
+                (i) => _PackCard(
+                  pack: packs[i],
+                  isSelected: selectedIndex == i,
+                  onTap: () => setState(() => selectedIndex = i),
+                ),
+              ),
             ),
           ),
         ],
@@ -305,16 +423,28 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               color: const Color(0xFFF0FAF2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.account_balance_wallet_outlined,
-                color: Color(0xFF1B6B2F), size: 22),
+            child: const Icon(
+              Icons.account_balance_wallet_outlined,
+              color: Color(0xFF1B6B2F),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('You Pay', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('₹${selected['price']}',
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87)),
+              const Text(
+                'You Pay',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              Text(
+                '₹${selected['price']}',
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
             ],
           ),
           const SizedBox(width: 16),
@@ -331,10 +461,18 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('You Get', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('${selected['units']} Units',
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B6B2F))),
+              const Text(
+                'You Get',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              Text(
+                '${selected['units']} Units',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B6B2F),
+                ),
+              ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -342,8 +480,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   color: const Color(0xFFF0FAF2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('₹10 / Unit (Current Price)',
-                    style: TextStyle(fontSize: 10, color: Color(0xFF1B6B2F))),
+                child: const Text(
+                  '₹10 / Unit (Current Price)',
+                  style: TextStyle(fontSize: 10, color: Color(0xFF1B6B2F)),
+                ),
               ),
             ],
           ),
@@ -366,7 +506,9 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         children: [
           // Right side green scene
           Positioned(
-            right: 0, top: 0, bottom: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
             width: 160,
             child: Container(
               decoration: const BoxDecoration(
@@ -378,19 +520,29 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
               child: const Stack(
                 children: [
-                  Positioned(bottom: 0, right: 10,
-                    child: Text('🌍', style: TextStyle(fontSize: 65))),
-                  Positioned(bottom: 0, left: 0,
-                    child: Text('🌲', style: TextStyle(fontSize: 30))),
-                  Positioned(top: 10, right: 30,
-                    child: Text('🐦', style: TextStyle(fontSize: 12))),
+                  Positioned(
+                    bottom: 0,
+                    right: 10,
+                    child: Text('🌍', style: TextStyle(fontSize: 65)),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: Text('🌲', style: TextStyle(fontSize: 30)),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 30,
+                    child: Text('🐦', style: TextStyle(fontSize: 12)),
+                  ),
                 ],
               ),
             ),
           ),
           // Thank you badge
           Positioned(
-            right: 8, bottom: 10,
+            right: 8,
+            bottom: 10,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -404,8 +556,18 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Thank You!', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                      Text('For Choosing Green', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                      Text(
+                        'Thank You!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'For Choosing Green',
+                        style: TextStyle(color: Colors.white70, fontSize: 9),
+                      ),
                     ],
                   ),
                 ],
@@ -414,7 +576,8 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
           // Left text
           Positioned(
-            left: 16, top: 16,
+            left: 16,
+            top: 16,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -422,19 +585,33 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   children: [
                     const Icon(Icons.eco, color: Color(0xFF1B6B2F), size: 16),
                     const SizedBox(width: 4),
-                    const Text('Your Impact',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF1B6B2F), fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Your Impact',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF1B6B2F),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text(
                   '${selected['units']} Units = Support ${selected['units']} Trees',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
                   'You are one step closer to a\ngreener tomorrow.',
-                  style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -461,15 +638,30 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: features.map((f) => Column(
-          children: [
-            Icon(f['icon'] as IconData, color: const Color(0xFF1B6B2F), size: 24),
-            const SizedBox(height: 4),
-            Text(f['label'] as String,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 10, color: Colors.black54, height: 1.3)),
-          ],
-        )).toList(),
+        children:
+            features
+                .map(
+                  (f) => Column(
+                    children: [
+                      Icon(
+                        f['icon'] as IconData,
+                        color: const Color(0xFF1B6B2F),
+                        size: 24,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        f['label'] as String,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.black54,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -486,22 +678,26 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             height: 54,
             child: ElevatedButton(
               onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaymentSuccessScreen()));
-
-                
-               
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PaymentSuccessScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B6B2F),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 elevation: 0,
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Proceed to Payment',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Proceed to Payment',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(width: 10),
                   Icon(Icons.arrow_forward, size: 20),
                 ],
@@ -514,8 +710,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             children: [
               Icon(Icons.verified_user_outlined, size: 13, color: Colors.grey),
               SizedBox(width: 4),
-              Text('Your payment information is safe and encrypted.',
-                  style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text(
+                'Your payment information is safe and encrypted.',
+                style: TextStyle(fontSize: 10, color: Colors.grey),
+              ),
             ],
           ),
         ],
@@ -561,34 +759,36 @@ class _PackCard extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-
             /// 🔥 MOST POPULAR
             if (isPopular)
-             Positioned(
-  top: -10,
-  left: 0,
-  right: 0,
-  child: Center(
-    child: Transform.translate(
-      offset: const Offset(0, -2), // 👈 micro adjust
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFF7ED957),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Text(
-          "Most Popular",
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    ),
-  ),
-),
+              Positioned(
+                top: -10,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Transform.translate(
+                    offset: const Offset(0, -2), // 👈 micro adjust
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7ED957),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Most Popular",
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
             /// ✅ SELECTED ICON
             if (isSelected)
@@ -613,10 +813,7 @@ class _PackCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 /// 🌱 TREE ICON
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 26),
-                ),
+                Text(emoji, style: const TextStyle(fontSize: 26)),
 
                 const SizedBox(height: 6),
 
@@ -633,10 +830,7 @@ class _PackCard extends StatelessWidget {
 
                 const Text(
                   "Units",
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
 
                 const SizedBox(height: 8),
@@ -646,9 +840,10 @@ class _PackCard extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 8),
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFDFF5E5)
-                        : const Color(0xFFF3F3F3),
+                    color:
+                        isSelected
+                            ? const Color(0xFFDFF5E5)
+                            : const Color(0xFFF3F3F3),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -657,9 +852,10 @@ class _PackCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? const Color(0xFF1B6B2F)
-                            : Colors.black87,
+                        color:
+                            isSelected
+                                ? const Color(0xFF1B6B2F)
+                                : Colors.black87,
                       ),
                     ),
                   ),

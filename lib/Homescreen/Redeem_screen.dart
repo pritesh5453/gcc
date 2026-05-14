@@ -75,7 +75,9 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
   List<Map<String, dynamic>> get _filteredRewards {
     if (_selectedFilter == 0) return _myRewards;
     final statusMap = {1: 'available', 2: 'redeemed', 3: 'expired'};
-    return _myRewards.where((r) => r['status'] == statusMap[_selectedFilter]).toList();
+    return _myRewards
+        .where((r) => r['status'] == statusMap[_selectedFilter])
+        .toList();
   }
 
   @override
@@ -118,16 +120,21 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
                     const SizedBox(height: 14),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _filteredRewards.isEmpty
-                          ? _buildEmptyState()
-                          : Column(
-                              children: _filteredRewards
-                                  .map((r) => _RewardItem(
-                                        reward: r,
-                                        onRedeem: () => _showRedeemDialog(r),
-                                      ))
-                                  .toList(),
-                            ),
+                      child:
+                          _filteredRewards.isEmpty
+                              ? _buildEmptyState()
+                              : Column(
+                                children:
+                                    _filteredRewards
+                                        .map(
+                                          (r) => _RewardItem(
+                                            reward: r,
+                                            onRedeem:
+                                                () => _showRedeemDialog(r),
+                                          ),
+                                        )
+                                        .toList(),
+                              ),
                     ),
                     const SizedBox(height: 14),
                     Padding(
@@ -160,16 +167,27 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
               border: Border.all(color: Colors.grey[300]!),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.chevron_left, color: Colors.black87, size: 22),
+            child: const Icon(
+              Icons.chevron_left,
+              color: Colors.black87,
+              size: 22,
+            ),
           ),
           const Expanded(
             child: Column(
               children: [
-                Text('Redeem Rewards',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                Text('Use your points for exciting offers',
-                    style: TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  'Redeem Rewards',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  'Use your points for exciting offers',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ],
             ),
           ),
@@ -180,7 +198,11 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
               border: Border.all(color: Colors.grey[300]!),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.help_outline, color: Colors.black87, size: 18),
+            child: const Icon(
+              Icons.help_outline,
+              color: Colors.black87,
+              size: 18,
+            ),
           ),
         ],
       ),
@@ -207,16 +229,23 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
-                    Text('Available Points',
-                        style: TextStyle(fontSize: 12, color: Colors.white70)),
+                    Text(
+                      'Available Points',
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
                     SizedBox(height: 4),
-                    Text('1,850',
-                        style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
-                    Text('Eco-Reward Points',
-                        style: TextStyle(fontSize: 11, color: Colors.white70)),
+                    Text(
+                      '1,850',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Eco-Reward Points',
+                      style: TextStyle(fontSize: 11, color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -268,11 +297,14 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
             children: [
               Icon(Icons.info_outline, color: primaryGreen, size: 16),
               SizedBox(width: 6),
-              Text('How to Redeem',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: primaryGreen)),
+              Text(
+                'How to Redeem',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: primaryGreen,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -291,26 +323,39 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
                           shape: BoxShape.circle,
                         ),
                         child: Center(
-                          child: Text(steps[i]['num']!,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold)),
+                          child: Text(
+                            steps[i]['num']!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       SizedBox(
                         width: 60,
-                        child: Text(steps[i]['text']!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 10, height: 1.3, color: Colors.black54)),
+                        child: Text(
+                          steps[i]['text']!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            height: 1.3,
+                            color: Colors.black54,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   if (i < steps.length - 1)
                     const Padding(
                       padding: EdgeInsets.only(bottom: 18),
-                      child: Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                     ),
                 ],
               );
@@ -335,7 +380,10 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
               onTap: () => setState(() => _selectedFilter = i),
               child: Container(
                 margin: const EdgeInsets.only(right: 10, top: 8, bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: selected ? primaryGreen : Colors.grey[100],
                   borderRadius: BorderRadius.circular(20),
@@ -367,11 +415,19 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
         children: [
           Text('🎁', style: TextStyle(fontSize: 52)),
           SizedBox(height: 12),
-          Text('No rewards here yet!',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black54)),
+          Text(
+            'No rewards here yet!',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
+          ),
           SizedBox(height: 4),
-          Text('Earn more points and redeem exciting offers.',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(
+            'Earn more points and redeem exciting offers.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -394,12 +450,19 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Need more points?',
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                Text(
+                  'Need more points?',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
                 SizedBox(height: 2),
-                Text('Complete daily tasks & earn Eco-Rewards fast!',
-                    style: TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  'Complete daily tasks & earn Eco-Rewards fast!',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ],
             ),
           ),
@@ -411,10 +474,14 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: const Text('Earn Now',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Earn Now',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -443,7 +510,11 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 10, offset: const Offset(0, -2))
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: SafeArea(
@@ -459,15 +530,21 @@ class _RedeemRewardsScreenState extends State<RedeemRewardsScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(items[i]['icon'] as IconData,
-                        color: selected ? primaryGreen : Colors.grey, size: 24),
+                    Icon(
+                      items[i]['icon'] as IconData,
+                      color: selected ? primaryGreen : Colors.grey,
+                      size: 24,
+                    ),
                     const SizedBox(height: 2),
-                    Text(items[i]['label'] as String,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: selected ? primaryGreen : Colors.grey,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                        )),
+                    Text(
+                      items[i]['label'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: selected ? primaryGreen : Colors.grey,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -484,7 +561,11 @@ class _StatChip extends StatelessWidget {
   final String label;
   final String value;
   final String icon;
-  const _StatChip({required this.label, required this.value, required this.icon});
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -499,12 +580,23 @@ class _StatChip extends StatelessWidget {
           children: [
             Text(icon, style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 2),
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70, fontSize: 8, height: 1.2)),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 8,
+                height: 1.2,
+              ),
+            ),
           ],
         ),
       ),
@@ -569,11 +661,16 @@ class _RewardItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
-        border: isAvailable
-            ? Border.all(color: const Color(0xFFBBE5C8))
-            : Border.all(color: Colors.grey[200]!),
+        border:
+            isAvailable
+                ? Border.all(color: const Color(0xFFBBE5C8))
+                : Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
         children: [
@@ -589,7 +686,9 @@ class _RewardItem extends StatelessWidget {
                     width: 58,
                     height: 58,
                     color: reward['bgColor'] as Color,
-                    child: Center(child: _MiniLogo(logo: reward['logo'] as String)),
+                    child: Center(
+                      child: _MiniLogo(logo: reward['logo'] as String),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -597,12 +696,22 @@ class _RewardItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(reward['title'] as String,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      Text(
+                        reward['title'] as String,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(reward['voucher'] as String,
-                          style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      Text(
+                        reward['voucher'] as String,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
                       const SizedBox(height: 5),
                       Row(
                         children: [
@@ -610,15 +719,24 @@ class _RewardItem extends StatelessWidget {
                             width: 14,
                             height: 14,
                             decoration: const BoxDecoration(
-                                color: primaryGreen, shape: BoxShape.circle),
-                            child: const Icon(Icons.check, color: Colors.white, size: 9),
+                              color: primaryGreen,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 9,
+                            ),
                           ),
                           const SizedBox(width: 4),
-                          Text('${reward['points']} Points',
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: primaryGreen,
-                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            '${reward['points']} Points',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: primaryGreen,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -626,7 +744,10 @@ class _RewardItem extends StatelessWidget {
                 ),
                 // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -635,11 +756,14 @@ class _RewardItem extends StatelessWidget {
                     children: [
                       Icon(_statusIcon, size: 12, color: _statusColor),
                       const SizedBox(width: 3),
-                      Text(_statusLabel,
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: _statusColor,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        _statusLabel,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: _statusColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -663,8 +787,10 @@ class _RewardItem extends StatelessWidget {
                   color: Colors.grey,
                 ),
                 const SizedBox(width: 4),
-                Text(reward['expiry'] as String,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  reward['expiry'] as String,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
                 const Spacer(),
                 if (isAvailable)
                   SizedBox(
@@ -677,10 +803,16 @@ class _RewardItem extends StatelessWidget {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text('Redeem Now',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Redeem Now',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   )
                 else
@@ -691,7 +823,8 @@ class _RewardItem extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       minimumSize: const Size(0, 34),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: Text(
                       reward['status'] == 'redeemed' ? 'Used' : 'Expired',
@@ -716,19 +849,34 @@ class _MiniLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (logo) {
       case 'amazon':
-        return const Text('a',
-            style: TextStyle(
-                fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white));
+        return const Text(
+          'a',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+          ),
+        );
       case 'flipkart':
-        return const Text('F',
-            style: TextStyle(
-                fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white));
+        return const Text(
+          'F',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+          ),
+        );
       case 'starbucks':
         return const Text('☕', style: TextStyle(fontSize: 28));
       case 'bigbasket':
-        return const Text('bb',
-            style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF84C225)));
+        return const Text(
+          'bb',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF84C225),
+          ),
+        );
       case 'bookmyshow':
         return const Text('🎬', style: TextStyle(fontSize: 26));
       case 'plant':
@@ -806,11 +954,19 @@ class _RedeemBottomSheetState extends State<_RedeemBottomSheet> {
           ),
           const SizedBox(height: 14),
 
-          const Text('🎉 Reward Unlocked!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            '🎉 Reward Unlocked!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(widget.reward['title'] as String,
-              style: const TextStyle(fontSize: 13, color: Colors.grey)),
+          Text(
+            widget.reward['title'] as String,
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
           const SizedBox(height: 20),
 
           // Voucher code box
@@ -823,18 +979,23 @@ class _RedeemBottomSheetState extends State<_RedeemBottomSheet> {
             ),
             child: Column(
               children: [
-                const Text('Your Voucher Code',
-                    style: TextStyle(fontSize: 11, color: Colors.grey)),
+                const Text(
+                  'Your Voucher Code',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(widget.reward['code'] as String,
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryGreen,
-                            letterSpacing: 2)),
+                    Text(
+                      widget.reward['code'] as String,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryGreen,
+                        letterSpacing: 2,
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     GestureDetector(
                       onTap: _copyCode,
@@ -856,16 +1017,20 @@ class _RedeemBottomSheetState extends State<_RedeemBottomSheet> {
                 if (_copied)
                   const Padding(
                     padding: EdgeInsets.only(top: 6),
-                    child: Text('Copied to clipboard!',
-                        style: TextStyle(fontSize: 11, color: primaryGreen)),
+                    child: Text(
+                      'Copied to clipboard!',
+                      style: TextStyle(fontSize: 11, color: primaryGreen),
+                    ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 12),
 
-          Text(widget.reward['expiry'] as String,
-              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(
+            widget.reward['expiry'] as String,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
           const SizedBox(height: 20),
 
           // Done button
@@ -878,10 +1043,14 @@ class _RedeemBottomSheetState extends State<_RedeemBottomSheet> {
                 backgroundColor: primaryGreen,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              child: const Text('Done',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Done',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
