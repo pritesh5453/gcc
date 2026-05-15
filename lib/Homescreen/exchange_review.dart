@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Homescreen/green_exchange.dart';
 
 class ExchangeReviewScreen extends StatelessWidget {
   const ExchangeReviewScreen({super.key});
@@ -69,16 +70,16 @@ class ExchangeReviewScreen extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              height: 130,
+              height: 100,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/Images/green_banner.png'),
-                  fit: BoxFit.cover,
+                  image: AssetImage('assets/Images/almost_there.png'),
+                  fit: BoxFit.fill,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // 2. Exchange Summary Card
             Container(
@@ -280,7 +281,14 @@ class ExchangeReviewScreen extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GreenExchangeApp(),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF388E3C),
                   shape: RoundedRectangleBorder(

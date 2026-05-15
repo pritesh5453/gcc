@@ -60,79 +60,82 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            /// Center Logo + Text
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.eco, color: lightGreen, size: 20),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'GCC',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: primaryGreen,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Green Contribution Certificate',
+                  style: TextStyle(fontSize: 8, color: Colors.grey),
+                ),
+              ],
             ),
-            child: const Icon(Icons.menu, color: Colors.black87, size: 22),
-          ),
-          Column(
-            children: [
-              Row(
+
+            /// Notification Icon at End
+            Positioned(
+              right: 0,
+              child: Stack(
                 children: [
-                  const Icon(Icons.eco, color: lightGreen, size: 20),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'GCC',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: primaryGreen,
-                      letterSpacing: 1,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      size: 22,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: const BoxDecoration(
+                        color: primaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '3',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const Text(
-                'Green Contribution Certificate',
-                style: TextStyle(fontSize: 8, color: Colors.grey),
-              ),
-            ],
-          ),
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  size: 22,
-                  color: Colors.black87,
-                ),
-              ),
-              Positioned(
-                right: 4,
-                top: 4,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: const BoxDecoration(
-                    color: primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '3',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,222 +146,208 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1B6B2F), Color(0xFF2E8B57)],
-        ),
         boxShadow: [
           BoxShadow(
-            color: primaryGreen.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: primaryGreen.withOpacity(0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // Hero area with illustration
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: Container(
-              height: 200,
-              child: Stack(
-                children: [
-                  // Sky gradient background
-                  Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF87CEEB),
-                            Color(0xFFB8E4A3),
-                            Color(0xFF4CAF50),
-                          ],
-                          stops: [0.0, 0.5, 1.0],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
+          child: Column(
+            children: [
+              /// HERO IMAGE SECTION
+              SizedBox(
+                height: 220,
+                child: Stack(
+                  children: [
+                    /// Background Image
+                    Positioned.fill(
+                      child: Image.asset(
+                        'assets/Images/hero_screen.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+
+                    /// Dark Overlay for better text visibility
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Colors.black.withOpacity(0.45),
+                              Colors.black.withOpacity(0.15),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  // Mountains/hills in back
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: CustomPaint(
-                      size: const Size(double.infinity, 100),
-                      painter: _HillsPainter(),
-                    ),
-                  ),
-                  // Birds
-                  const Positioned(top: 25, left: 140, child: _BirdIcon()),
-                  const Positioned(top: 35, left: 160, child: _BirdIcon()),
-                  const Positioned(top: 20, left: 120, child: _BirdIcon()),
-                  // Big tree on the right
-                  Positioned(
-                    bottom: 0,
-                    right: 20,
-                    child: const Text('🌳', style: TextStyle(fontSize: 100)),
-                  ),
-                  // Small trees on left
-                  Positioned(
-                    bottom: 0,
-                    left: 10,
-                    child: _TreeWidget(
-                      height: 75,
-                      color: const Color(0xFF1B6B2F),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 55,
-                    child: _TreeWidget(
-                      height: 60,
-                      color: const Color(0xFF2E7D32),
-                    ),
-                  ),
-                  // Text overlay on left
-                  Positioned(
-                    top: 25,
-                    left: 18,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Hello, Aadarsh!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Grow Your\nDigital Forest',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Your small steps create\na big impact.',
-                          style: TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // "You're doing Great!" badge
-                  Positioned(
-                    top: 20,
-                    right: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryGreen,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+
+                    /// Hello Text
+                    Positioned(
+                      top: 18,
+                      left: 18,
+                      child: Row(
+                        children: const [
+                          Icon(Icons.eco, color: Color(0xFFB2FF59), size: 14),
+                          SizedBox(width: 4),
                           Text(
-                            "You're doing\nGreat!",
+                            'Hello, Aadarsh!',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Text('🌿', style: TextStyle(fontSize: 14)),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
-          // Stats row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1B5E20),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _ForestStatNew(
-                      icon: Icons.park,
-                      label: 'Trees Supported',
-                      value: '128',
-                      unit: 'Trees',
+                    /// Main Heading
+                    const Positioned(
+                      top: 45,
+                      left: 18,
+                      child: Text(
+                        'Grow Your\nDigital Forest',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
                     ),
-                    Container(width: 1, height: 50, color: Colors.white24),
-                    _ForestStatNew(
-                      icon: Icons.cloud_outlined,
-                      label: 'CO₂ Offset',
-                      value: '240',
-                      unit: 'kg',
+
+                    /// Subtitle
+                    const Positioned(
+                      top: 125,
+                      left: 18,
+                      child: Text(
+                        'Your small steps create\na big impact.',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                    Container(width: 1, height: 50, color: Colors.white24),
-                    _ForestStatNew(
-                      icon: Icons.flag_outlined,
-                      label: 'Next Milestone',
-                      value: '150',
-                      unit: 'Trees',
+
+                    /// You're Doing Great Badge
+                    Positioned(
+                      top: 75,
+                      right: 18,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Column(
+                          children: [
+                            Text(
+                              "You're doing\nGreat! 🌿",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: 0.85,
-                    backgroundColor: Colors.white24,
-                    color: lightGreen,
-                    minHeight: 8,
-                  ),
+              ),
+
+              /// BOTTOM STATS SECTION
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
                 ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(fontSize: 11, color: Colors.white70),
-                    children: [
-                      TextSpan(text: 'You are '),
-                      TextSpan(
-                        text: '85%',
-                        style: TextStyle(
-                          color: Color(0xFF76FF03),
-                          fontWeight: FontWeight.bold,
+                decoration: const BoxDecoration(color: Color(0xFF1B5E20)),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _ForestStatNew(
+                          icon: Icons.park,
+                          label: 'Trees Supported',
+                          value: '128',
+                          unit: 'Trees',
                         ),
+                        Container(width: 1, height: 50, color: Colors.white24),
+                        _ForestStatNew(
+                          icon: Icons.cloud_outlined,
+                          label: 'CO₂ Offset',
+                          value: '240',
+                          unit: 'kg',
+                        ),
+                        Container(width: 1, height: 50, color: Colors.white24),
+                        _ForestStatNew(
+                          icon: Icons.flag_outlined,
+                          label: 'Next Milestone',
+                          value: '150',
+                          unit: 'Trees',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: 0.85,
+                        backgroundColor: Colors.white24,
+                        color: lightGreen,
+                        minHeight: 8,
                       ),
-                      TextSpan(text: ' closer to your next milestone!'),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(fontSize: 11, color: Colors.white70),
+                        children: [
+                          TextSpan(text: 'You are '),
+                          TextSpan(
+                            text: '85%',
+                            style: TextStyle(
+                              color: Color(0xFF76FF03),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextSpan(text: ' closer to your next milestone!'),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -449,20 +438,32 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 9,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: primaryGreen.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        '₹10.00 / Unit',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: primaryGreen,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Current Price : ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Text(
+                            '₹10.00 / Unit',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

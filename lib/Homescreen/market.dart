@@ -47,10 +47,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           indicatorColor: const Color(0xFF2E7D32),
           labelColor: const Color(0xFF2E7D32),
           unselectedLabelColor: Colors.grey.shade600,
-          tabs: const [
-            Tab(text: 'Marketplace'),
-            Tab(text: 'My Orders'),
-          ],
+          tabs: const [Tab(text: 'Marketplace'), Tab(text: 'My Orders')],
         ),
       ),
       body: TabBarView(
