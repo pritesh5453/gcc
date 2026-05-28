@@ -147,7 +147,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/tree.png',
+                          'assets/Images/tree.png',
                           height: 24,
                           width: 24,
                           fit: BoxFit.contain,

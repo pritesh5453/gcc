@@ -82,7 +82,7 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
                     'assets/Images/exchange_complete.png',
                     width: double.infinity,
                     height: 150,
-                    fit: BoxFit.fill,
+                    fit: BoxFit.cover,
                     filterQuality: FilterQuality.high,
                   ),
                 ],
