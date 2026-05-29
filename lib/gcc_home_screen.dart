@@ -163,14 +163,14 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
+            decoration: BoxDecoration(  
               color: primaryGreen.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.park, color: primaryGreen, size: 22),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          const Expanded( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

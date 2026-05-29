@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Auth/ragister_screen.dart';
 import 'package:gcc/Navbar/navbar.dart';
 
 class MobileLoginScreen extends StatelessWidget {
@@ -154,21 +155,34 @@ class MobileLoginScreen extends StatelessWidget {
                 //   ),
                 // ),
                 // const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.apple, size: 20),
-                    label: const Text('Apple'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1B3B1F),
-                      side: BorderSide(color: Colors.grey.shade300),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                    ),
-                  ),
-                ),
+              Expanded(
+  child: ElevatedButton(
+  onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const RegisterScreen(),
+    ),
+  );
+},
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF1B3B1F),
+      foregroundColor: Colors.white,
+      elevation: 2,
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(40),
+      ),
+    ),
+    child: const Text(
+      'Register',
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+),
               ],
             ),
             const Spacer(flex: 1),
