@@ -3,12 +3,20 @@ import 'package:gcc/Models_nServices/verify_otp/verify_services.dart';
 import 'package:gcc/Navbar/navbar.dart'; 
 import 'package:gcc/Models_nServices/login/login_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
 
 class OtpScreen extends StatefulWidget {
   final String mobileNumber; // Pass the mobile number from login screen
   final String sessionId;
+  final bool isLoginFlow; // true for login, false for registration
 
-  const OtpScreen({super.key, required this.mobileNumber, required this.sessionId});
+  const OtpScreen({
+    super.key,
+    required this.mobileNumber,
+    required this.sessionId,
+    this.isLoginFlow = true,
+  });
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -71,34 +79,39 @@ class _OtpScreenState extends State<OtpScreen> {
         _isVerifying = true;
       });
 
-      final response = await verifyOtp(
-        sessionId: widget.sessionId,
-        otp: otp,
-      );
+      final response = widget.isLoginFlow
+          ? await verifyLoginOtp(
+              sessionId: widget.sessionId,
+              otp: otp,
+            )
+          : await verifyOtp(
+              sessionId: widget.sessionId,
+              otp: otp,
+            );
 
       setState(() {
         _isVerifying = false;
       });
 
       if (response.status == true) {
-        final prefs = await SharedPreferences.getInstance();
-
-        // Save user data
+        // Save using AppPreference to keep app-wide consistency
         if (response.token != null && response.token!.isNotEmpty) {
-          await prefs.setString("token", response.token!);
+          await AppPreference().setString(PreferencesKey.authToken, response.token!);
         }
 
         if (response.user?.name != null && response.user!.name!.isNotEmpty) {
-          await prefs.setString("user_name", response.user!.name!);
+          await AppPreference().setString(PreferencesKey.userName, response.user!.name!);
         }
 
         if (response.user?.phone != null && response.user!.phone!.isNotEmpty) {
-          await prefs.setString("phone", response.user!.phone!);
+          await AppPreference().setString(PreferencesKey.userMobile, response.user!.phone!);
         }
 
         if (response.user?.id != null && response.user!.id != 0) {
-          await prefs.setInt("user_id", response.user!.id!);
+          await AppPreference().setInt(PreferencesKey.userId, response.user!.id!);
         }
+
+        await AppPreference().setBool(PreferencesKey.isLoggedIn, true);
 
         // Show success message
         if (mounted) {

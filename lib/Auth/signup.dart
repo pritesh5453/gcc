@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Navbar/navbar.dart'; // Adjust path as needed
+import 'package:gcc/Models_nServices/login/login_services.dart';
+import 'package:gcc/Auth/OTP_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -16,6 +18,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _isLoading = false;
+  String? _errorMessage;
+
   bool _isPasswordObscured = true;
   bool _isConfirmPasswordObscured = true;
 
@@ -29,21 +34,48 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() {
-    if (_formKey.currentState!.validate()) {
-      // Perform signup logic here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Color(0xFF2E7D32),
-          behavior: SnackBarBehavior.floating,
-        ),
+  Future<void> _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = AuthApiService();
+      final resp = await auth.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _mobileController.text.trim(),
       );
-      // Navigate to main screen after successful signup
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (resp.status == true && resp.phone != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(
+              mobileNumber: resp.phone!,
+              sessionId: resp.sessionId ?? "",
+              isLoginFlow: false,
+            ),
+          ),
+        );
+      } else {
+        setState(() {
+          _errorMessage = resp.message ?? 'Registration failed. Please try again.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Network error. Please check your connection and try again.';
+      });
+      debugPrint('Register Error: $e');
     }
   }
 
@@ -67,7 +99,7 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 // Top spacing
                 SizedBox(height: screenHeight * 0.04),
-                
+
                 // Welcome header (same as login)
                 Center(
                   child: Column(
@@ -122,9 +154,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: screenHeight * 0.05),
-                
+
                 // Full Name Field
                 _buildTextField(
                   controller: _nameController,
@@ -138,7 +170,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Email Field
                 _buildTextField(
                   controller: _emailController,
@@ -156,7 +188,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Mobile Number with Country Code (same as login)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +243,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Password Field
                 _buildTextField(
                   controller: _passwordController,
@@ -242,7 +274,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Confirm Password Field
                 _buildTextField(
                   controller: _confirmPasswordController,
@@ -274,12 +306,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Sign Up Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _handleSignup,
+                    onPressed: _isLoading ? null : _handleSignup,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
                       foregroundColor: Colors.white,
@@ -288,25 +320,40 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Account',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                
+                const SizedBox(height: 12),
+                if (_errorMessage != null) ...[
+                  Center(
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 // OR Divider (same as login)
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(
-                        color: Colors.grey.shade300,
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -319,15 +366,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        color: Colors.grey.shade300,
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Social Sign-up Buttons
                 Row(
                   children: [
@@ -393,7 +437,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Already have an account - Login link
                 Center(
                   child: TextButton(
@@ -420,9 +464,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Footer text (same as login)
                 Center(
                   child: Padding(
@@ -462,9 +506,10 @@ class _SignupScreenState extends State<SignupScreen> {
       validator: validator,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: Colors.grey.shade600)
-            : null,
+        prefixIcon:
+            prefixIcon != null
+                ? Icon(prefixIcon, color: Colors.grey.shade600)
+                : null,
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

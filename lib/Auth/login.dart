@@ -85,6 +85,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
               builder: (_) => OtpScreen(
                 mobileNumber: response.phone!,
                 sessionId: response.sessionId ?? "",
+                isLoginFlow: true,
               ),
             ),
           );

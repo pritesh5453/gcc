@@ -21,6 +21,15 @@ class VerifyOtpModel {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'message': message,
+      'token': token,
+      'user': user?.toJson(),
+    };
+  }
 }
 
 class UserData {
@@ -43,5 +52,14 @@ class UserData {
       email: json['email'],
       phone: json['phone'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+    };
   }
 }
