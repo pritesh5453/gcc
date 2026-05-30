@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/contribute_screen.dart';
-import 'package:gcc/Homescreen/profile.dart';
-import 'package:gcc/earn_rewards_screen.dart';
-import 'package:gcc/gcc_home_screen.dart';
-import 'package:gcc/rewards_store_screen.dart';
+import 'package:gcc/contribute/contribute_screen.dart';
+import 'package:gcc/profile/profile.dart';
+import 'package:gcc/earn/earn_rewards_screen.dart';
+import 'package:gcc/Homescreen/gcc_home_screen.dart';
+import 'package:gcc/reward/rewards_store_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget? child;

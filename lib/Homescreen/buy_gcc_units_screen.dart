@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/payment_screen.dart';
+import 'package:gcc/Homescreen/payment_screen.dart';
 
 class BuyGCCUnitsScreen extends StatefulWidget {
   const BuyGCCUnitsScreen({super.key});

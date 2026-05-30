@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Homescreen/Redeem_screen.dart';
 import 'package:gcc/Homescreen/resell_&_exchange.dart';
-import 'package:gcc/buy_gcc_units_screen.dart';
-import 'package:gcc/daily_streak_card.dart';
-import 'package:gcc/earn_rewards_screen.dart';
+import 'package:gcc/Homescreen/buy_gcc_units_screen.dart';
+import 'package:gcc/exception/daily_streak_card.dart';
+import 'package:gcc/earn/earn_rewards_screen.dart';
 import 'package:gcc/profile/help_n_support.dart';
 import 'package:gcc/profile/my_impacts.dart';
 import 'package:gcc/profile/referral_screen.dart';
