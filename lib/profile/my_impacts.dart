@@ -1,87 +1,152 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:gcc/Models_nServices/Impact_Screen/impact_model.dart';
+import 'package:gcc/Models_nServices/Impact_Screen/impact_svc.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
+import 'package:gcc/prefs/app_preference.dart';
 
-class MyImpactScreen extends StatelessWidget {
+class MyImpactScreen extends StatefulWidget {
   const MyImpactScreen({super.key});
 
   @override
+  State<MyImpactScreen> createState() => _MyImpactScreenState();
+}
+
+class _MyImpactScreenState extends State<MyImpactScreen> {
+  ImpactSummaryResponse? _impactData;
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchImpactSummary();
+  }
+
+  Future<void> _fetchImpactSummary() async {
+    final appPref = AppPreference();
+    await appPref.initialAppPreference();
+    final token = appPref.getString(PreferencesKey.authToken);
+
+    if (token.isEmpty) {
+      setState(() {
+        _errorMessage = 'Authentication token not found. Please log in again.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final service = ImpactSummaryService();
+      final data = await service.getImpactSummary(token);
+      setState(() {
+        _impactData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FBF8),
+        appBar: _buildAppBar(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FBF8),
+        appBar: _buildAppBar(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(_errorMessage, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = '';
+                    _fetchImpactSummary();
+                  });
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final impact = _impactData!.data;
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FBF8),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
-          centerTitle: true,
-          title: const Column(
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.eco, color: Colors.green, size: 20),
-                  SizedBox(width: 4),
-                  Text(
-                    'My Impact',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'See the positive change you\'re creating',
-                style: TextStyle(color: Colors.grey, fontSize: 11),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.ios_share, size: 18, color: Colors.black),
-              label: const Text(
-                'Share',
-                style: TextStyle(color: Colors.black, fontSize: 12),
-              ),
-            ),
-          ],
-          bottom: const TabBar(
-            isScrollable: false,
-            indicatorColor: Colors.green,
-            labelColor: Colors.green,
-            unselectedLabelColor: Colors.grey,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            tabs: [
-              Tab(text: 'Overview'),
-              Tab(text: 'Trees'),
-              Tab(text: 'CO₂ Offset'),
-              Tab(text: 'History'),
-            ],
-          ),
-        ),
+        appBar: _buildAppBar(),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               _buildTopBanner(),
               const SizedBox(height: 16),
-              _buildOverallImpactCard(),
+              _buildOverallImpactCard(impact),
               const SizedBox(height: 16),
-              _buildImpactBreakdown(),
+              _buildImpactBreakdown(impact.tree),
               const SizedBox(height: 16),
-              _buildEnvironmentalEquivalents(),
+              _buildEnvironmentalEquivalents(impact),
               const SizedBox(height: 16),
               _buildBottomActionCard(),
               const SizedBox(height: 20),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => Navigator.pop(context),
+      ),
+      centerTitle: true,
+      title: const Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.eco, color: Colors.green, size: 20),
+              SizedBox(width: 4),
+              Text(
+                'My Impact',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            'See the positive change you\'re creating',
+            style: TextStyle(color: Colors.grey, fontSize: 11),
+          ),
+        ],
       ),
     );
   }
@@ -94,11 +159,6 @@ class MyImpactScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: NetworkImage('https://via.placeholder.com/400x100'),
-          fit: BoxFit.cover,
-          opacity: 0.3,
-        ),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +177,12 @@ class MyImpactScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOverallImpactCard() {
+  Widget _buildOverallImpactCard(ImpactData impact) {
+    // Format totalUnits to remove trailing .0 if integer
+    String gccUnits = impact.totalUnits.toString();
+    if (gccUnits.endsWith('.0'))
+      gccUnits = gccUnits.substring(0, gccUnits.length - 2);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -150,11 +215,6 @@ class MyImpactScreen extends StatelessWidget {
                       'All Time',
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.white,
-                      size: 16,
-                    ),
                   ],
                 ),
               ),
@@ -166,25 +226,26 @@ class MyImpactScreen extends StatelessWidget {
             children: [
               _buildImpactStat(
                 Icons.park,
-                '55',
+                '${impact.treeSupported}',
                 'Trees Supported',
                 '🌱 Growing strong',
               ),
               _buildImpactStat(
                 Icons.cloud,
-                '12 kg',
+                '${impact.co2Offset} kg',
                 'CO₂ Offset',
                 '✨ Good for planet',
               ),
               _buildImpactStat(
                 Icons.eco,
-                '3,250',
+                gccUnits,
                 'GCC Units Used',
                 '💚 Keep it up!',
               ),
+              // Eco-Rewards restored here
               _buildImpactStat(
                 Icons.stars,
-                '1,850',
+                '${impact.ecoRewardsEarned}',
                 'Eco-Rewards Earned',
                 '🎉 Great going!',
               ),
@@ -260,7 +321,11 @@ class MyImpactScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildImpactBreakdown() {
+  Widget _buildImpactBreakdown(TreeDetails tree) {
+    int total = tree.totalTree;
+    double unitsPercent = total > 0 ? tree.unitsTree / total : 0;
+    double referralPercent = total > 0 ? tree.referralTree / total : 0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -286,19 +351,22 @@ class MyImpactScreen extends StatelessWidget {
                   children: [
                     CustomPaint(
                       size: const Size(100, 100),
-                      painter: DonutChartPainter(),
+                      painter: DonutChartPainter(
+                        unitsPercent: unitsPercent,
+                        referralPercent: referralPercent,
+                      ),
                     ),
-                    const Column(
+                    Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '55',
-                          style: TextStyle(
+                          '${tree.totalTree}',
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'Trees',
                           style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
@@ -314,20 +382,15 @@ class MyImpactScreen extends StatelessWidget {
                     _buildBreakdownRow(
                       Colors.green,
                       'GCC Units Purchase',
-                      '40 Trees',
-                    ),
-                    const Divider(),
-                    _buildBreakdownRow(
-                      Colors.blue,
-                      'Invited Friends',
-                      '10 Trees',
+                      '${tree.unitsTree} Trees',
                     ),
                     const Divider(),
                     _buildBreakdownRow(
                       Colors.orange,
-                      'Rewards & Tasks',
-                      '5 Trees',
+                      'Invited Friends',
+                      '${tree.referralTree} Trees',
                     ),
+                    // Rewards row removed as requested
                   ],
                 ),
               ),
@@ -393,7 +456,7 @@ class MyImpactScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEnvironmentalEquivalents() {
+  Widget _buildEnvironmentalEquivalents(ImpactData impact) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -412,21 +475,21 @@ class MyImpactScreen extends StatelessWidget {
           children: [
             _buildEqCard(
               Icons.directions_car,
-              '26 km',
+              '${impact.ifCarEmissionsAvoided} km',
               'of car emissions avoided',
               Colors.green,
             ),
             const SizedBox(width: 8),
             _buildEqCard(
               Icons.bolt,
-              '5',
+              '${impact.hoursOfElectricitySaved}',
               'hours of electricity saved',
               Colors.green,
             ),
             const SizedBox(width: 8),
             _buildEqCard(
               Icons.water_drop,
-              '2,200 L',
+              '${impact.litersOfWaterConserved} L',
               'of water conserved',
               Colors.blue,
             ),
@@ -517,6 +580,14 @@ class MyImpactScreen extends StatelessWidget {
 }
 
 class DonutChartPainter extends CustomPainter {
+  final double unitsPercent;
+  final double referralPercent;
+
+  DonutChartPainter({
+    required this.unitsPercent,
+    required this.referralPercent,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -529,37 +600,34 @@ class DonutChartPainter extends CustomPainter {
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round;
 
-    // Green Section (70%)
-    paint.color = Colors.green;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - strokeWidth),
-      -math.pi / 2,
-      2 * math.pi * 0.7,
-      false,
-      paint,
-    );
+    double startAngle = -math.pi / 2;
 
-    // Blue Section (20%)
-    paint.color = Colors.blue;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - strokeWidth),
-      2 * math.pi * 0.7 - math.pi / 2,
-      2 * math.pi * 0.2,
-      false,
-      paint,
-    );
+    if (unitsPercent > 0) {
+      paint.color = Colors.green;
+      final sweep = 2 * math.pi * unitsPercent;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+        startAngle,
+        sweep,
+        false,
+        paint,
+      );
+      startAngle += sweep;
+    }
 
-    // Orange Section (10%)
-    paint.color = Colors.orange;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - strokeWidth),
-      2 * math.pi * 0.9 - math.pi / 2,
-      2 * math.pi * 0.1,
-      false,
-      paint,
-    );
+    if (referralPercent > 0) {
+      paint.color = Colors.orange;
+      final sweep = 2 * math.pi * referralPercent;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+        startAngle,
+        sweep,
+        false,
+        paint,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

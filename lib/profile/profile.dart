@@ -1,16 +1,157 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gcc/Auth/login.dart';
+import 'package:gcc/Models_nServices/profile/profile_model.dart';
+import 'package:gcc/Models_nServices/profile/profile_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
+import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/profile/account_security_screen.dart';
 import 'package:gcc/profile/edit_profile.dart';
 import 'package:gcc/profile/green_chain.dart';
 import 'package:gcc/profile/help_n_support.dart';
+import 'package:gcc/profile/kyc_screen.dart';
 import 'package:gcc/profile/my_impacts.dart';
+import 'package:gcc/profile/referral_screen.dart';
 import 'package:gcc/profile/transaction_record_screen.dart';
 import 'package:gcc/profile/wallet.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final UserService _userService = UserService();
+  final AppPreference _appPref = AppPreference();
+
+  late Future<SimpleUser> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final token = _appPref.getString(PreferencesKey.authToken);
+    if (token.isEmpty) {
+      _userFuture = Future.error('Authentication token missing');
+    } else {
+      _userFuture = _userService.fetchSimpleUser(token);
+    }
+  }
+
+  Future<void> _updateLocalPreferences(SimpleUser user) async {
+    await _appPref.setString(PreferencesKey.userName, user.name);
+    await _appPref.setString(PreferencesKey.userEmail, user.email);
+    await _appPref.setString(PreferencesKey.userMobile, user.phone);
+  }
+
+  // Show logout confirmation dialog (same as before, but uses async)
+  Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout,
+                    size: 32,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Log Out',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Are you sure you want to log out?\nAll your session data will be cleared.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.green.shade700),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _appPref.clearSharedPreferences();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MobileLoginScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Log Out'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,160 +174,207 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 20),
-              _buildImpactStats(),
-              const SizedBox(height: 20),
-              _buildContributorBanner(),
-              const SizedBox(height: 20),
-              _buildMenuSection([
-                _MenuAction(
-                  Icons.person_outline,
-                  'Edit Profile',
-                  'Update your personal information',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EditProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.security_outlined,
-                  'Account & Security',
-                  'Manage password and security settings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AccountSecurityScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.card_giftcard,
-                  'My Rewards',
-                  'View your points, rewards and withdrawals',
-                  onTap: () {
-                    // Navigate to Rewards tab in MainScreen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const MainScreen(
-                              initialIndex: 3,
-                            ), // 3 = RewardsStoreScreen
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.eco_outlined,
-                  'My Impact',
-                  'See your contribution and environmental impact',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyImpactScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.history,
-                  'Transaction History',
-                  'View all your transactions and payments',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TransactionHistoryScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ]),
-              const SizedBox(height: 16),
-              _buildMenuSection([
-                _MenuAction(
-                  Icons.notifications_none,
-                  'Notifications',
-                  'Manage your notification preferences',
-                ),
-                _MenuAction(
-                  Icons.help_outline,
-                  'Help & Support',
-                  'Get help and find answers',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HelpSupportScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.account_balance_wallet,
-                  'Wallet',
-                  'Account and Wallet balance details',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WalletScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.info_outline,
-                  'About GreenChain',
-                  'Learn more about our mission',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AboutGreenChainScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _MenuAction(
-                  Icons.logout,
-                  'Log Out',
-                  'Sign out from your account',
-                  isDestructive: true,
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MobileLoginScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ]),
-              const SizedBox(height: 16),
-              _buildInviteCard(),
-              const SizedBox(height: 20), // Adjusted for better spacing
-            ],
-          ),
+      body: FutureBuilder<SimpleUser>(
+        future: _userFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            // Fallback to local preferences if API fails
+            final localName = _appPref.getString(
+              PreferencesKey.userName,
+              defValue: 'Guest',
+            );
+            final localEmail = _appPref.getString(
+              PreferencesKey.userEmail,
+              defValue: 'guest@example.com',
+            );
+            final localMobile = _appPref.getString(
+              PreferencesKey.userMobile,
+              defValue: 'Not provided',
+            );
+            return _buildBody(context, localName, localEmail, localMobile);
+          } else if (snapshot.hasData) {
+            final user = snapshot.data!;
+            // Update local preferences in background
+            _updateLocalPreferences(user);
+            return _buildBody(context, user.name, user.email, user.phone);
+          } else {
+            return const Center(child: Text('No user data found'));
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    String name,
+    String email,
+    String mobile,
+  ) {
+    final profileImageUrl = _appPref.getString(
+      PreferencesKey.userProfileImage,
+      defValue: '',
+    );
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildProfileHeader(name, email, mobile, profileImageUrl),
+            const SizedBox(height: 20),
+            _buildImpactStats(),
+            const SizedBox(height: 20),
+            _buildContributorBanner(),
+            const SizedBox(height: 20),
+            _buildMenuSection([
+              _MenuAction(
+                Icons.person_outline,
+                'Edit Profile',
+                'Update your personal information',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.security_outlined,
+                'Account & Security',
+                'Manage password and security settings',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AccountSecurityScreen(),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.eco_outlined,
+                'KYC',
+                'Complete your KYC verification',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const KycScreen()),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.card_giftcard,
+                'My Rewards',
+                'View your points, rewards and withdrawals',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MainScreen(initialIndex: 3),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.eco_outlined,
+                'My Impact',
+                'See your contribution and environmental impact',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyImpactScreen(),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.history,
+                'Transaction History',
+                'View all your transactions and payments',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TransactionHistoryScreen(),
+                    ),
+                  );
+                },
+              ),
+            ]),
+            const SizedBox(height: 16),
+            _buildMenuSection([
+              _MenuAction(
+                Icons.notifications_none,
+                'Notifications',
+                'Manage your notification preferences',
+              ),
+              _MenuAction(
+                Icons.help_outline,
+                'Help & Support',
+                'Get help and find answers',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HelpSupportScreen(),
+                    ),
+                  );
+                },
+              ),
+              // _MenuAction(
+              //   Icons.account_balance_wallet,
+              //   'Wallet',
+              //   'Account and Wallet balance details',
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => const WalletScreen(),
+              //       ),
+              //     );
+              //   },
+              // ),
+              _MenuAction(
+                Icons.info_outline,
+                'About GreenChain',
+                'Learn more about our mission',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AboutGreenChainScreen(),
+                    ),
+                  );
+                },
+              ),
+              _MenuAction(
+                Icons.logout,
+                'Log Out',
+                'Sign out from your account',
+                isDestructive: true,
+                onTap: () => _showLogoutConfirmationDialog(context),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            _buildInviteCard(),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(
+    String name,
+    String email,
+    String mobile,
+    String imageUrl,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -196,26 +384,34 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 40,
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+            backgroundImage:
+                imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+            child:
+                imageUrl.isEmpty
+                    ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                    : null,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Rahul Sharma',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-                const Text(
-                  'rahulsharma@gmail.com',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                Text(
+                  email,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
-                const Text(
-                  '+91 98765 43210',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                Text(
+                  mobile,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -246,7 +442,6 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
         ],
       ),
     );
@@ -320,7 +515,12 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyImpactScreen()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white.withOpacity(0.2),
               foregroundColor: Colors.white,
@@ -425,7 +625,12 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReferralGrowthScreen()),
+              );
+            },
             icon: const Icon(Icons.share_outlined, size: 14),
             label: const Text('Invite Now', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(

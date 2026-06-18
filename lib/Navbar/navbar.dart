@@ -22,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     GCCHomeScreen(), // index 0 - Home
     EarnRewardsScreen(), // index 1 - Earn
     PortfolioScreen(), // index 2 - Contribute/Portfolio
-    RewardsStoreScreen(), // index 3 - Rewards
+    ScratchCardScreen(), // index 3 - Rewards
     ProfileScreen(), // index 4 - Profile
   ];
 

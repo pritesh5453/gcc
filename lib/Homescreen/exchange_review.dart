@@ -1,8 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Homescreen/green_exchange.dart';
+import 'package:gcc/Models_nServices/Sell/sell_trading_svc.dart';
 
-class ExchangeReviewScreen extends StatelessWidget {
-  const ExchangeReviewScreen({super.key});
+class ExchangeReviewScreen extends StatefulWidget {
+  final int coinId;
+  final double enteredUnits;
+  final double currentPrice;
+  final double estimatedPayout;
+  final double availableUnits;
+  final double grossAmount;
+  final double serviceCharge;
+  final double gstCharge;
+
+  const ExchangeReviewScreen({
+    super.key,
+    required this.coinId,
+    required this.enteredUnits,
+    required this.currentPrice,
+    required this.estimatedPayout,
+    required this.availableUnits,
+    required this.grossAmount,
+    required this.serviceCharge,
+    required this.gstCharge,
+  });
+
+  @override
+  State<ExchangeReviewScreen> createState() => _ExchangeReviewScreenState();
+}
+
+class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
+  bool _isSubmitting = false;
+
+  Future<void> _confirmExchange() async {
+    if (widget.enteredUnits <= 0) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await sellGCCUnits(
+        coinId: widget.coinId,
+        coinAmount: widget.enteredUnits,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message ?? 'Exchange confirmed successfully.'),
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const GreenExchangeApp()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +140,7 @@ class ExchangeReviewScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/Images/almost_there.png'),
+                  image: AssetImage('assets/images/almost_there.png'),
                   fit: BoxFit.fill,
                 ),
               ),
@@ -113,7 +179,7 @@ class ExchangeReviewScreen extends StatelessWidget {
                   _buildSummaryRow(
                     icon: Icons.eco_outlined,
                     label: 'Units to Exchange',
-                    value: '100 Units',
+                    value: '${widget.enteredUnits.toStringAsFixed(3)} Units',
                     valueColor: Colors.green,
                     showEdit: true,
                   ),
@@ -124,12 +190,16 @@ class ExchangeReviewScreen extends StatelessWidget {
                         child: _buildSummaryItem(
                           Icons.currency_rupee,
                           'You Will Get (Est.)',
-                          '₹1,000.00',
+                          '₹${widget.estimatedPayout.toStringAsFixed(2)}',
                           valueColor: Colors.green,
                         ),
                       ),
                       Expanded(
-                        child: _buildSummaryItem(null, 'Rate', '₹10.00 / Unit'),
+                        child: _buildSummaryItem(
+                          null,
+                          'Rate',
+                          '₹${widget.currentPrice.toStringAsFixed(2)} / Unit',
+                        ),
                       ),
                     ],
                   ),
@@ -155,14 +225,6 @@ class ExchangeReviewScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildSummaryRow(
-                    icon: Icons.account_balance_wallet_outlined,
-                    label: 'Payout Method',
-                    value: 'Bank Transfer',
-                    subLabel: 'Bank Account',
-                    subValue: 'XXXX XXXX 4567',
-                    showArrow: true,
-                  ),
                 ],
               ),
             ),
@@ -203,13 +265,13 @@ class ExchangeReviewScreen extends StatelessWidget {
                           children: [
                             _buildHoldingCol(
                               'GCC Units',
-                              '240 Units',
+                              '${(widget.availableUnits - widget.enteredUnits).toStringAsFixed(3)} Units',
                               secondaryGreen,
                             ),
                             const SizedBox(width: 24),
                             _buildHoldingCol(
                               'Est. Value',
-                              '₹2,400.00',
+                              '₹${((widget.availableUnits - widget.enteredUnits) * widget.currentPrice).toStringAsFixed(2)}',
                               secondaryGreen,
                             ),
                           ],
@@ -281,35 +343,40 @@ class ExchangeReviewScreen extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const GreenExchangeApp(),
-                    ),
-                  );
-                },
+                onPressed: _isSubmitting ? null : _confirmExchange,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF388E3C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.lock, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Confirm Exchange',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                child:
+                    _isSubmitting
+                        ? const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        )
+                        : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.lock, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'Confirm Exchange',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
               ),
             ),
             const SizedBox(height: 12),

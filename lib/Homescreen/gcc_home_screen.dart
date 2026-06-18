@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:gcc/Homescreen/Redeem_screen.dart';
 import 'package:gcc/Homescreen/resell_&_exchange.dart';
 import 'package:gcc/Homescreen/buy_gcc_units_screen.dart';
+import 'package:gcc/Models_nServices/home_screen/home_screen_model.dart';
+import 'package:gcc/Models_nServices/home_screen/home_screen_svc.dart';
 import 'package:gcc/exception/daily_streak_card.dart';
 import 'package:gcc/earn/earn_rewards_screen.dart';
 import 'package:gcc/profile/help_n_support.dart';
+import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/profile/my_impacts.dart';
 import 'package:gcc/profile/referral_screen.dart';
+import 'package:gcc/profile/wallet.dart';
 
 class GCCHomeScreen extends StatefulWidget {
   const GCCHomeScreen({super.key});
@@ -21,14 +26,102 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
   static const Color bgColor = Color(0xFFF5F5F5);
   static const Color purpleColor = Color(0xFF6B3FA0);
 
+  bool _isLoading = true;
+  String? _errorMessage;
+  HomeScreenData? _homeScreenData;
+  String _userName = '';
+  double? _walletInrBalance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHomeScreen();
+  }
+
+  // Future<void> _loadWalletDetails() async {
+  //   try {
+  //     final resp = await fetchWalletDetails();
+  //     if (resp.success == true && resp.data?.walletBalance != null) {
+  //       setState(() {
+  //         _walletInrBalance = resp.data!.walletBalance!.inrBalance ?? 0.0;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     // silently ignore wallet fetch errors; top bar will show placeholder
+  //     debugPrint('Wallet fetch error: $e');
+  //   }
+  // }
+
+  Future<void> _loadHomeScreen() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await fetchHomeScreen();
+      if (response.success == true && response.data != null) {
+        setState(() {
+          _homeScreenData = response.data!.homeScreen;
+          _userName =
+              response.data!.user?.name ??
+              AppPreference().getString(PreferencesKey.userName);
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.message ?? 'Failed to load home data';
+        });
+      }
+    } catch (error) {
+      setState(() {
+        _errorMessage = error.toString();
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(
+      'Auth Token: ${AppPreference().getString(PreferencesKey.authToken)}',
+    ); // Debug print for auth token
+    // AppPreference().getString(PreferencesKey.authToken);
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
             _buildTopBar(),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: LinearProgressIndicator(minHeight: 3),
+              ),
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                  ),
+                ),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -39,7 +132,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 12),
                     _buildGCCUnitsCard(),
                     const SizedBox(height: 12),
-                    _buildDailyActionCard(),
+                    // _buildDailyActionCard(),
                     const SizedBox(height: 12),
                     _buildQuickActionsSection(),
                     const SizedBox(height: 12),
@@ -55,13 +148,14 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
     );
   }
 
-  // ─── TOP BAR ───────────────────────────────────────────────────────────────
+  // ─── TOP BAR WITH WALLET AMOUNT ───────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: SizedBox(
         width: double.infinity,
+        height: 60,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -71,10 +165,10 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.eco, color: lightGreen, size: 20),
-                    const SizedBox(width: 4),
-                    const Text(
+                  children: const [
+                    Icon(Icons.eco, color: lightGreen, size: 20),
+                    SizedBox(width: 4),
+                    Text(
                       'GCC',
                       style: TextStyle(
                         fontSize: 24,
@@ -85,53 +179,140 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     ),
                   ],
                 ),
-                const Text(
+                Text(
                   'Green Contribution Certificate',
                   style: TextStyle(fontSize: 8, color: Colors.grey),
                 ),
               ],
             ),
 
-            /// Notification Icon at End
+            /// Wallet Section
+            // Positioned(
+            //   left: 0,
+            //   child: GestureDetector(
+            //     onTap: () {
+            //       Navigator.push(
+            //         context,
+            //         MaterialPageRoute(builder: (_) => const WalletScreen()),
+            //       );
+            //     },
+            //     child: Container(
+            //       width: 100,
+            //       padding: const EdgeInsets.symmetric(
+            //         horizontal: 8,
+            //         vertical: 6,
+            //       ),
+            //       decoration: BoxDecoration(
+            //         color: primaryGreen.withOpacity(0.1),
+            //         borderRadius: BorderRadius.circular(14),
+            //         border: Border.all(color: primaryGreen.withOpacity(0.3)),
+            //       ),
+            //       child: Column(
+            //         crossAxisAlignment: CrossAxisAlignment.start,
+            //         mainAxisSize: MainAxisSize.min,
+            //         children: [
+            //           Row(
+            //             children: const [
+            //               Icon(
+            //                 Icons.account_balance_wallet_outlined,
+            //                 size: 12,
+            //                 color: primaryGreen,
+            //               ),
+            //               SizedBox(width: 4),
+            //               Text(
+            //                 'Wallet',
+            //                 style: TextStyle(
+            //                   fontSize: 8,
+            //                   color: Colors.grey,
+            //                   fontWeight: FontWeight.w500,
+            //                 ),
+            //               ),
+            //             ],
+            //           ),
+
+            //           const SizedBox(height: 2),
+
+            //           Text(
+            //             _walletInrBalance != null
+            //                 ? '₹${_walletInrBalance!.toStringAsFixed(2)}'
+            //                 : '₹--',
+            //             maxLines: 1,
+            //             overflow: TextOverflow.ellipsis,
+            //             style: const TextStyle(
+            //               fontSize: 15,
+            //               fontWeight: FontWeight.bold,
+            //               color: primaryGreen,
+            //             ),
+            //           ),
+
+            //           const SizedBox(height: 1),
+
+            //           // Text(
+            //           //   '${_homeScreenData?.totalGccUnitsOwned ?? 0} GCC',
+            //           //   maxLines: 1,
+            //           //   overflow: TextOverflow.ellipsis,
+            //           //   style: const TextStyle(
+            //           //     fontSize: 8,
+            //           //     fontWeight: FontWeight.w600,
+            //           //     color: primaryGreen,
+            //           //   ),
+            //           // ),
+            //         ],
+            //       ),
+            //     ),
+            //   ),
+            // ),
+
+            /// Notification Icon
             Positioned(
               right: 0,
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
+              child: GestureDetector(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Notifications coming soon!'),
+                      duration: Duration(seconds: 2),
                     ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      size: 22,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Positioned(
-                    right: 4,
-                    top: 4,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: const BoxDecoration(
-                        color: primaryGreen,
-                        shape: BoxShape.circle,
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(
-                        child: Text(
-                          '3',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        size: 22,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: primaryGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '3',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -168,7 +349,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     /// Background Image
                     Positioned.fill(
                       child: Image.asset(
-                        'assets/Images/hero_screen.png',
+                        'assets/images/hero_screen.png',
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -195,12 +376,16 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                       top: 18,
                       left: 18,
                       child: Row(
-                        children: const [
-                          Icon(Icons.eco, color: Color(0xFFB2FF59), size: 14),
-                          SizedBox(width: 4),
+                        children: [
+                          const Icon(
+                            Icons.eco,
+                            color: Color(0xFFB2FF59),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
                           Text(
-                            'Hello, Aadarsh!',
-                            style: TextStyle(
+                            'Hello, ${_userName.isNotEmpty ? _userName : 'Friend'}!',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -292,21 +477,21 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                         _ForestStatNew(
                           icon: Icons.park,
                           label: 'Trees Supported',
-                          value: '128',
+                          value: '${_homeScreenData?.treeValue ?? 0}',
                           unit: 'Trees',
                         ),
                         Container(width: 1, height: 50, color: Colors.white24),
                         _ForestStatNew(
                           icon: Icons.cloud_outlined,
                           label: 'CO₂ Offset',
-                          value: '240',
+                          value: '${_homeScreenData?.totalCo2Impact ?? 0}',
                           unit: 'kg',
                         ),
                         Container(width: 1, height: 50, color: Colors.white24),
                         _ForestStatNew(
                           icon: Icons.flag_outlined,
                           label: 'Next Milestone',
-                          value: '150',
+                          value: '${_homeScreenData?.nextTree ?? 0}',
                           unit: 'Trees',
                         ),
                       ],
@@ -369,12 +554,15 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               // GCC Units
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -398,6 +586,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
@@ -412,18 +601,18 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '240',
-                              style: TextStyle(
+                              '${_homeScreenData?.totalGccUnitsOwned?.toStringAsFixed(2) ?? "0.00"}',
+                              style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
-                            Text(
+                            const Text(
                               'Units',
                               style: TextStyle(
                                 fontSize: 12,
@@ -455,9 +644,9 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const Text(
-                            '₹10.00 / Unit',
-                            style: TextStyle(
+                          Text(
+                            '₹${(_homeScreenData?.currentGccUnitPrice ?? 0).toStringAsFixed(2)} / Unit',
+                            style: const TextStyle(
                               fontSize: 11,
                               color: primaryGreen,
                               fontWeight: FontWeight.w600,
@@ -499,6 +688,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                       const SizedBox(height: 8),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
@@ -513,18 +703,19 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Text(
-                                '1,850',
-                                style: TextStyle(
+                                '${_homeScreenData?.rewardPoints?.toStringAsFixed(0) ?? "0"}',
+                                style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
                                 ),
                               ),
-                              Text(
+                              const Text(
                                 'Points',
                                 style: TextStyle(
                                   fontSize: 12,

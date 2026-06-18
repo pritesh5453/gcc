@@ -1,7 +1,171 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
+import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/Models_nServices/transaction/transaction_model.dart';
+import 'package:gcc/Models_nServices/transaction/transaction_svc.dart';
 
-class TransactionHistoryScreen extends StatelessWidget {
+class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
+
+  @override
+  State<TransactionHistoryScreen> createState() =>
+      _TransactionHistoryScreenState();
+}
+
+class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+  final TransactionService _service = TransactionService();
+  final AppPreference _appPref = AppPreference();
+
+  List<TransactionItemModel> allTransactions = [];
+  List<TransactionItemModel> filteredTransactions = [];
+  bool isLoading = false;
+  bool isLoadingMore = false;
+  String? errorMessage;
+  String selectedFilter = 'All';
+
+  // Wallet balances
+  int totalAmountHeld = 0;
+  int utilizedBalance = 0;
+  int unutilizedBalance = 0;
+
+  // Pagination
+  int currentPage = 1;
+  int lastPage = 1;
+  bool hasMorePages = true;
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstPage();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!isLoadingMore && hasMorePages && !isLoading) {
+        _loadMore();
+      }
+    }
+  }
+
+  Future<void> _loadFirstPage() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+      currentPage = 1;
+      allTransactions = [];
+      hasMorePages = true;
+    });
+    await _fetchTransactions(reset: true);
+  }
+
+  Future<void> _loadMore() async {
+    if (!hasMorePages || isLoadingMore) return;
+    setState(() {
+      isLoadingMore = true;
+      currentPage++;
+    });
+    await _fetchTransactions(reset: false);
+  }
+
+  Future<void> _fetchTransactions({required bool reset}) async {
+    try {
+      final token = _appPref.getString(PreferencesKey.authToken);
+
+      print("===== AUTH TOKEN =====");
+      print(token);
+      if (token.isEmpty) {
+        throw Exception('Authentication token missing');
+      }
+
+      final response = await _service.getTransactions(
+        token: token,
+        page: currentPage,
+        perPage: 10,
+      );
+
+      if (response != null && response.success) {
+        setState(() {
+          if (reset) {
+            allTransactions = response.data.transactions;
+            // Update wallet balances only on first page
+            totalAmountHeld =
+                response.data.wallet.walletBalance.totalAmountHeld;
+            utilizedBalance =
+                response.data.wallet.walletBalance.utilizedBalance;
+            unutilizedBalance =
+                response.data.wallet.walletBalance.unutilizedBalance;
+          } else {
+            allTransactions.addAll(response.data.transactions);
+          }
+          lastPage = response.data.pagination.lastPage;
+          hasMorePages = currentPage < lastPage;
+          _applyFilter();
+        });
+      } else {
+        throw Exception('Failed to load transactions');
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+        if (reset) allTransactions = [];
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
+  }
+
+  void _applyFilter() {
+    if (selectedFilter == 'All') {
+      filteredTransactions = List.from(allTransactions);
+    } else {
+      filteredTransactions =
+          allTransactions
+              .where(
+                (tx) => tx.type.toLowerCase() == selectedFilter.toLowerCase(),
+              )
+              .toList();
+    }
+    setState(() {});
+  }
+
+  void _onFilterSelected(String filter) {
+    selectedFilter = filter;
+    _applyFilter();
+  }
+
+  String _getDisplayStatus(TransactionItemModel tx) {
+    if (tx.type.toLowerCase() == 'deposit') {
+      if (tx.status.toLowerCase() == 'pending') return 'Pending';
+      if (tx.status.toLowerCase() == 'completed') return 'Approved';
+    }
+    return tx.status;
+  }
+
+  (Color color, IconData icon) _getTypeStyle(String type) {
+    switch (type.toLowerCase()) {
+      case 'buy':
+        return (Colors.green, Icons.arrow_downward);
+      case 'sell':
+        return (Colors.red, Icons.arrow_upward);
+      case 'deposit':
+        return (Colors.orange, Icons.arrow_downward);
+      default:
+        return (Colors.grey, Icons.remove);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +184,7 @@ class TransactionHistoryScreen extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -28,8 +192,7 @@ class TransactionHistoryScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildFilterChips(),
             const SizedBox(height: 16),
-            _buildTransactionList(context), // ✅ context passed here
-            const SizedBox(height: 40),
+            Expanded(child: _buildTransactionList()),
           ],
         ),
       ),
@@ -50,95 +213,49 @@ class TransactionHistoryScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Total Spent',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '₹ 1,850',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Last 30 days',
-                  style: TextStyle(color: Colors.white, fontSize: 10),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Total Earned',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '₹ 450',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Row(
-                children: [
-                  Icon(Icons.trending_up, color: Colors.white70, size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    '+12% vs last month',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          _summaryItem('Total Held', '₹$totalAmountHeld'),
+          _summaryItem('Utilized', '₹$utilizedBalance'),
+          _summaryItem('Unutilized', '₹$unutilizedBalance'),
         ],
       ),
     );
   }
 
+  Widget _summaryItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 11),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFilterChips() {
-    final List<String> filters = [
-      'All',
-      'Rewards',
-      'Redeemed',
-      'Donations',
-      'Deposits',
-    ];
-    int selectedIndex = 0; // For demo, can be stateful if needed
+    final filters = ['All', 'buy', 'sell', 'deposit'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children:
-            filters.asMap().entries.map((entry) {
-              int idx = entry.key;
-              String label = entry.value;
-              bool isSelected = idx == selectedIndex;
+            filters.map((label) {
+              final isSelected = selectedFilter == label;
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: FilterChip(
-                  label: Text(label),
+                  label: Text(label[0].toUpperCase() + label.substring(1)),
                   selected: isSelected,
-                  onSelected: (selected) {
-                    // Update state in a StatefulWidget if needed
-                  },
+                  onSelected: (_) => _onFilterSelected(label),
                   backgroundColor: Colors.white,
                   selectedColor: Colors.green[100],
                   checkmarkColor: Colors.green[700],
@@ -155,174 +272,100 @@ class TransactionHistoryScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Added BuildContext parameter
-  Widget _buildTransactionList(BuildContext context) {
-    final transactions = [
-      _Transaction(
-        id: 'TXN001',
-        title: 'Plastic Waste Drop',
-        date: 'Today, 10:30 AM',
-        amount: '+ ₹ 25',
-        type: 'credit',
-        category: 'Earned',
-        icon: Icons.recycling,
-        iconColor: Colors.green,
-      ),
-      _Transaction(
-        id: 'TXN002',
-        title: 'Recycled PET Bottles',
-        date: 'Yesterday, 4:15 PM',
-        amount: '+ ₹ 40',
-        type: 'credit',
-        category: 'Earned',
-        icon: Icons.water_drop,
-        iconColor: Colors.blue,
-      ),
-      _Transaction(
-        id: 'TXN003',
-        title: 'Reward Redeemed - Plant Kit',
-        date: 'Dec 12, 2024',
-        amount: '- ₹ 150',
-        type: 'debit',
-        category: 'Redeemed',
-        icon: Icons.card_giftcard,
-        iconColor: Colors.orange,
-      ),
-      _Transaction(
-        id: 'TXN004',
-        title: 'E-Waste Collection',
-        date: 'Dec 10, 2024',
-        amount: '+ ₹ 60',
-        type: 'credit',
-        category: 'Earned',
-        icon: Icons.computer,
-        iconColor: Colors.purple,
-      ),
-      _Transaction(
-        id: 'TXN005',
-        title: 'Tree Plantation Donation',
-        date: 'Dec 5, 2024',
-        amount: '- ₹ 200',
-        type: 'debit',
-        category: 'Donation',
-        icon: Icons.park,
-        iconColor: Colors.brown,
-      ),
-      _Transaction(
-        id: 'TXN006',
-        title: 'Weekly Challenge Bonus',
-        date: 'Dec 1, 2024',
-        amount: '+ ₹ 100',
-        type: 'credit',
-        category: 'Bonus',
-        icon: Icons.emoji_events,
-        iconColor: Colors.amber,
-      ),
-    ];
-
-    // Group by date
-    Map<String, List<_Transaction>> grouped = {};
-    for (var tx in transactions) {
-      String groupKey =
-          tx.date.contains('Today')
-              ? 'Today'
-              : tx.date.contains('Yesterday')
-              ? 'Yesterday'
-              : 'December 2024';
-      if (!grouped.containsKey(groupKey)) grouped[groupKey] = [];
-      grouped[groupKey]!.add(tx);
+  Widget _buildTransactionList() {
+    if (isLoading && allTransactions.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (errorMessage != null && allTransactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadFirstPage,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (filteredTransactions.isEmpty && !isLoading) {
+      return const Center(child: Text('No transactions found'));
     }
 
-    return Column(
-      children:
-          grouped.entries.map((entry) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView.separated(
+      controller: _scrollController,
+      itemCount: filteredTransactions.length + (isLoadingMore ? 1 : 0),
+      separatorBuilder:
+          (_, __) =>
+              Divider(height: 1, indent: 70, color: Colors.grey.shade100),
+      itemBuilder: (context, index) {
+        if (index == filteredTransactions.length && isLoadingMore) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final tx = filteredTransactions[index];
+        final (color, icon) = _getTypeStyle(tx.type);
+        final displayStatus = _getDisplayStatus(tx);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: color.withOpacity(0.1),
+              child: Icon(icon, color: color),
+            ),
+            title: Text(
+              tx.type[0].toUpperCase() + tx.type.substring(1),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            subtitle: Text(
+              tx.createdAt,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    entry.key,
+                Text(
+                  "₹${tx.amountInr.toStringAsFixed(2)}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: color,
+                  ),
+                ),
+                if (tx.type.toLowerCase() == 'deposit')
+                  Text(
+                    displayStatus,
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.grey[700],
+                      fontSize: 10,
+                      color:
+                          displayStatus == 'Approved'
+                              ? Colors.green
+                              : Colors.orange,
                     ),
                   ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    children:
-                        entry.value.map((tx) {
-                          final isLast = entry.value.last == tx;
-                          return Column(
-                            children: [
-                              ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: tx.iconColor.withOpacity(
-                                    0.1,
-                                  ),
-                                  child: Icon(
-                                    tx.icon,
-                                    color: tx.iconColor,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(
-                                  tx.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '${tx.date} • ${tx.category}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                trailing: Text(
-                                  tx.amount,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color:
-                                        tx.type == 'credit'
-                                            ? Colors.green[700]
-                                            : Colors.red,
-                                  ),
-                                ),
-                                onTap:
-                                    () => _showTransactionDetails(
-                                      context,
-                                      tx,
-                                    ), // ✅ context now available
-                              ),
-                              if (!isLast)
-                                Divider(
-                                  height: 1,
-                                  indent: 70,
-                                  color: Colors.grey.shade100,
-                                ),
-                            ],
-                          );
-                        }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 16),
               ],
-            );
-          }).toList(),
+            ),
+            onTap: () => _showTransactionDetails(context, tx),
+          ),
+        );
+      },
     );
   }
 
-  void _showTransactionDetails(BuildContext context, _Transaction tx) {
+  void _showTransactionDetails(BuildContext context, TransactionItemModel tx) {
+    final (color, icon) = _getTypeStyle(tx.type);
+    final displayStatus = _getDisplayStatus(tx);
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -349,8 +392,8 @@ class TransactionHistoryScreen extends StatelessWidget {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: tx.iconColor.withOpacity(0.1),
-                      child: Icon(tx.icon, color: tx.iconColor),
+                      backgroundColor: color.withOpacity(0.1),
+                      child: Icon(icon, color: color),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -358,14 +401,14 @@ class TransactionHistoryScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            tx.title,
+                            tx.type[0].toUpperCase() + tx.type.substring(1),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
                           Text(
-                            tx.category,
+                            displayStatus,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 13,
@@ -375,14 +418,11 @@ class TransactionHistoryScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      tx.amount,
+                      "₹${tx.amountInr.toStringAsFixed(2)}",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color:
-                            tx.type == 'credit'
-                                ? Colors.green[700]
-                                : Colors.red,
+                        color: color,
                       ),
                     ),
                   ],
@@ -390,10 +430,19 @@ class TransactionHistoryScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 12),
-                _detailRow('Transaction ID', tx.id),
-                _detailRow('Date & Time', tx.date),
-                _detailRow('Status', 'Completed'),
-                _detailRow('Payment Method', 'GreenChain Wallet'),
+                _detailRow('Transaction ID', tx.id.toString()),
+                _detailRow('Date & Time', tx.createdAt),
+                _detailRow('Status', displayStatus),
+                if (tx.type == 'deposit' && tx.utrNumber != null)
+                  _detailRow('UTR Number', tx.utrNumber!),
+                if (tx.type != 'deposit' && tx.coin != null) ...[
+                  _detailRow('Coin', '${tx.coin!.name} (${tx.coin!.symbol})'),
+                  _detailRow('Amount Coin', tx.amountCoin.toStringAsFixed(4)),
+                  _detailRow(
+                    'Price per unit',
+                    '₹${tx.priceAtTransaction.toStringAsFixed(2)}',
+                  ),
+                ],
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -408,7 +457,6 @@ class TransactionHistoryScreen extends StatelessWidget {
                     child: const Text('Close'),
                   ),
                 ),
-                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -417,39 +465,25 @@ class TransactionHistoryScreen extends StatelessWidget {
 
   Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
     );
   }
-}
-
-class _Transaction {
-  final String id;
-  final String title;
-  final String date;
-  final String amount;
-  final String type; // 'credit' or 'debit'
-  final String category;
-  final IconData icon;
-  final Color iconColor;
-
-  _Transaction({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.amount,
-    required this.type,
-    required this.category,
-    required this.icon,
-    required this.iconColor,
-  });
 }

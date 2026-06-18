@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:gcc/Baseurl/baseurl.dart';
 import 'package:gcc/Models_nServices/login/login_model.dart';
+import 'package:gcc/api/api_endpoints.dart';
 import 'package:gcc/api/dio_client.dart';
 
 class AuthApiService {

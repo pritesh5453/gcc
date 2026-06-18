@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:gcc/Models_nServices/verify_otp/verify_model.dart';
-import 'package:gcc/Baseurl/baseurl.dart';
+import 'package:gcc/api/api_endpoints.dart';
 import 'package:gcc/api/dio_client.dart';
 
 Future<VerifyOtpModel> verifyOtp({

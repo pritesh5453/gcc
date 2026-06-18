@@ -1,193 +1,297 @@
+import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:gcc/Models_nServices/Coupons/coupons_model.dart';
+import 'package:gcc/Models_nServices/Coupons/coupons_svc.dart';
+import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
+import 'package:gcc/prefs/app_preference.dart';
 
-class RewardsStoreScreen extends StatefulWidget {
-  const RewardsStoreScreen({super.key});
+// ─── Main Screen ─────────────────────────────────────────────────────────────
+class ScratchCardScreen extends StatefulWidget {
+  const ScratchCardScreen({super.key});
 
   @override
-  State<RewardsStoreScreen> createState() => _RewardsStoreScreenState();
+  State<ScratchCardScreen> createState() => _ScratchCardScreenState();
 }
 
-class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
-  static const Color primaryGreen = Color(0xFF1B6B2F);
-  static const Color lightGreenBg = Color(0xFFF0FAF2);
+class _ScratchCardScreenState extends State<ScratchCardScreen> {
+  final CouponService _couponService = CouponService();
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+  String? _errorMessage;
+  int _rewardPoints = 0;
+  List<CouponData> _coupons = [];
 
-  int _selectedCategory = 0;
-  int _selectedNav = 2;
+  // Store claimed reward amounts per coupon ID (for display after scratching)
+  final Map<int, int> _claimedRewards = {};
 
-  final List<Map<String, dynamic>> _categories = [
-    {'icon': Icons.card_giftcard_outlined, 'label': 'All Rewards'},
-    {'icon': Icons.local_offer_outlined, 'label': 'E-Vouchers'},
-    {'icon': Icons.shopping_bag_outlined, 'label': 'Shopping'},
-    {'icon': Icons.coffee_outlined, 'label': 'Lifestyle'},
-    {'icon': Icons.favorite_border, 'label': 'Donation'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchCoupons(showLoading: true);
+  }
 
-  final List<Map<String, dynamic>> _rewards = [
-    {
-      'title': 'Amazon Pay eGift Card',
-      'voucher': '₹100 Voucher',
-      'points': '1,000 Points',
-      'bgColor': Color(0xFF131921),
-      'logo': 'amazon',
-      'liked': false,
-    },
-    {
-      'title': 'Flipkart Gift Card',
-      'voucher': '₹100 Voucher',
-      'points': '1,000 Points',
-      'bgColor': Color(0xFF2874F0),
-      'logo': 'flipkart',
-      'liked': false,
-    },
-    {
-      'title': 'Starbucks eGift Card',
-      'voucher': '₹150 Voucher',
-      'points': '1,500 Points',
-      'bgColor': Color(0xFF00704A),
-      'logo': 'starbucks',
-      'liked': false,
-    },
-    {
-      'title': 'BigBasket Voucher',
-      'voucher': '₹250 Voucher',
-      'points': '2,500 Points',
-      'bgColor': Color(0xFFD4EDAB),
-      'logo': 'bigbasket',
-      'liked': false,
-    },
-    {
-      'title': 'BookMyShow Voucher',
-      'voucher': '₹200 Voucher',
-      'points': '2,000 Points',
-      'bgColor': Color(0xFFCC0000),
-      'logo': 'bookmyshow',
-      'liked': false,
-    },
-    {
-      'title': 'Plant a Tree',
-      'voucher': 'Contribute & Grow',
-      'points': '500 Points',
-      'bgColor': Color(0xFFD6EED6),
-      'logo': 'plant',
-      'liked': false,
-    },
-  ];
+  // ─── Fetch coupons (with optional loading indicator) ────────────────────
+  Future<void> _fetchCoupons({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    } else {
+      setState(() {
+        _isRefreshing = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final token = AppPreference().getString(PreferencesKey.authToken);
+      if (token.isEmpty) {
+        setState(() {
+          _errorMessage = 'Please login again.';
+          if (showLoading) _isLoading = false;
+          _isRefreshing = false;
+        });
+        return;
+      }
+
+      final response = await _couponService.getCoupons(token: token);
+      if (response != null && response.status) {
+        setState(() {
+          _rewardPoints = response.rewardPoints;
+          _coupons = response.data;
+          if (showLoading) _isLoading = false;
+          _isRefreshing = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage =
+              response?.status == false
+                  ? 'Failed to load coupons'
+                  : 'No coupons available';
+          if (showLoading) _isLoading = false;
+          _isRefreshing = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        if (showLoading) _isLoading = false;
+        _isRefreshing = false;
+      });
+    }
+  }
+
+  // ─── Refresh callback for RefreshIndicator ──────────────────────────────
+  Future<void> _onRefresh() async {
+    await _fetchCoupons(showLoading: false);
+  }
+
+  // ─── Called when a coupon is successfully scratched ──────────────────────
+  void _onCouponClaimed(int couponId, int rewardAmountWon, int newPoints) {
+    setState(() {
+      _claimedRewards[couponId] = rewardAmountWon;
+      _rewardPoints = newPoints;
+      // Mark the coupon as claimed locally (isEligible = false)
+      final index = _coupons.indexWhere((c) => c.id == couponId);
+      if (index != -1) {
+        _coupons[index] = CouponData(
+          id: _coupons[index].id,
+          couponName: _coupons[index].couponName,
+          couponImage: _coupons[index].couponImage,
+          requiredRewardPoints: _coupons[index].requiredRewardPoints,
+          minRewardAmount: _coupons[index].minRewardAmount,
+          maxRewardAmount: _coupons[index].maxRewardAmount,
+          isEligible: false,
+          isScratch: _coupons[index].isScratch,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            _buildAppBar(context),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _buildBalanceCard(),
-                    ),
-                    const SizedBox(height: 18),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _buildCategorySection(),
-                    ),
-                    const SizedBox(height: 18),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _buildAllRewardsSection(),
-                    ),
-                    const SizedBox(height: 14),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _buildBottomBanner(),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                      ? _buildErrorWidget()
+                      : _coupons.isEmpty
+                      ? _buildEmptyState()
+                      : RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        color: const Color(0xFF1B6B2F),
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                ),
+                                child: _buildBalanceCard(),
+                              ),
+                              const SizedBox(height: 18),
+                              _buildSectionHeader(),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 14),
+                                child: Text(
+                                  'Finger se scratch karo to reveal karo',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildGrid(),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                      ),
             ),
-            _buildBottomNavBar(),
           ],
         ),
       ),
     );
   }
 
-  // ── App Bar ────────────────────────────────────────────────────────────────
-  Widget _buildAppBar() {
+  Widget _buildEmptyState() {
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      color: const Color(0xFF1B6B2F),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('🎯', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: 16),
+                const Text(
+                  'No coupons available',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Check back later for new offers',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => _fetchCoupons(showLoading: true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B6B2F),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Refresh'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      color: const Color(0xFF1B6B2F),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(_errorMessage!, textAlign: TextAlign.center),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => _fetchCoupons(showLoading: true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B6B2F),
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.chevron_left, color: Colors.black87, size: 28),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.chevron_left, color: Colors.black, size: 28),
+            ),
+          ),
           const Expanded(
             child: Column(
               children: [
                 Text(
-                  'Rewards Store',
+                  'Scratch Cards',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
                   ),
                 ),
                 Text(
-                  'Redeem your points for exciting rewards',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  'Scratch to reveal your rewards',
+                  style: TextStyle(fontSize: 11, color: Colors.black54),
                 ),
               ],
             ),
-          ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.shopping_bag_outlined,
-                size: 28,
-                color: Colors.black87,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: const BoxDecoration(
-                    color: primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '2',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
 
-  // ── Balance Card ──────────────────────────────────────────────────────────
   Widget _buildBalanceCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       decoration: BoxDecoration(
-        color: lightGreenBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFBBE5C8)),
+        color: const Color(0xFF1B6B2F),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
       child: Column(
         children: [
@@ -199,31 +303,27 @@ class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Your Balance',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      'Your balance',
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          '1,850',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                        Text(
+                          _rewardPoints.toString(),
+                          style: const TextStyle(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            height: 1,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          width: 26,
-                          height: 26,
-                          decoration: const BoxDecoration(
-                            color: primaryGreen,
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -235,45 +335,26 @@ class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
                       ],
                     ),
                     const Text(
-                      'Points',
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                      'Points available',
+                      style: TextStyle(fontSize: 13, color: Colors.white70),
                     ),
                   ],
                 ),
               ),
-              SizedBox(
-                width: 100,
-                height: 80,
+              const SizedBox(
+                width: 80,
+                height: 70,
                 child: Stack(
-                  children: const [
+                  children: [
                     Positioned(
                       right: 0,
                       bottom: 0,
-                      child: Text('🎁', style: TextStyle(fontSize: 58)),
+                      child: Text('🎁', style: TextStyle(fontSize: 52)),
                     ),
                     Positioned(
                       left: 0,
                       bottom: 8,
-                      child: Text('🪙', style: TextStyle(fontSize: 22)),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 12,
-                      child: Text(
-                        '✦',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFFFFD700),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      left: 16,
-                      child: Text(
-                        '✦',
-                        style: TextStyle(fontSize: 8, color: Color(0xFF4CAF50)),
-                      ),
+                      child: Text('🪙', style: TextStyle(fontSize: 20)),
                     ),
                   ],
                 ),
@@ -284,11 +365,11 @@ class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
               ),
             ),
             child: const Row(
@@ -297,8 +378,8 @@ class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
                 Text('🌿', style: TextStyle(fontSize: 13)),
                 SizedBox(width: 6),
                 Text(
-                  'Earn more points by completing tasks and challenges!',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                  'Earn more by completing tasks and challenges',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
                 ),
               ],
             ),
@@ -308,577 +389,503 @@ class _RewardsStoreScreenState extends State<RewardsStoreScreen> {
     );
   }
 
-  // ── Category Section ──────────────────────────────────────────────────────
-  Widget _buildCategorySection() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Browse by Category',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+  Widget _buildSectionHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Your scratch cards',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1B6B2F),
             ),
-            const Spacer(),
-            const Text(
-              'View All',
-              style: TextStyle(
-                fontSize: 12,
-                color: primaryGreen,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 16, color: primaryGreen),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(_categories.length, (i) {
-            final selected = _selectedCategory == i;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedCategory = i),
-              child: Column(
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: selected ? const Color(0xFFD6EED6) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: selected ? primaryGreen : Colors.grey[200]!,
-                        width: selected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Icon(
-                      _categories[i]['icon'] as IconData,
-                      color: primaryGreen,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  SizedBox(
-                    width: 62,
-                    child: Text(
-                      _categories[i]['label'] as String,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: selected ? primaryGreen : Colors.black54,
-                        fontWeight:
-                            selected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ),
-      ],
+          ),
+          Text(
+            '${_coupons.length} available',
+            style: const TextStyle(fontSize: 11, color: Color(0xFF1B6B2F)),
+          ),
+        ],
+      ),
     );
   }
 
-  // ── All Rewards Section ───────────────────────────────────────────────────
-  Widget _buildAllRewardsSection() {
-    final screenWidth = MediaQuery.of(context).size.width;
+  Widget _buildGrid() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cardWidth = (constraints.maxWidth - 12) / 2;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children:
+                _coupons
+                    .map(
+                      (coupon) => SizedBox(
+                        width: cardWidth,
+                        child: _ScratchCard(
+                          coupon: coupon,
+                          userPoints: _rewardPoints,
+                          onClaimed: _onCouponClaimed,
+                          claimedReward: _claimedRewards[coupon.id],
+                        ),
+                      ),
+                    )
+                    .toList(),
+          );
+        },
+      ),
+    );
+  }
+}
 
-    // Responsive grid settings
-    int crossAxisCount;
-    double childAspectRatio;
+// ─── Scratch Card Widget (unchanged) ──────────────────────────────────────
+class _ScratchCard extends StatefulWidget {
+  final CouponData coupon;
+  final int userPoints;
+  final void Function(int couponId, int rewardAmount, int newPoints) onClaimed;
+  final int? claimedReward;
 
-    if (screenWidth < 480) {
-      crossAxisCount = 2; // 2 cards on small phones
-      childAspectRatio = 1;
-    } else if (screenWidth < 720) {
-      crossAxisCount = 3; // 3 cards on larger phones
-      childAspectRatio = 0.65;
+  const _ScratchCard({
+    required this.coupon,
+    required this.userPoints,
+    required this.onClaimed,
+    this.claimedReward,
+  });
+
+  @override
+  State<_ScratchCard> createState() => _ScratchCardState();
+}
+
+class _ScratchCardState extends State<_ScratchCard>
+    with SingleTickerProviderStateMixin {
+  final CouponService _couponService = CouponService();
+  bool _revealed = false;
+  bool _isClaiming = false;
+  late AnimationController _fadeCtrl;
+  late Animation<double> _fadeAnim;
+
+  bool get _canScratch =>
+      widget.coupon.isEligible &&
+      widget.userPoints >= widget.coupon.requiredRewardPoints &&
+      !_isClaiming;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnim = Tween<double>(begin: 1, end: 0).animate(_fadeCtrl);
+
+    if (!widget.coupon.isEligible || widget.claimedReward != null) {
+      _revealed = true;
+      _fadeCtrl.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onScratchComplete() async {
+    if (_revealed || _isClaiming || !_canScratch) return;
+
+    setState(() => _isClaiming = true);
+
+    try {
+      final token = AppPreference().getString(PreferencesKey.authToken);
+      if (token.isEmpty) {
+        _showError('Please login again');
+        setState(() => _isClaiming = false);
+        return;
+      }
+
+      final response = await _couponService.scratchCoupon(
+        token: token,
+        couponId: widget.coupon.id,
+      );
+
+      if (response != null && response.status) {
+        setState(() {
+          _revealed = true;
+          _isClaiming = false;
+          _fadeCtrl.forward();
+        });
+        widget.onClaimed(
+          widget.coupon.id,
+          response.data.rewardAmountWon,
+          response.data.remainingRewardPoints,
+        );
+      } else {
+        setState(() => _isClaiming = false);
+        _showError(response?.message ?? 'Failed to claim reward');
+      }
+    } catch (e) {
+      setState(() => _isClaiming = false);
+      _showError('Error: $e');
+    }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF1B6B2F)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.coupon;
+    final bool hasEnoughPoints = widget.userPoints >= c.requiredRewardPoints;
+    final bool isEligible = c.isEligible && hasEnoughPoints;
+
+    String rewardDisplay;
+    String rewardLabel;
+    String icon;
+
+    if (widget.claimedReward != null) {
+      rewardDisplay = '₹${widget.claimedReward}';
+      rewardLabel = 'Won!';
+      icon = '🎉';
+    } else if (isEligible) {
+      rewardDisplay = '₹${c.minRewardAmount} - ₹${c.maxRewardAmount}';
+      rewardLabel = 'Scratch to win';
+      icon = '🎁';
     } else {
-      crossAxisCount = 4; // 4 cards on tablets
-      childAspectRatio = 0.62;
+      if (!hasEnoughPoints) {
+        rewardDisplay = '—';
+        rewardLabel = 'Not enough points';
+        icon = '🔒';
+      } else {
+        rewardDisplay = '—';
+        rewardLabel = 'Already Claimed';
+        icon = '✅';
+      }
     }
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            const Text(
-              'All Rewards',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: const Row(
+    final bgColor = isEligible ? const Color(0xFFE8F5E9) : Colors.grey[200]!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: SizedBox(
+              height: 140,
+              child: Stack(
                 children: [
-                  Text(
-                    'Sort by: Popular',
-                    style: TextStyle(fontSize: 11, color: Colors.black54),
+                  Container(
+                    color: bgColor,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(icon, style: const TextStyle(fontSize: 36)),
+                          const SizedBox(height: 4),
+                          Text(
+                            rewardDisplay,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1B6B2F),
+                            ),
+                          ),
+                          Text(
+                            rewardLabel,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey),
+                  if (isEligible && widget.claimedReward == null && !_revealed)
+                    FadeTransition(
+                      opacity: _fadeAnim,
+                      child: _ScratchLayer(
+                        scratchColor: _getScratchColor(c.id),
+                        onRevealed: _onScratchComplete,
+                      ),
+                    ),
+                  if (!isEligible)
+                    Container(
+                      color: Colors.black.withOpacity(0.4),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              hasEnoughPoints
+                                  ? 'Already Claimed'
+                                  : 'Not enough points',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (!hasEnoughPoints)
+                              Text(
+                                'Need ${c.requiredRewardPoints} pts',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (_isClaiming)
+                    Container(
+                      color: Colors.black.withOpacity(0.5),
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    ),
                 ],
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 16,
-            childAspectRatio: childAspectRatio,
           ),
-          itemCount: _rewards.length,
-          itemBuilder:
-              (context, i) => _RewardCard(
-                reward: _rewards[i],
-                onLike:
-                    () => setState(
-                      () => _rewards[i]['liked'] = !_rewards[i]['liked'],
-                    ),
-              ),
-        ),
-      ],
-    );
-  }
-
-  // ── Bottom Banner ─────────────────────────────────────────────────────────
-  Widget _buildBottomBanner() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: lightGreenBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFBBE5C8)),
-      ),
-      child: Row(
-        children: [
-          const Text('🌳', style: TextStyle(fontSize: 32)),
-          const SizedBox(width: 12),
-          const Expanded(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: _revealed ? 28 : 0,
+            color: const Color(0xFFE8F5E9),
+            child:
+                _revealed
+                    ? const Center(
+                      child: Text(
+                        '🎉  Reward revealed!',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
+                    : const SizedBox.shrink(),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 11),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 3),
                 Text(
-                  'Every redemption supports a greener planet.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                  c.couponName.length > 20
+                      ? '${c.couponName.substring(0, 20)}...'
+                      : c.couponName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text(
-                  'Thank you for being a part of the change!',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Nav Bar ────────────────────────────────────────────────────────
-  Widget _buildBottomNavBar() {
-    final items = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.stars_outlined, 'label': 'Earn'},
-      {'icon': Icons.card_giftcard_outlined, 'label': 'Rewards'},
-      {'icon': Icons.person_outline, 'label': 'Profile'},
-    ];
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-
-      // child: SafeArea(
-      //   top: false,
-      //   child: Padding(
-      //     padding: const EdgeInsets.symmetric(vertical: 8),
-      //     child: Row(
-      //       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      //       children: List.generate(items.length, (i) {
-      //         final selected = _selectedNav == i;
-      //         return GestureDetector(
-      //           onTap: () => setState(() => _selectedNav = i),
-      //           child: Column(
-      //             mainAxisSize: MainAxisSize.min,
-      //             children: [
-      //               Icon(items[i]['icon'] as IconData,
-      //                   color: selected ? primaryGreen : Colors.grey, size: 24),
-      //               const SizedBox(height: 2),
-      //               Text(items[i]['label'] as String,
-      //                   style: TextStyle(
-      //                     fontSize: 10,
-      //                     color: selected ? primaryGreen : Colors.grey,
-      //                     fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-      //                   )),
-      //             ],
-      //           ),
-      //         );
-      //       }),
-      //     ),
-      //   ),
-      // ),
-    );
-  }
-}
-
-// ── Reward Card Widget ────────────────────────────────────────────────────────
-class _RewardCard extends StatelessWidget {
-  final Map<String, dynamic> reward;
-  final VoidCallback onLike;
-  static const Color primaryGreen = Color(0xFF1B6B2F);
-
-  const _RewardCard({required this.reward, required this.onLike});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Brand image area
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(14),
-                ),
-                child: Container(
-                  height: 90,
-                  width: double.infinity,
-                  color: reward['bgColor'] as Color,
-                  child: Center(
-                    child: _BrandLogo(logo: reward['logo'] as String),
-                  ),
-                ),
-              ),
-              // Heart button
-              Positioned(
-                top: 6,
-                right: 6,
-                child: GestureDetector(
-                  onTap: onLike,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      (reward['liked'] as bool)
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      size: 14,
-                      color:
-                          (reward['liked'] as bool) ? Colors.red : Colors.grey,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    reward['title'] as String,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    reward['voucher'] as String,
-                    style: const TextStyle(fontSize: 9, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: primaryGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 8,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          reward['points'] as String,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: primaryGreen,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 28,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Redeem Now',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Brand Logo Widget ─────────────────────────────────────────────────────────
-class _BrandLogo extends StatelessWidget {
-  final String logo;
-  const _BrandLogo({required this.logo});
-
-  @override
-  Widget build(BuildContext context) {
-    switch (logo) {
-      case 'amazon':
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'a',
-              style: TextStyle(
-                fontSize: 38,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                fontFamily: 'serif',
-              ),
-            ),
-            Container(
-              width: 40,
-              height: 3,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF9900),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        );
-      case 'flipkart':
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Flipkart',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFE000),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Center(
-                child: Text(
-                  'F',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF2874F0),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      case 'starbucks':
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: const Center(
-                child: Text('☕', style: TextStyle(fontSize: 28)),
-              ),
-            ),
-          ],
-        );
-      case 'bigbasket':
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF84C225),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'bb',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Text(
-                      'big',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF84C225),
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1B6B2F),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 9,
                       ),
                     ),
+                    const SizedBox(width: 5),
                     Text(
-                      'basket',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFCC0000),
+                      '${c.requiredRewardPoints} points',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF1B6B2F),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'A TATA Enterprise',
-              style: TextStyle(fontSize: 8, color: Colors.black45),
-            ),
-          ],
-        );
-      case 'bookmyshow':
-        return const Center(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'book',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-                TextSpan(
-                  text: 'my',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFFFFD700),
-                  ),
-                ),
-                TextSpan(
-                  text: 'show',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
           ),
-        );
-      case 'plant':
-        return const Center(child: Text('🌱', style: TextStyle(fontSize: 44)));
-      default:
-        return const SizedBox();
+        ],
+      ),
+    );
+  }
+
+  Color _getScratchColor(int id) {
+    final colors = [
+      const Color(0xFFB8860B),
+      const Color(0xFF388E3C),
+      const Color(0xFF5E35B1),
+      const Color(0xFF1565C0),
+      const Color(0xFFC2185B),
+      const Color(0xFF33691E),
+      const Color(0xFFE65100),
+      const Color(0xFF00838F),
+      const Color(0xFF6A1B9A),
+      const Color(0xFFF57F17),
+    ];
+    return colors[id % colors.length];
+  }
+}
+
+// ─── Scratch Layer (CustomPainter) – unchanged ────────────────────────────
+class _ScratchLayer extends StatefulWidget {
+  final Color scratchColor;
+  final VoidCallback onRevealed;
+
+  const _ScratchLayer({required this.scratchColor, required this.onRevealed});
+
+  @override
+  State<_ScratchLayer> createState() => _ScratchLayerState();
+}
+
+class _ScratchLayerState extends State<_ScratchLayer> {
+  final List<Offset> _points = [];
+  double _scratchedPercent = 0;
+  bool _alreadyRevealed = false;
+  Size _lastSize = Size.zero;
+
+  void _addPoint(Offset localPos) {
+    setState(() {
+      _points.add(localPos);
+    });
+    _estimateScratch();
+  }
+
+  void _estimateScratch() {
+    if (_lastSize == Size.zero) return;
+    final total = _lastSize.width * _lastSize.height;
+    if (total == 0) return;
+
+    double covered = 0;
+    const r = 22.0;
+    for (final p in _points) {
+      covered += pi * r * r;
+    }
+    _scratchedPercent = (covered / total).clamp(0, 1);
+
+    if (_scratchedPercent > 0.45 && !_alreadyRevealed) {
+      _alreadyRevealed = true;
+      widget.onRevealed();
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onPanStart: (d) => _addPoint(d.localPosition),
+      onPanUpdate: (d) => _addPoint(d.localPosition),
+      child: LayoutBuilder(
+        builder: (ctx, constraints) {
+          _lastSize = Size(constraints.maxWidth, constraints.maxHeight);
+          return CustomPaint(
+            size: _lastSize,
+            painter: _ScratchPainter(
+              points: _points,
+              scratchColor: widget.scratchColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ScratchPainter extends CustomPainter {
+  final List<Offset> points;
+  final Color scratchColor;
+
+  _ScratchPainter({required this.points, required this.scratchColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final basePaint = Paint()..color = scratchColor;
+    canvas.drawRect(Offset.zero & size, basePaint);
+
+    final dotPaint = Paint()..color = Colors.white.withOpacity(0.15);
+    final cols = 6;
+    for (int i = 0; i < cols; i++) {
+      final x = (size.width / cols) * i + size.width / (cols * 2);
+      canvas.drawCircle(Offset(x, size.height / 2), 18, dotPaint);
+    }
+
+    final tp = TextPainter(
+      text: TextSpan(
+        children: [
+          const TextSpan(
+            text: 'Scratch here\n',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
+          ),
+          TextSpan(
+            text: 'to reveal reward',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    tp.layout(maxWidth: size.width);
+    tp.paint(
+      canvas,
+      Offset((size.width - tp.width) / 2, (size.height - tp.height) / 2),
+    );
+
+    if (points.isEmpty) return;
+
+    canvas.saveLayer(Offset.zero & size, Paint());
+    canvas.drawRect(Offset.zero & size, basePaint);
+
+    final erasePaint =
+        Paint()
+          ..blendMode = BlendMode.clear
+          ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < points.length; i++) {
+      canvas.drawCircle(points[i], 22, erasePaint);
+      if (i > 0) {
+        final path =
+            Path()
+              ..moveTo(points[i - 1].dx, points[i - 1].dy)
+              ..lineTo(points[i].dx, points[i].dy);
+        canvas.drawPath(
+          path,
+          erasePaint
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 44
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_ScratchPainter old) => old.points.length != points.length;
 }

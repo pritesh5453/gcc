@@ -18,7 +18,7 @@ class ReferralGrowthScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 50),
-            _buildAppBar(),
+            _buildAppBar(context),
             Expanded(
               child: Container(
                 margin: const EdgeInsets.only(top: 20),
@@ -65,24 +65,30 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 18,
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
+
           Row(
             children: [
               const Text(
@@ -97,6 +103,7 @@ class ReferralGrowthScreen extends StatelessWidget {
               Icon(Icons.eco, color: Colors.green[300]),
             ],
           ),
+
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(

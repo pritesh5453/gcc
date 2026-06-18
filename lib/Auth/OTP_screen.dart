@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Models_nServices/verify_otp/verify_services.dart';
-import 'package:gcc/Navbar/navbar.dart'; 
+import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Models_nServices/login/login_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 
@@ -79,15 +78,10 @@ class _OtpScreenState extends State<OtpScreen> {
         _isVerifying = true;
       });
 
-      final response = widget.isLoginFlow
-          ? await verifyLoginOtp(
-              sessionId: widget.sessionId,
-              otp: otp,
-            )
-          : await verifyOtp(
-              sessionId: widget.sessionId,
-              otp: otp,
-            );
+      final response =
+          widget.isLoginFlow
+              ? await verifyLoginOtp(sessionId: widget.sessionId, otp: otp)
+              : await verifyOtp(sessionId: widget.sessionId, otp: otp);
 
       setState(() {
         _isVerifying = false;
@@ -96,19 +90,31 @@ class _OtpScreenState extends State<OtpScreen> {
       if (response.status == true) {
         // Save using AppPreference to keep app-wide consistency
         if (response.token != null && response.token!.isNotEmpty) {
-          await AppPreference().setString(PreferencesKey.authToken, response.token!);
+          await AppPreference().setString(
+            PreferencesKey.authToken,
+            response.token!,
+          );
         }
 
         if (response.user?.name != null && response.user!.name!.isNotEmpty) {
-          await AppPreference().setString(PreferencesKey.userName, response.user!.name!);
+          await AppPreference().setString(
+            PreferencesKey.userName,
+            response.user!.name!,
+          );
         }
 
         if (response.user?.phone != null && response.user!.phone!.isNotEmpty) {
-          await AppPreference().setString(PreferencesKey.userMobile, response.user!.phone!);
+          await AppPreference().setString(
+            PreferencesKey.userMobile,
+            response.user!.phone!,
+          );
         }
 
         if (response.user?.id != null && response.user!.id != 0) {
-          await AppPreference().setInt(PreferencesKey.userId, response.user!.id!);
+          await AppPreference().setInt(
+            PreferencesKey.userId,
+            response.user!.id!,
+          );
         }
 
         await AppPreference().setBool(PreferencesKey.isLoggedIn, true);
@@ -129,9 +135,7 @@ class _OtpScreenState extends State<OtpScreen> {
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (_) => const MainScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const MainScreen()),
             (route) => false,
           );
         }
@@ -139,18 +143,19 @@ class _OtpScreenState extends State<OtpScreen> {
         setState(() {
           _errorMessage = response.message ?? "Invalid OTP. Please try again.";
         });
-        
+
         // Clear OTP fields on error
         _clearOtpFields();
       }
     } catch (e) {
       setState(() {
         _isVerifying = false;
-        _errorMessage = 'Network error. Please check your connection and try again.';
+        _errorMessage =
+            'Network error. Please check your connection and try again.';
       });
-      
+
       debugPrint('OTP Verification Error: $e');
-      
+
       // Clear OTP fields on error
       _clearOtpFields();
     }
@@ -176,10 +181,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
     try {
       final authApiService = AuthApiService();
-      
-      final response = await authApiService.login(
-        phone: widget.mobileNumber,
-      );
+
+      final response = await authApiService.login(phone: widget.mobileNumber);
 
       setState(() {
         _isVerifying = false;
@@ -188,7 +191,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (response.status == true) {
         // Reset timer
         _startResendTimer();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -199,13 +202,14 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
           );
         }
-        
+
         // Clear OTP fields for new code
         _clearOtpFields();
       } else {
         setState(() {
           _canResend = true;
-          _errorMessage = response.message ?? 'Failed to resend OTP. Please try again.';
+          _errorMessage =
+              response.message ?? 'Failed to resend OTP. Please try again.';
         });
       }
     } catch (e) {
@@ -214,7 +218,7 @@ class _OtpScreenState extends State<OtpScreen> {
         _canResend = true;
         _errorMessage = 'Network error. Please check your connection.';
       });
-      
+
       debugPrint('Resend OTP Error: $e');
     }
   }
@@ -222,7 +226,7 @@ class _OtpScreenState extends State<OtpScreen> {
   void _startResendTimer() {
     _canResend = false;
     _resendTimerSeconds = 30;
-    
+
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return false;
@@ -315,7 +319,10 @@ class _OtpScreenState extends State<OtpScreen> {
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
@@ -323,7 +330,11 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                      Icon(
+                        Icons.error_outline,
+                        size: 16,
+                        color: Colors.red.shade700,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -352,24 +363,25 @@ class _OtpScreenState extends State<OtpScreen> {
                       borderRadius: BorderRadius.circular(40),
                     ),
                   ),
-                  child: _isVerifying
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                  child:
+                      _isVerifying
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Verify & Continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        )
-                      : const Text(
-                          'Verify & Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -388,9 +400,10 @@ class _OtpScreenState extends State<OtpScreen> {
                           ? 'Resend'
                           : 'Resend in ${_resendTimerSeconds}s',
                       style: TextStyle(
-                        color: _canResend
-                            ? const Color(0xFF2E7D32)
-                            : Colors.grey.shade500,
+                        color:
+                            _canResend
+                                ? const Color(0xFF2E7D32)
+                                : Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -449,7 +462,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Widget _buildOtpTextField(int index, double screenWidth) {
     // Responsive box size
-    double boxSize = (screenWidth - 48 - 40) / 6; // 48 = horizontal padding, 40 = spacing
+    double boxSize =
+        (screenWidth - 48 - 40) / 6; // 48 = horizontal padding, 40 = spacing
     if (boxSize > 56) boxSize = 56;
 
     return SizedBox(
@@ -465,7 +479,9 @@ class _OtpScreenState extends State<OtpScreen> {
           counterText: '',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: _errorMessage != null ? Colors.red : Colors.green.shade200),
+            borderSide: BorderSide(
+              color: _errorMessage != null ? Colors.red : Colors.green.shade200,
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -491,16 +507,16 @@ class _OtpScreenState extends State<OtpScreen> {
               _errorMessage = null;
             });
           }
-          
+
           // Move to next field
           if (value.length == 1 && index < 5) {
             _focusNodes[index + 1].requestFocus();
-          } 
+          }
           // Move to previous field on delete
           else if (value.isEmpty && index > 0) {
             _focusNodes[index - 1].requestFocus();
           }
-          
+
           // Auto-submit when all 6 digits are filled
           if (index == 5 && _otpControllers.every((c) => c.text.isNotEmpty)) {
             _handleVerifyOtp();

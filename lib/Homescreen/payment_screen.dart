@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Models_nServices/Buy_transaction/buy_transaction_model.dart';
 import 'dart:math' as math;
-
-
-
+import 'package:gcc/Models_nServices/deposite/deposite_model.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
-  const PaymentSuccessScreen({super.key});
+  final BuyTransactionData? transactionData;
+  final DepositData? depositData;
+
+  const PaymentSuccessScreen({
+    super.key,
+    this.transactionData,
+    this.depositData,
+  });
 
   @override
   State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
@@ -35,8 +41,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       duration: const Duration(seconds: 2),
     );
 
-    _checkScale = CurvedAnimation(parent: _checkController, curve: Curves.elasticOut);
-    _checkFade = CurvedAnimation(parent: _checkController, curve: Curves.easeIn);
+    _checkScale = CurvedAnimation(
+      parent: _checkController,
+      curve: Curves.elasticOut,
+    );
+    _checkFade = CurvedAnimation(
+      parent: _checkController,
+      curve: Curves.easeIn,
+    );
 
     _checkController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -106,7 +118,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               children: [
                 Text(
                   'Payment Successful',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 2),
@@ -174,18 +190,90 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   List<Widget> _buildConfettiPieces() {
     final pieces = [
-      _ConfettiData(angle: 0, radius: 80, color: const Color(0xFF4CAF50), width: 8, height: 14),
-      _ConfettiData(angle: 0.4, radius: 85, color: const Color(0xFFFF9800), width: 6, height: 12),
-      _ConfettiData(angle: 0.9, radius: 78, color: const Color(0xFF2196F3), width: 8, height: 8),
-      _ConfettiData(angle: 1.4, radius: 88, color: const Color(0xFFFFEB3B), width: 6, height: 10),
-      _ConfettiData(angle: 1.9, radius: 82, color: const Color(0xFF9C27B0), width: 8, height: 6),
-      _ConfettiData(angle: 2.4, radius: 76, color: const Color(0xFFF44336), width: 6, height: 14),
-      _ConfettiData(angle: 2.9, radius: 90, color: const Color(0xFF00BCD4), width: 8, height: 8),
-      _ConfettiData(angle: 3.4, radius: 80, color: const Color(0xFF4CAF50), width: 6, height: 12),
-      _ConfettiData(angle: 3.9, radius: 86, color: const Color(0xFFFF5722), width: 8, height: 6),
-      _ConfettiData(angle: 4.4, radius: 74, color: const Color(0xFF3F51B5), width: 6, height: 10),
-      _ConfettiData(angle: 4.9, radius: 88, color: const Color(0xFF8BC34A), width: 8, height: 14),
-      _ConfettiData(angle: 5.4, radius: 82, color: const Color(0xFFFFEB3B), width: 6, height: 8),
+      _ConfettiData(
+        angle: 0,
+        radius: 80,
+        color: const Color(0xFF4CAF50),
+        width: 8,
+        height: 14,
+      ),
+      _ConfettiData(
+        angle: 0.4,
+        radius: 85,
+        color: const Color(0xFFFF9800),
+        width: 6,
+        height: 12,
+      ),
+      _ConfettiData(
+        angle: 0.9,
+        radius: 78,
+        color: const Color(0xFF2196F3),
+        width: 8,
+        height: 8,
+      ),
+      _ConfettiData(
+        angle: 1.4,
+        radius: 88,
+        color: const Color(0xFFFFEB3B),
+        width: 6,
+        height: 10,
+      ),
+      _ConfettiData(
+        angle: 1.9,
+        radius: 82,
+        color: const Color(0xFF9C27B0),
+        width: 8,
+        height: 6,
+      ),
+      _ConfettiData(
+        angle: 2.4,
+        radius: 76,
+        color: const Color(0xFFF44336),
+        width: 6,
+        height: 14,
+      ),
+      _ConfettiData(
+        angle: 2.9,
+        radius: 90,
+        color: const Color(0xFF00BCD4),
+        width: 8,
+        height: 8,
+      ),
+      _ConfettiData(
+        angle: 3.4,
+        radius: 80,
+        color: const Color(0xFF4CAF50),
+        width: 6,
+        height: 12,
+      ),
+      _ConfettiData(
+        angle: 3.9,
+        radius: 86,
+        color: const Color(0xFFFF5722),
+        width: 8,
+        height: 6,
+      ),
+      _ConfettiData(
+        angle: 4.4,
+        radius: 74,
+        color: const Color(0xFF3F51B5),
+        width: 6,
+        height: 10,
+      ),
+      _ConfettiData(
+        angle: 4.9,
+        radius: 88,
+        color: const Color(0xFF8BC34A),
+        width: 8,
+        height: 14,
+      ),
+      _ConfettiData(
+        angle: 5.4,
+        radius: 82,
+        color: const Color(0xFFFFEB3B),
+        width: 6,
+        height: 8,
+      ),
     ];
 
     return pieces.map((p) {
@@ -215,26 +303,70 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   // ── Success Text ──────────────────────────────────────────────────────────
   Widget _buildSuccessText() {
-    return Column(
-      children: [
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'You did it! ',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryGreen),
-            ),
-            Text('🌱', style: TextStyle(fontSize: 20)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '55 GCC Units added to your account successfully.',
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
+    bool isDeposit =
+        widget.depositData != null && widget.transactionData == null;
+
+    if (isDeposit) {
+      final amount = widget.depositData?.amount?.toStringAsFixed(2) ?? '0.00';
+      return Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Deposit Submitted! ',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: primaryGreen,
+                ),
+              ),
+              Text('✅', style: TextStyle(fontSize: 20)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your deposit of ₹$amount has been submitted for verification.',
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Admin will verify your payment within 24 hours.',
+            style: TextStyle(fontSize: 12, color: Colors.orange[700]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    } else {
+      final amountInr =
+          widget.transactionData?.transaction?.amountInr?.toStringAsFixed(0) ??
+          '0';
+      return Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'You did it! ',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: primaryGreen,
+                ),
+              ),
+              Text('🌱', style: TextStyle(fontSize: 20)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$amountInr GCC Units added to your account successfully.',
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
   }
 
   // ── Impact Card ───────────────────────────────────────────────────────────
@@ -254,7 +386,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               children: [
                 Text(
                   'Your Impact Just Grows! ',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: primaryGreen),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: primaryGreen,
+                  ),
                 ),
                 Text('🌍', style: TextStyle(fontSize: 16)),
               ],
@@ -265,13 +401,40 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           IntrinsicHeight(
             child: Row(
               children: [
-                Expanded(child: _ImpactStat(emoji: '🌳', value: '5', unit: 'Trees', label: 'Supported')),
-                VerticalDivider(color: Colors.grey[300], thickness: 1, width: 1),
                 Expanded(
-                  child: _ImpactStatCO2(value: '12', unit: 'kg', label: 'CO₂ Offset'),
+                  child: _ImpactStat(
+                    emoji: '🌳',
+                    value: '5',
+                    unit: 'Trees',
+                    label: 'Supported',
+                  ),
                 ),
-                VerticalDivider(color: Colors.grey[300], thickness: 1, width: 1),
-                Expanded(child: _ImpactStat(emoji: '🍃', value: '55', unit: 'Tres', label: 'GCC Units\nAdded to your account', isGreen: true)),
+                VerticalDivider(
+                  color: Colors.grey[300],
+                  thickness: 1,
+                  width: 1,
+                ),
+                Expanded(
+                  child: _ImpactStatCO2(
+                    value: '12',
+                    unit: 'kg',
+                    label: 'CO₂ Offset',
+                  ),
+                ),
+                VerticalDivider(
+                  color: Colors.grey[300],
+                  thickness: 1,
+                  width: 1,
+                ),
+                Expanded(
+                  child: _ImpactStat(
+                    emoji: '🍃',
+                    value: '55',
+                    unit: 'Tres',
+                    label: 'GCC Units\nAdded to your account',
+                    isGreen: true,
+                  ),
+                ),
               ],
             ),
           ),
@@ -304,43 +467,88 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   // ── What's Next ───────────────────────────────────────────────────────────
   Widget _buildWhatsNextSection() {
     final items = [
-      {'emoji': '🌱', 'title': 'Track Your\nImpact', 'sub': 'See your trees\nand CO₂ saved'},
-      {'emoji': '🎁', 'title': 'Earn\nRewards', 'sub': 'Complete tasks\nand earn points'},
-      {'emoji': '🛍️', 'title': 'Redeem\nOffers', 'sub': 'Use your points\non exciting offers'},
-      {'emoji': '👥', 'title': 'Invite\nFriends', 'sub': 'Invite and earn\nmore rewards'},
+      {
+        'emoji': '🌱',
+        'title': 'Track Your\nImpact',
+        'sub': 'See your trees\nand CO₂ saved',
+      },
+      {
+        'emoji': '🎁',
+        'title': 'Earn\nRewards',
+        'sub': 'Complete tasks\nand earn points',
+      },
+      {
+        'emoji': '🛍️',
+        'title': 'Redeem\nOffers',
+        'sub': 'Use your points\non exciting offers',
+      },
+      {
+        'emoji': '👥',
+        'title': 'Invite\nFriends',
+        'sub': 'Invite and earn\nmore rewards',
+      },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("What's Next?",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+        const Text(
+          "What's Next?",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 12),
         Row(
-          children: items.map((item) => Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: [
-                  Text(item['emoji']!, style: const TextStyle(fontSize: 28)),
-                  const SizedBox(height: 6),
-                  Text(item['title']!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, height: 1.3)),
-                  const SizedBox(height: 4),
-                  Text(item['sub']!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 9, color: Colors.grey, height: 1.3)),
-                ],
-              ),
-            ),
-          )).toList(),
+          children:
+              items
+                  .map(
+                    (item) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              item['emoji']!,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              item['title']!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['sub']!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
         ),
       ],
     );
@@ -348,6 +556,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   // ── Transaction Details ───────────────────────────────────────────────────
   Widget _buildTransactionDetails() {
+    final txData = widget.transactionData?.transaction;
+    final txId = txData?.id?.toString() ?? 'N/A';
+    final amountInr = txData?.amountInr?.toStringAsFixed(2) ?? '0.00';
+    final amountCoin = txData?.amountCoin?.toStringAsFixed(2) ?? '0.00';
+    final createdAt = txData?.createdAt ?? 'N/A';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -358,13 +572,19 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Transaction Details',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const Text(
+            'Transaction Details',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 14),
           _TxRow(
             icon: Icons.receipt_outlined,
             label: 'Transaction ID',
-            value: 'GCC240501184726',
+            value: txId,
             valueColor: Colors.black87,
             showCopy: true,
           ),
@@ -372,14 +592,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           _TxRow(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Amount Paid',
-            value: '₹500',
+            value: '₹$amountInr',
             valueColor: Colors.black87,
           ),
           _divider(),
           _TxRow(
             icon: Icons.eco_outlined,
             label: 'GCC Units Added',
-            value: '55 GCC Units',
+            value: '$amountCoin GCC',
             valueColor: primaryGreen,
             valueBold: true,
           ),
@@ -387,7 +607,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           _TxRow(
             icon: Icons.access_time_outlined,
             label: 'Date & Time',
-            value: '01 May 2024, 06:47 PM',
+            value: createdAt,
             valueColor: Colors.black87,
             valueBold: true,
           ),
@@ -397,9 +617,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   }
 
   Widget _divider() => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Divider(color: Colors.grey[100], height: 1),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Divider(color: Colors.grey[100], height: 1),
+  );
 
   // ── Receipt Note ──────────────────────────────────────────────────────────
   Widget _buildReceiptNote() {
@@ -426,16 +646,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
             style: OutlinedButton.styleFrom(
               foregroundColor: primaryGreen,
               side: const BorderSide(color: primaryGreen, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.refresh, size: 18,color: Colors.black,),
+                Icon(Icons.refresh, size: 18, color: Colors.black),
                 SizedBox(width: 6),
-                Text('View My Impact',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  'View My Impact',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),
@@ -448,16 +672,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               backgroundColor: primaryGreen,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Back to Home',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                Text(
+                  'Back to Home',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
                 SizedBox(width: 6),
-                Icon(Icons.chevron_right, size: 18,color: Colors.white,),
+                Icon(Icons.chevron_right, size: 18, color: Colors.white),
               ],
             ),
           ),
@@ -478,7 +706,13 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 10, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -493,15 +727,21 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(items[i]['icon'] as IconData,
-                        color: selected ? primaryGreen : Colors.grey, size: 24),
+                    Icon(
+                      items[i]['icon'] as IconData,
+                      color: selected ? primaryGreen : Colors.grey,
+                      size: 24,
+                    ),
                     const SizedBox(height: 2),
-                    Text(items[i]['label'] as String,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: selected ? primaryGreen : Colors.grey,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                        )),
+                    Text(
+                      items[i]['label'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: selected ? primaryGreen : Colors.grey,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -560,22 +800,32 @@ class _ImpactStat extends StatelessWidget {
                 TextSpan(
                   text: value,
                   style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 TextSpan(
                   text: ' $unit',
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isGreen ? const Color(0xFF1B6B2F) : Colors.black87),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isGreen ? const Color(0xFF1B6B2F) : Colors.black87,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 10, color: Colors.grey, height: 1.3)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.grey,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );
@@ -588,7 +838,11 @@ class _ImpactStatCO2 extends StatelessWidget {
   final String unit;
   final String label;
 
-  const _ImpactStatCO2({required this.value, required this.unit, required this.label});
+  const _ImpactStatCO2({
+    required this.value,
+    required this.unit,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -604,7 +858,14 @@ class _ImpactStatCO2 extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(
-              child: Text('CO₂', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF00695C))),
+              child: Text(
+                'CO₂',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00695C),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -613,19 +874,29 @@ class _ImpactStatCO2 extends StatelessWidget {
               children: [
                 TextSpan(
                   text: value,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 const TextSpan(
                   text: ' kg',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
+          ),
         ],
       ),
     );
