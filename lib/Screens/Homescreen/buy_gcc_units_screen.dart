@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/manual_deposite.dart';
-import 'package:gcc/Homescreen/payment_screen.dart';
+import 'package:gcc/Screens/Homescreen/manual_deposite.dart';
+import 'package:gcc/Screens/Homescreen/payment_screen.dart';
 import 'package:gcc/Models_nServices/Banner/banner_model.dart';
 import 'package:gcc/Models_nServices/Banner/banner_svc.dart';
 import 'package:gcc/Models_nServices/Trading_response/trading_model.dart';
@@ -1254,8 +1254,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => ManualDepositScreen(purchaseAmount: amount, gccUnits: units),
+        builder: (_) => BuyGCCScreen(purchaseAmount: amount, gccUnits: units),
       ),
     );
   }

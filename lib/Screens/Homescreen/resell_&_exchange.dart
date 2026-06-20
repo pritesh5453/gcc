@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/exchange_review.dart';
+import 'package:gcc/Screens/Homescreen/exchange_review.dart';
 import 'package:gcc/Models_nServices/Coin_sunmary/coin_summary_svc.dart';
 
 class ExchangeGCCScreen extends StatefulWidget {
@@ -82,7 +82,12 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Column(
           children: [
             const Text(

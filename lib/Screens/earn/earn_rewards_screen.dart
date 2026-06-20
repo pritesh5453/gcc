@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_model.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/Screens/profile/my_impacts.dart';
 import 'package:gcc/main.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
-import 'package:gcc/profile/my_impacts.dart';
 
 class EarnRewardsScreen extends StatefulWidget {
   const EarnRewardsScreen({super.key});
@@ -323,9 +323,9 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: const Row(
+      child: Row(
         children: [
-          Expanded(
+          const Expanded(
             child: Column(
               children: [
                 Text(

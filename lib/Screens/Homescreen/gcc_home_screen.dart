@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/Redeem_screen.dart';
-import 'package:gcc/Homescreen/resell_&_exchange.dart';
-import 'package:gcc/Homescreen/buy_gcc_units_screen.dart';
+import 'package:flutter/services.dart'; // <-- ADDED for SystemNavigator
+import 'package:gcc/Screens/Homescreen/Redeem_screen.dart';
+import 'package:gcc/Screens/Homescreen/resell_&_exchange.dart';
+import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
 import 'package:gcc/Models_nServices/home_screen/home_screen_model.dart';
 import 'package:gcc/Models_nServices/home_screen/home_screen_svc.dart';
+import 'package:gcc/Screens/profile/help_n_support.dart';
+import 'package:gcc/Screens/profile/my_impacts.dart';
+import 'package:gcc/Screens/profile/referral_screen.dart';
 import 'package:gcc/exception/daily_streak_card.dart';
-import 'package:gcc/earn/earn_rewards_screen.dart';
-import 'package:gcc/profile/help_n_support.dart';
+import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
-import 'package:gcc/profile/my_impacts.dart';
-import 'package:gcc/profile/referral_screen.dart';
-import 'package:gcc/profile/wallet.dart';
 
 class GCCHomeScreen extends StatefulWidget {
   const GCCHomeScreen({super.key});
@@ -85,10 +85,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      'Auth Token: ${AppPreference().getString(PreferencesKey.authToken)}',
-    ); // Debug print for auth token
-    // AppPreference().getString(PreferencesKey.authToken);
+    print('Auth Token: ${AppPreference().getString(PreferencesKey.authToken)}');
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
@@ -136,8 +133,8 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 12),
                     _buildQuickActionsSection(),
                     const SizedBox(height: 12),
-                    _buildLeaderboardBanner(),
-                    const SizedBox(height: 20),
+                    // _buildLeaderboardBanner(),
+                    // const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -146,6 +143,29 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
         ),
       ),
     );
+  }
+
+  // ─── EXIT CONFIRMATION DIALOG ─────────────────────────────────────────────
+  Future<bool> _showExitConfirmation(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Exit App?'),
+                content: const Text('Are you sure you want to exit the app?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('No'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Yes'),
+                  ),
+                ],
+              ),
+        ) ??
+        false; // if dialog dismissed (tap outside), treat as "No"
   }
 
   // ─── TOP BAR WITH WALLET AMOUNT ───────────────────────────────────────────
@@ -186,7 +206,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               ],
             ),
 
-            /// Wallet Section
+            /// Wallet Section (commented out)
             // Positioned(
             //   left: 0,
             //   child: GestureDetector(
@@ -229,9 +249,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
             //               ),
             //             ],
             //           ),
-
             //           const SizedBox(height: 2),
-
             //           Text(
             //             _walletInrBalance != null
             //                 ? '₹${_walletInrBalance!.toStringAsFixed(2)}'
@@ -244,9 +262,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
             //               color: primaryGreen,
             //             ),
             //           ),
-
             //           const SizedBox(height: 1),
-
             //           // Text(
             //           //   '${_homeScreenData?.totalGccUnitsOwned ?? 0} GCC',
             //           //   maxLines: 1,
@@ -349,7 +365,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     /// Background Image
                     Positioned.fill(
                       child: Image.asset(
-                        'assets/images/hero_screen.png',
+                        'assets/Images/hero_screen.png',
                         fit: BoxFit.cover,
                       ),
                     ),

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/buy_gcc_units_screen.dart';
-import 'package:gcc/Homescreen/resell_&_exchange.dart';
+import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
+import 'package:gcc/Screens/Homescreen/resell_&_exchange.dart';
 import 'package:gcc/Models_nServices/portfolio/portfolio_model.dart';
 import 'package:gcc/Models_nServices/portfolio/portfolio_svc.dart';
+import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/Screens/profile/referral_screen.dart';
+import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
-import 'package:gcc/profile/referral_screen.dart';
-import 'package:gcc/profile/transaction_record_screen.dart';
 
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key});
@@ -54,7 +55,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+
         title: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               "My Portfolio",
@@ -66,7 +69,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             ),
             Text(
               "Your GCC overview",
-              style: TextStyle(color: Colors.grey[500], fontSize: rs(12)),
+              style: TextStyle(color: Colors.grey, fontSize: rs(12)),
             ),
           ],
         ),

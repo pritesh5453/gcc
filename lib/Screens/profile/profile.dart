@@ -4,17 +4,16 @@ import 'package:gcc/Auth/login.dart';
 import 'package:gcc/Models_nServices/profile/profile_model.dart';
 import 'package:gcc/Models_nServices/profile/profile_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/Screens/profile/account_security_screen.dart';
+import 'package:gcc/Screens/profile/edit_profile.dart';
+import 'package:gcc/Screens/profile/green_chain.dart';
+import 'package:gcc/Screens/profile/help_n_support.dart';
+import 'package:gcc/Screens/profile/kyc_screen.dart';
+import 'package:gcc/Screens/profile/my_impacts.dart';
+import 'package:gcc/Screens/profile/referral_screen.dart';
+import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
-import 'package:gcc/profile/account_security_screen.dart';
-import 'package:gcc/profile/edit_profile.dart';
-import 'package:gcc/profile/green_chain.dart';
-import 'package:gcc/profile/help_n_support.dart';
-import 'package:gcc/profile/kyc_screen.dart';
-import 'package:gcc/profile/my_impacts.dart';
-import 'package:gcc/profile/referral_screen.dart';
-import 'package:gcc/profile/transaction_record_screen.dart';
-import 'package:gcc/profile/wallet.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

@@ -397,38 +397,38 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F8E9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.eco_outlined, color: Colors.green),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'You\'re in the top 20% of contributors! 🌿',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                      Text(
-                        'Keep going, you\'re an inspiration.',
-                        style: TextStyle(color: Colors.grey, fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.all(12),
+          //   decoration: BoxDecoration(
+          //     color: const Color(0xFFF1F8E9),
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: const Row(
+          //     children: [
+          //       Icon(Icons.eco_outlined, color: Colors.green),
+          //       SizedBox(width: 12),
+          //       Expanded(
+          //         child: Column(
+          //           crossAxisAlignment: CrossAxisAlignment.start,
+          //           children: [
+          //             Text(
+          //               'You\'re in the top 20% of contributors! 🌿',
+          //               style: TextStyle(
+          //                 fontWeight: FontWeight.bold,
+          //                 fontSize: 11,
+          //               ),
+          //             ),
+          //             Text(
+          //               'Keep going, you\'re an inspiration.',
+          //               style: TextStyle(color: Colors.grey, fontSize: 10),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //       Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/contribute/contribute_screen.dart';
-import 'package:gcc/profile/profile.dart';
-import 'package:gcc/earn/earn_rewards_screen.dart';
-import 'package:gcc/Homescreen/gcc_home_screen.dart';
-import 'package:gcc/reward/rewards_store_screen.dart';
+import 'package:flutter/services.dart'; // <-- for SystemNavigator
+import 'package:gcc/Screens/contribute/contribute_screen.dart';
+import 'package:gcc/Screens/profile/profile.dart';
+import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
+import 'package:gcc/Screens/Homescreen/gcc_home_screen.dart';
+import 'package:gcc/Screens/reward/rewards_store_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget? child;
@@ -17,6 +18,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
+  bool _isShowingDialog = false; // prevent multiple dialogs
 
   final List<Widget> _screens = const [
     GCCHomeScreen(), // index 0 - Home
@@ -38,42 +40,95 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  // ─── EXIT CONFIRMATION DIALOG ─────────────────────────────────────────────
+  Future<bool> _showExitConfirmation(BuildContext context) async {
+    if (_isShowingDialog) return false;
+    setState(() => _isShowingDialog = true);
+
+    try {
+      final result = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (ctx) => AlertDialog(
+              title: const Text('Exit App?'),
+              content: const Text('Are you sure you want to exit the app?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('No'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Yes'),
+                ),
+              ],
+            ),
+      );
+
+      if (mounted) setState(() => _isShowingDialog = false);
+      return result ?? false;
+    } catch (e) {
+      if (mounted) setState(() => _isShowingDialog = false);
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body:
-          widget.child != null
-              ? widget.child!
-              : IndexedStack(index: _currentIndex, children: _screens),
-      extendBody: true,
-      bottomNavigationBar:
-          widget.child == null
-              ? Container(
-                height: 90,
-                margin: const EdgeInsets.fromLTRB(15, 0, 15, 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(Icons.home_outlined, "Home", 0),
-                    _buildNavItem(Icons.stars_outlined, "Earn", 1),
-                    _buildCenterNavItem(2),
-                    _buildNavItem(Icons.card_giftcard_outlined, "Rewards", 3),
-                    _buildNavItem(Icons.person_outline, "Profile", 4),
-                  ],
-                ),
-              )
-              : null,
+    // Wrap Scaffold with PopScope to intercept system back button
+    return PopScope(
+      canPop: false, // we handle it ourselves
+      onPopInvoked: (didPop) async {
+        if (didPop || !mounted) return;
+
+        // ONLY show confirmation if we are on the HOME tab (index 0)
+        if (_currentIndex == 0) {
+          final shouldExit = await _showExitConfirmation(context);
+          if (shouldExit) {
+            SystemNavigator.pop();
+          }
+        } else {
+          setState(() {
+            _currentIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        body:
+            widget.child != null
+                ? widget.child!
+                : IndexedStack(index: _currentIndex, children: _screens),
+        extendBody: true,
+        bottomNavigationBar:
+            widget.child == null
+                ? Container(
+                  height: 90,
+                  margin: const EdgeInsets.fromLTRB(15, 0, 15, 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(Icons.home_outlined, "Home", 0),
+                      _buildNavItem(Icons.stars_outlined, "Earn", 1),
+                      _buildCenterNavItem(2),
+                      _buildNavItem(Icons.card_giftcard_outlined, "Rewards", 3),
+                      _buildNavItem(Icons.person_outline, "Profile", 4),
+                    ],
+                  ),
+                )
+                : null,
+      ),
     );
   }
 

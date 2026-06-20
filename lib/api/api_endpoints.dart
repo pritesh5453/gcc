@@ -10,7 +10,7 @@ class ApiEndpoints {
   static const String sellTrading = "$baseUrl/trading/sell";
 
   //Buy Screen API
-  static const String paymentsDeposits = "$baseUrl/payments/deposits";
+  static const String buyCoin = "$baseUrl/trading/buy";
 
   // Auth APIs
   static const String login = "$baseUrl/login";

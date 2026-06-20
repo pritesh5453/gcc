@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Models_nServices/Buy_transaction/buy_transaction_model.dart';
 import 'dart:math' as math;
+
 import 'package:gcc/Models_nServices/deposite/deposite_model.dart';
+import 'package:gcc/Screens/profile/my_impacts.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
-  final BuyTransactionData? transactionData;
-  final DepositData? depositData;
+  final Transaction? transactionData; // Only buy transaction
 
-  const PaymentSuccessScreen({
-    super.key,
-    this.transactionData,
-    this.depositData,
-  });
+  const PaymentSuccessScreen({super.key, this.transactionData});
 
   @override
   State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
@@ -86,7 +82,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                           const SizedBox(height: 20),
                           _buildWhatsNextSection(),
                           const SizedBox(height: 20),
-                          _buildTransactionDetails(),
+                          _buildTransactionDetails(), // Only for buy
                           const SizedBox(height: 12),
                           _buildReceiptNote(),
                           const SizedBox(height: 16),
@@ -134,7 +130,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
             ),
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: () => Navigator.pop(context),
             child: const Icon(Icons.close, color: Colors.black54, size: 24),
           ),
         ],
@@ -303,74 +299,38 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   // ── Success Text ──────────────────────────────────────────────────────────
   Widget _buildSuccessText() {
-    bool isDeposit =
-        widget.depositData != null && widget.transactionData == null;
-
-    if (isDeposit) {
-      final amount = widget.depositData?.amount?.toStringAsFixed(2) ?? '0.00';
-      return Column(
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Deposit Submitted! ',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: primaryGreen,
-                ),
+    final amountCoin =
+        widget.transactionData?.amountCoin?.toStringAsFixed(2) ?? '0';
+    return Column(
+      children: [
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'You did it! ',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: primaryGreen,
               ),
-              Text('✅', style: TextStyle(fontSize: 20)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your deposit of ₹$amount has been submitted for verification.',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Admin will verify your payment within 24 hours.',
-            style: TextStyle(fontSize: 12, color: Colors.orange[700]),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    } else {
-      final amountInr =
-          widget.transactionData?.transaction?.amountInr?.toStringAsFixed(0) ??
-          '0';
-      return Column(
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'You did it! ',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: primaryGreen,
-                ),
-              ),
-              Text('🌱', style: TextStyle(fontSize: 20)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$amountInr GCC Units added to your account successfully.',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    }
+            ),
+            Text('🌱', style: TextStyle(fontSize: 20)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$amountCoin GCC Units added to your account successfully.',
+          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
 
   // ── Impact Card ───────────────────────────────────────────────────────────
   Widget _buildImpactCard() {
+    final amountCoin =
+        widget.transactionData?.amountCoin?.toStringAsFixed(0) ?? '55';
     return Container(
       decoration: BoxDecoration(
         color: lightGreenBg,
@@ -397,7 +357,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
             ),
           ),
           const SizedBox(height: 14),
-          // Stats row
           IntrinsicHeight(
             child: Row(
               children: [
@@ -429,8 +388,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                 Expanded(
                   child: _ImpactStat(
                     emoji: '🍃',
-                    value: '55',
-                    unit: 'Tres',
+                    value: amountCoin,
+                    unit: 'Trees',
                     label: 'GCC Units\nAdded to your account',
                     isGreen: true,
                   ),
@@ -439,7 +398,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
             ),
           ),
           const SizedBox(height: 14),
-          // Quote bar
           Container(
             margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -503,64 +461,59 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         const SizedBox(height: 12),
         Row(
           children:
-              items
-                  .map(
-                    (item) => Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              item['emoji']!,
-                              style: const TextStyle(fontSize: 28),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              item['title']!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item['sub']!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+              items.map((item) {
+                return Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 12,
                     ),
-                  )
-                  .toList(),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          item['emoji']!,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item['title']!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item['sub']!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
       ],
     );
   }
 
-  // ── Transaction Details ───────────────────────────────────────────────────
+  // ── Transaction Details (for Buy) ────────────────────────────────────────
   Widget _buildTransactionDetails() {
-    final txData = widget.transactionData?.transaction;
-    final txId = txData?.id?.toString() ?? 'N/A';
-    final amountInr = txData?.amountInr?.toStringAsFixed(2) ?? '0.00';
-    final amountCoin = txData?.amountCoin?.toStringAsFixed(2) ?? '0.00';
-    final createdAt = txData?.createdAt ?? 'N/A';
+    final tx = widget.transactionData;
+    if (tx == null) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -584,7 +537,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           _TxRow(
             icon: Icons.receipt_outlined,
             label: 'Transaction ID',
-            value: txId,
+            value: tx.id.toString(),
             valueColor: Colors.black87,
             showCopy: true,
           ),
@@ -592,14 +545,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           _TxRow(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Amount Paid',
-            value: '₹$amountInr',
+            value: '₹${tx.amountInr.toStringAsFixed(2)}',
             valueColor: Colors.black87,
           ),
           _divider(),
           _TxRow(
             icon: Icons.eco_outlined,
             label: 'GCC Units Added',
-            value: '$amountCoin GCC',
+            value: '${tx.amountCoin.toStringAsFixed(2)} GCC',
             valueColor: primaryGreen,
             valueBold: true,
           ),
@@ -607,7 +560,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           _TxRow(
             icon: Icons.access_time_outlined,
             label: 'Date & Time',
-            value: createdAt,
+            value: tx.createdAt,
             valueColor: Colors.black87,
             valueBold: true,
           ),
@@ -623,13 +576,15 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   // ── Receipt Note ──────────────────────────────────────────────────────────
   Widget _buildReceiptNote() {
+    // Replace with actual user email later
+    const email = 'your@email.com';
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(Icons.verified_user_outlined, size: 14, color: primaryGreen),
         const SizedBox(width: 6),
         Text(
-          'A receipt has been sent to rahulsharma@gmail.com',
+          'A receipt has been sent to $email',
           style: TextStyle(fontSize: 11, color: Colors.grey[600]),
         ),
       ],
@@ -642,7 +597,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyImpactScreen()),
+              );
+            },
             style: OutlinedButton.styleFrom(
               foregroundColor: primaryGreen,
               side: const BorderSide(color: primaryGreen, width: 1.5),
@@ -667,7 +627,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryGreen,
               foregroundColor: Colors.white,
@@ -753,14 +715,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   }
 }
 
-// ── Helper Data class for confetti ───────────────────────────────────────────
+// ─── Helper Classes (unchanged) ──────────────────────────────────────────────
+
 class _ConfettiData {
   final double angle;
   final double radius;
   final Color color;
   final int width;
   final int height;
-
   const _ConfettiData({
     required this.angle,
     required this.radius,
@@ -770,14 +732,12 @@ class _ConfettiData {
   });
 }
 
-// ── Impact Stat Widget ────────────────────────────────────────────────────────
 class _ImpactStat extends StatelessWidget {
   final String emoji;
   final String value;
   final String unit;
   final String label;
   final bool isGreen;
-
   const _ImpactStat({
     required this.emoji,
     required this.value,
@@ -832,12 +792,10 @@ class _ImpactStat extends StatelessWidget {
   }
 }
 
-// ── CO2 Stat Widget ───────────────────────────────────────────────────────────
 class _ImpactStatCO2 extends StatelessWidget {
   final String value;
   final String unit;
   final String label;
-
   const _ImpactStatCO2({
     required this.value,
     required this.unit,
@@ -903,7 +861,6 @@ class _ImpactStatCO2 extends StatelessWidget {
   }
 }
 
-// ── Transaction Row Widget ────────────────────────────────────────────────────
 class _TxRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -911,7 +868,6 @@ class _TxRow extends StatelessWidget {
   final Color valueColor;
   final bool showCopy;
   final bool valueBold;
-
   const _TxRow({
     required this.icon,
     required this.label,
@@ -939,7 +895,16 @@ class _TxRow extends StatelessWidget {
         ),
         if (showCopy) ...[
           const SizedBox(width: 6),
-          const Icon(Icons.copy_outlined, size: 14, color: Colors.grey),
+          GestureDetector(
+            onTap: () {
+              // Copy to clipboard logic
+            },
+            child: const Icon(
+              Icons.copy_outlined,
+              size: 14,
+              color: Colors.grey,
+            ),
+          ),
         ],
       ],
     );

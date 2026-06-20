@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/green_exchange.dart';
+import 'package:gcc/Screens/Homescreen/green_exchange.dart';
 import 'package:gcc/Models_nServices/Sell/sell_trading_svc.dart';
 
 class ExchangeReviewScreen extends StatefulWidget {

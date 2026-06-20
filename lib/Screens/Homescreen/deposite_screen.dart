@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Homescreen/payment_screen.dart';
+import 'package:gcc/Screens/Homescreen/payment_screen.dart';
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});

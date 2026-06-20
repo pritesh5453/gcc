@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Navbar/navbar.dart';
-import 'package:gcc/profile/transaction_record_screen.dart';
+import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 
 class GreenExchangeApp extends StatelessWidget {
   const GreenExchangeApp({super.key});

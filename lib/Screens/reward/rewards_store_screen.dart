@@ -249,19 +249,6 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(Icons.chevron_left, color: Colors.black, size: 28),
-            ),
-          ),
           const Expanded(
             child: Column(
               children: [
