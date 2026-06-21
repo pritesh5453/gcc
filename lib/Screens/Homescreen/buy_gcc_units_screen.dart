@@ -6,6 +6,7 @@ import 'package:gcc/Models_nServices/Banner/banner_model.dart';
 import 'package:gcc/Models_nServices/Banner/banner_svc.dart';
 import 'package:gcc/Models_nServices/Trading_response/trading_model.dart';
 import 'package:gcc/Models_nServices/Trading_response/trading_svc.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 
 class BuyGCCUnitsScreen extends StatefulWidget {
   const BuyGCCUnitsScreen({super.key});
@@ -60,9 +61,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     if (text.isNotEmpty) {
       final amount = double.tryParse(text);
       if (amount != null && amount > 0 && currentUnitPrice > 0) {
+        final units = (amount / currentUnitPrice).floor();
         setState(() {
           _customAmount = amount;
-          _customUnits = (amount / currentUnitPrice).floor();
+          _customUnits = units;
         });
       } else {
         setState(() {
@@ -102,7 +104,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       _isCustomAmount = true;
       selectedIndex = -1; // Deselect any pack
     });
-    // Focus on the text field after a short delay
     Future.delayed(const Duration(milliseconds: 100), () {
       _customAmountFocusNode.requestFocus();
     });
@@ -118,7 +119,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     });
   }
 
-  // Get the current selected amount
   double get _selectedAmount {
     if (_isCustomAmount && _customAmount != null && _customAmount! > 0) {
       return _customAmount!;
@@ -129,7 +129,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     return 0;
   }
 
-  // Get the current selected units
   int get _selectedUnits {
     if (_isCustomAmount && _customUnits != null && _customUnits! > 0) {
       return _customUnits!;
@@ -140,18 +139,18 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     return 0;
   }
 
-  // Check if button should be enabled
   bool get _isButtonEnabled {
     if (_isCustomAmount) {
-      // For custom amount, check if amount is valid (> 0)
-      return _customAmount != null && _customAmount! > 0;
+      // For custom: valid amount and at least 1 unit
+      return _customAmount != null &&
+          _customAmount! > 0 &&
+          _customUnits != null &&
+          _customUnits! > 0;
     } else {
-      // For pack selection, check if a pack is selected
       return selectedIndex >= 0 && selectedIndex < packs.length;
     }
   }
 
-  // Check if any amount is selected for showing summary
   bool get _hasSelection {
     return (_isCustomAmount && _customAmount != null && _customAmount! > 0) ||
         (selectedIndex >= 0 && selectedIndex < packs.length);
@@ -223,7 +222,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                _buildAppBar(),
+                const CommonAppBar(title: 'Buy GCC Units', subtitle: ''),
                 _buildTrustBar(),
                 Expanded(
                   child: SingleChildScrollView(
@@ -257,59 +256,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
         );
       },
-    );
-  }
-
-  // ── App Bar ────────────────────────────────────────────────────────────────
-  Widget _buildAppBar() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.chevron_left,
-                color: Colors.black87,
-                size: 22,
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Buy GCC Units',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.help_outline,
-              color: Colors.black87,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -347,7 +293,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     child: Text('|', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
   );
 
-  // ── Banner Section with Auto Slide ────────────────────────────────────────
+  // ── Banner Section ────────────────────────────────────────────────────────
   Widget _buildBannerSection() {
     return FutureBuilder<List<BannerModel>>(
       future: _bannerFuture,
@@ -365,7 +311,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           );
         }
 
-        // Show fallback banner if no banners available
         if (snapshot.hasError ||
             snapshot.data == null ||
             snapshot.data!.isEmpty) {
@@ -373,8 +318,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         }
 
         final banners = snapshot.data!;
-
-        // Start auto-slide when banners are loaded
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _startAutoSlide(banners);
         });
@@ -464,7 +407,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // Green gradient bg right side
           Positioned(
             right: 0,
             top: 0,
@@ -480,7 +422,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
             ),
           ),
-          // Birds
           const Positioned(
             top: 18,
             right: 60,
@@ -505,7 +446,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               style: TextStyle(color: Color(0xFF4CAF50), fontSize: 10),
             ),
           ),
-          // Big plant + hand on right
           const Positioned(
             right: 10,
             top: 10,
@@ -518,7 +458,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ],
             ),
           ),
-          // Text left
           const Positioned(
             left: 18,
             top: 28,
@@ -756,6 +695,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   // ── Custom Amount Card ────────────────────────────────────────────────────
   Widget _buildCustomAmountCard() {
+    final bool showUnits = _customUnits != null && _customUnits! > 0;
+    final bool showWarning =
+        _customAmount != null && _customAmount! > 0 && _customUnits == 0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -843,7 +786,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
             ],
           ),
-          if (_customAmount != null && _customUnits != null) ...[
+          if (showUnits) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -882,6 +825,29 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
             ),
           ],
+          if (showWarning) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade300),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Amount is too small to receive any units. Please enter a higher amount.',
+                      style: TextStyle(fontSize: 12, color: Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           const Text(
             'Minimum amount: ₹1',
@@ -895,6 +861,8 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   // ── Summary Card ──────────────────────────────────────────────────────────
   Widget _buildSummaryCard() {
     final totalAmount = _selectedAmount.toStringAsFixed(2);
+    final units = _selectedUnits;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -903,38 +871,48 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FAF2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.account_balance_wallet_outlined,
-              color: Color(0xFF1B6B2F),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'You Pay',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              Text(
-                '₹$totalAmount',
-                style: const TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF0FAF2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Color(0xFF1B6B2F),
+                    size: 22,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'You Pay',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      Text(
+                        '₹$totalAmount',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Container(
             width: 32,
             height: 32,
@@ -942,40 +920,54 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               border: Border.all(color: Colors.grey.shade300),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.drag_handle, color: Colors.grey, size: 16),
+            child: const Icon(
+              Icons.arrow_forward,
+              color: Colors.grey,
+              size: 18,
+            ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'You Get',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              Text(
-                '$_selectedUnits Units',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B6B2F),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  'You Get',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FAF2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '₹${currentUnitPrice.toStringAsFixed(2)} / Unit (Current Price)',
+                Text(
+                  '$units Units',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                     color: Color(0xFF1B6B2F),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FAF2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '₹${currentUnitPrice.toStringAsFixed(2)} / Unit',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF1B6B2F),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -984,6 +976,9 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   // ── Impact Card ───────────────────────────────────────────────────────────
   Widget _buildImpactCard() {
+    final units = _selectedUnits;
+    final treesSupported = (units * 0.5).toInt();
+
     return Container(
       height: 140,
       decoration: BoxDecoration(
@@ -994,7 +989,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // Right side green scene
           Positioned(
             right: 0,
             top: 0,
@@ -1029,10 +1023,9 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
             ),
           ),
-          // Thank you badge
           Positioned(
-            right: 8,
-            bottom: 10,
+            top: 8,
+            right: 12,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -1040,11 +1033,13 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.favorite, color: Colors.white, size: 12),
                   SizedBox(width: 4),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Thank You!',
@@ -1064,7 +1059,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               ),
             ),
           ),
-          // Left text
           Positioned(
             left: 16,
             top: 16,
@@ -1087,7 +1081,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$_selectedUnits Units = Supports ~${(_selectedUnits * 0.5).toInt()} Trees',
+                  '$units Units = Supports ~${treesSupported} Trees',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -1158,13 +1152,14 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   // ── Bottom Bar ────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
-    // Get validation message if needed
     String? validationMessage;
     if (_isCustomAmount) {
       if (_customAmountController.text.isEmpty) {
         validationMessage = 'Please enter an amount';
       } else if (_customAmount == null || _customAmount! <= 0) {
         validationMessage = 'Please enter a valid amount';
+      } else if (_customUnits == null || _customUnits! <= 0) {
+        validationMessage = 'Amount is too low to receive any units';
       }
     }
 
@@ -1250,7 +1245,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
     debugPrint('Buy request amount: $amount, units: $units');
 
-    // Navigate to manual deposit screen for payment
     Navigator.push(
       context,
       MaterialPageRoute(

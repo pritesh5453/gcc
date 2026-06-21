@@ -888,15 +888,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
               ),
             ),
             Spacer(),
-            Text(
-              'View All',
-              style: TextStyle(
-                fontSize: 12,
-                color: primaryGreen,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 16, color: primaryGreen),
           ],
         ),
         const SizedBox(height: 12),

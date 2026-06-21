@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class ReferralGrowthScreen extends StatelessWidget {
   const ReferralGrowthScreen({super.key});
@@ -6,120 +7,65 @@ class ReferralGrowthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Background gradient as seen in image_bbf98a.png
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0A4D2E), Color(0xFF1B6B2F)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 50),
-            _buildAppBar(context),
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(top: 20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40),
-                  ),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 30,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildForestClubCard(),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(child: _buildRewardBoostCard()),
-                          const SizedBox(width: 15),
-                          Expanded(child: _buildNetworkImpactCard()),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      _buildMonthlyRewardsCard(),
-                      const SizedBox(height: 25),
-                      _buildClubLevelsSection(),
-                      const SizedBox(height: 20),
-                      _buildInviteFriendsCard(),
-                      const SizedBox(height: 30),
-                      _buildInviteButton(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
-
-          Row(
+      backgroundColor: Colors.white, // 👈 force white background
+      body: SafeArea(
+        child: Container(
+          color: Colors.white, // 👈 explicit white, no gradient
+          child: Column(
             children: [
-              const Text(
-                "Referral & Growth",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              const CommonAppBar(
+                title: 'Referral & Growth',
+                subtitle: 'Grow your network, grow the planet',
+                showHelp: true,
+              ),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 5,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildForestClubCard(),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(child: _buildRewardBoostCard()),
+                            const SizedBox(width: 15),
+                            Expanded(child: _buildNetworkImpactCard()),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildMonthlyRewardsCard(),
+                        const SizedBox(height: 25),
+                        _buildClubLevelsSection(),
+                        const SizedBox(height: 20),
+                        _buildInviteFriendsCard(),
+                        const SizedBox(height: 30),
+                        _buildInviteButton(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.eco, color: Colors.green[300]),
             ],
           ),
-
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.analytics_outlined,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+
+  // ---------- All existing helper widgets (unchanged) ----------
 
   Widget _buildForestClubCard() {
     return Container(
@@ -136,7 +82,6 @@ class ReferralGrowthScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Avatar with Badge matching image_bbf98a.png
               Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
@@ -412,12 +357,7 @@ class ReferralGrowthScreen extends StatelessWidget {
           child: Row(
             children: [
               _levelIcon("Earth", "1.0x", Icons.eco_outlined, false),
-              _levelIcon(
-                "Forest",
-                "1.25x",
-                Icons.eco,
-                true,
-              ), // MATCHING image_bbf98a.png
+              _levelIcon("Forest", "1.25x", Icons.eco, true),
               _levelIcon("Amazon", "1.5x", Icons.park, false),
               _levelIcon("Atmosphere", "1.75x", Icons.public, false),
               _levelIcon("Ozone", "2.0x", Icons.cloud_queue, false),
@@ -428,7 +368,7 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper Widgets ---
+  // --- Helper Widgets (unchanged) ---
 
   Widget _smallCardLayout(Widget child) {
     return Container(

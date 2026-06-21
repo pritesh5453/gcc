@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <-- ADDED for SystemNavigator
+import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Screens/Homescreen/Redeem_screen.dart';
 import 'package:gcc/Screens/Homescreen/resell_&_exchange.dart';
 import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
@@ -8,6 +9,7 @@ import 'package:gcc/Models_nServices/home_screen/home_screen_svc.dart';
 import 'package:gcc/Screens/profile/help_n_support.dart';
 import 'package:gcc/Screens/profile/my_impacts.dart';
 import 'package:gcc/Screens/profile/referral_screen.dart';
+import 'package:gcc/Screens/reward/rewards_store_screen.dart';
 import 'package:gcc/exception/daily_streak_card.dart';
 import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
 import 'package:gcc/prefs/app_preference.dart';
@@ -191,7 +193,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     Text(
                       'GCC',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
                         color: primaryGreen,
                         letterSpacing: 1,
@@ -201,7 +203,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                 ),
                 Text(
                   'Green Contribution Certificate',
-                  style: TextStyle(fontSize: 8, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
                 ),
               ],
             ),
@@ -643,14 +645,15 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: primaryGreen.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text(
                             'Current Price : ',
@@ -660,12 +663,15 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          Text(
-                            '₹${(_homeScreenData?.currentGccUnitPrice ?? 0).toStringAsFixed(2)} / Unit',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: primaryGreen,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              '₹${(_homeScreenData?.currentGccUnitPrice ?? 0).toStringAsFixed(2)} / Unit',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: primaryGreen,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -788,7 +794,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const RedeemRewardsScreen(),
+                        builder: (_) => const MainScreen(initialIndex: 3),
                       ),
                     );
                   },
@@ -1092,62 +1098,81 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children:
-            actions.map((a) {
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => a['screen'] as Widget),
-                    );
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(right: a == actions.last ? 0 : 12),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children:
+              actions.map((a) {
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => a['screen'] as Widget,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          a['emoji'] as String,
-                          style: const TextStyle(fontSize: 28),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          a['title'] as String,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                      );
+                    },
+                    child: Container(
+                      height: 140,
+                      margin: EdgeInsets.only(
+                        right: a == actions.last ? 0 : 12,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            a['emoji'] as String,
+                            style: const TextStyle(fontSize: 28),
+                          ),
 
-                        const SizedBox(height: 2),
+                          const SizedBox(height: 8),
 
-                        Text(
-                          a['subtitle'] as String,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          Text(
+                            a['title'] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          Text(
+                            a['subtitle'] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+        ),
       ),
     );
   }

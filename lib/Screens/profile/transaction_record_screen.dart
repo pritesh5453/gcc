@@ -3,6 +3,7 @@ import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/Models_nServices/transaction/transaction_model.dart';
 import 'package:gcc/Models_nServices/transaction/transaction_svc.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -171,28 +172,24 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBF8),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Transaction History',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        centerTitle: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
           children: [
-            _buildSummaryCard(),
-            const SizedBox(height: 20),
-            _buildFilterChips(),
-            const SizedBox(height: 16),
-            Expanded(child: _buildTransactionList()),
+            const CommonAppBar(title: 'Transaction History', showHelp: false),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildSummaryCard(),
+                    const SizedBox(height: 20),
+                    _buildFilterChips(),
+                    const SizedBox(height: 16),
+                    Expanded(child: _buildTransactionList()),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

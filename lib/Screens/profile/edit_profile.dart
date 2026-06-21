@@ -6,7 +6,10 @@ import 'package:gcc/api/api_endpoints.dart';
 import 'package:gcc/api/dio_client.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path if needed
 
+// -------------------------------------------------------------------------
+// 👇 These classes are already in your file – keep them as they are
 class KycUpdateRequest {
   final String name;
   final String phone;
@@ -68,7 +71,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final AppPreference _appPreference = AppPreference();
 
-  // Controllers for all fields – will be initialized after data fetch
   late TextEditingController _fullNameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -108,8 +110,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final data = response.data['data'];
         final String name = data['name'] ?? '';
-        final String email =
-            data['email'] ?? ''; // if email not in KYC, keep empty
+        final String email = data['email'] ?? '';
         final String phone = data['phone'] ?? '';
         final String dob = data['date_of_birth'] ?? '';
         final String gender = data['gender'] ?? 'male';
@@ -118,7 +119,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final String state = data['state'] ?? '';
         final String postalCode = data['postal_code'] ?? '';
 
-        // Initialize controllers with fetched data
         _fullNameController = TextEditingController(text: name);
         _emailController = TextEditingController(text: email);
         _phoneController = TextEditingController(text: phone);
@@ -204,7 +204,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
-            // Navigate back to previous screen on success
             Navigator.pop(context);
           }
         } else {
@@ -227,228 +226,261 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F0),
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: const Color(0xFF1B5E20),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _saveChanges,
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2E7D32),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: $_error', textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _fetchProfileData,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Avatar section
-                      Center(
-                        child: Stack(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ✅ CommonAppBar – no trailing, just title + back
+            const CommonAppBar(title: 'Edit Profile', showHelp: false),
+            Expanded(
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Color(0xFFC8E6C9),
-                              child: Icon(
-                                Icons.person,
-                                size: 55,
-                                color: Color(0xFF2E7D32),
-                              ),
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
                             ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF2E7D32),
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(6),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 18,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            const SizedBox(height: 16),
+                            Text('Error: $_error', textAlign: TextAlign.center),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _fetchProfileData,
+                              child: const Text('Retry'),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 30),
+                      )
+                      : SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Avatar section
+                              Center(
+                                child: Stack(
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 50,
+                                      backgroundColor: Color(0xFFC8E6C9),
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 55,
+                                        color: Color(0xFF2E7D32),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF2E7D32),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        padding: const EdgeInsets.all(6),
+                                        child: const Icon(
+                                          Icons.camera_alt,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
 
-                      _buildTextField(
-                        controller: _fullNameController,
-                        label: 'Full Name',
-                        icon: Icons.person_outline,
-                        validator:
-                            (v) => v!.trim().isEmpty ? 'Name required' : null,
-                      ),
-                      const SizedBox(height: 20),
+                              // All your existing fields
+                              _buildTextField(
+                                controller: _fullNameController,
+                                label: 'Full Name',
+                                icon: Icons.person_outline,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'Name required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
 
-                      _buildTextField(
-                        controller: _emailController,
-                        label: 'Email Address',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (v) {
-                          if (v!.trim().isEmpty) return 'Email required';
-                          if (!v.contains('@')) return 'Enter valid email';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                              _buildTextField(
+                                controller: _emailController,
+                                label: 'Email Address',
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (v) {
+                                  if (v!.trim().isEmpty)
+                                    return 'Email required';
+                                  if (!v.contains('@'))
+                                    return 'Enter valid email';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
 
-                      _buildTextField(
-                        controller: _phoneController,
-                        label: 'Phone Number',
-                        icon: Icons.phone_android_outlined,
-                        keyboardType: TextInputType.phone,
-                        validator:
-                            (v) => v!.trim().isEmpty ? 'Phone required' : null,
-                      ),
-                      const SizedBox(height: 20),
+                              _buildTextField(
+                                controller: _phoneController,
+                                label: 'Phone Number',
+                                icon: Icons.phone_android_outlined,
+                                keyboardType: TextInputType.phone,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'Phone required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
 
-                      GestureDetector(
-                        onTap: () => _selectDate(context),
-                        child: AbsorbPointer(
-                          child: _buildTextField(
-                            controller: _dobController,
-                            label: 'Date of Birth',
-                            icon: Icons.cake_outlined,
-                            validator:
-                                (v) =>
-                                    v!.trim().isEmpty ? 'DOB required' : null,
+                              GestureDetector(
+                                onTap: () => _selectDate(context),
+                                child: AbsorbPointer(
+                                  child: _buildTextField(
+                                    controller: _dobController,
+                                    label: 'Date of Birth',
+                                    icon: Icons.cake_outlined,
+                                    validator:
+                                        (v) =>
+                                            v!.trim().isEmpty
+                                                ? 'DOB required'
+                                                : null,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              DropdownButtonFormField<String>(
+                                value: _selectedGender,
+                                decoration: InputDecoration(
+                                  labelText: 'Gender',
+                                  prefixIcon: const Icon(
+                                    Icons.person_outline,
+                                    color: Color(0xFF558B2F),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 16,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF66BB6A),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                                items:
+                                    _genderOptions.map((gender) {
+                                      return DropdownMenuItem<String>(
+                                        value: gender,
+                                        child: Text(gender.toUpperCase()),
+                                      );
+                                    }).toList(),
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    _selectedGender = newValue!;
+                                  });
+                                },
+                                validator:
+                                    (value) =>
+                                        value == null
+                                            ? 'Gender required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField(
+                                controller: _addressController,
+                                label: 'Address',
+                                icon: Icons.home_outlined,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'Address required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField(
+                                controller: _cityController,
+                                label: 'City',
+                                icon: Icons.location_city_outlined,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'City required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField(
+                                controller: _stateController,
+                                label: 'State',
+                                icon: Icons.map_outlined,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'State required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildTextField(
+                                controller: _postalCodeController,
+                                label: 'Postal Code',
+                                icon: Icons.mail_outline,
+                                keyboardType: TextInputType.number,
+                                validator:
+                                    (v) =>
+                                        v!.trim().isEmpty
+                                            ? 'Postal code required'
+                                            : null,
+                              ),
+                              const SizedBox(height: 32),
+
+                              // ✅ SAVE BUTTON – full width, green, at the bottom
+                              SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _saveChanges,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: const Text(
+                                    'Save Changes',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      DropdownButtonFormField<String>(
-                        value: _selectedGender,
-                        decoration: InputDecoration(
-                          labelText: 'Gender',
-                          prefixIcon: const Icon(
-                            Icons.person_outline,
-                            color: Color(0xFF558B2F),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 16,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF66BB6A),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        items:
-                            _genderOptions.map((gender) {
-                              return DropdownMenuItem<String>(
-                                value: gender,
-                                child: Text(gender.toUpperCase()),
-                              );
-                            }).toList(),
-                        onChanged: (newValue) {
-                          setState(() {
-                            _selectedGender = newValue!;
-                          });
-                        },
-                        validator:
-                            (value) => value == null ? 'Gender required' : null,
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildTextField(
-                        controller: _addressController,
-                        label: 'Address',
-                        icon: Icons.home_outlined,
-                        validator:
-                            (v) =>
-                                v!.trim().isEmpty ? 'Address required' : null,
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildTextField(
-                        controller: _cityController,
-                        label: 'City',
-                        icon: Icons.location_city_outlined,
-                        validator:
-                            (v) => v!.trim().isEmpty ? 'City required' : null,
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildTextField(
-                        controller: _stateController,
-                        label: 'State',
-                        icon: Icons.map_outlined,
-                        validator:
-                            (v) => v!.trim().isEmpty ? 'State required' : null,
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildTextField(
-                        controller: _postalCodeController,
-                        label: 'Postal Code',
-                        icon: Icons.mail_outline,
-                        keyboardType: TextInputType.number,
-                        validator:
-                            (v) =>
-                                v!.trim().isEmpty
-                                    ? 'Postal code required'
-                                    : null,
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
-              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

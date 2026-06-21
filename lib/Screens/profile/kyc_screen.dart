@@ -5,6 +5,7 @@ import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class KycScreen extends StatefulWidget {
   const KycScreen({super.key});
@@ -412,7 +413,7 @@ class _KycScreenState extends State<KycScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // ---------- UI Builders (exactly as before) ----------
+  // ---------- UI Builders ----------
   @override
   Widget build(BuildContext context) {
     if (_isLoadingDetails) {
@@ -460,17 +461,30 @@ class _KycScreenState extends State<KycScreen> {
     }
   }
 
-  Widget _buildLoading() {
+  // Scaffold builder with CommonAppBar
+  Widget _buildScaffoldWithAppBar(Widget body) {
     return Scaffold(
       backgroundColor: const Color(0xFFEFF2F7),
-      body: const Center(child: CircularProgressIndicator()),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const CommonAppBar(title: 'KYC Verification', showHelp: false),
+            Expanded(child: body),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoading() {
+    return _buildScaffoldWithAppBar(
+      const Center(child: CircularProgressIndicator()),
     );
   }
 
   Widget _buildError() {
-    return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F7),
-      body: Center(
+    return _buildScaffoldWithAppBar(
+      Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -487,30 +501,19 @@ class _KycScreenState extends State<KycScreen> {
   }
 
   Widget _buildStatusScreen(String message, IconData icon, Color color) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F7),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 80, color: color),
-                  const SizedBox(height: 20),
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+    return _buildScaffoldWithAppBar(
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 80, color: color),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -520,55 +523,44 @@ class _KycScreenState extends State<KycScreen> {
     final showPan = _panVerified == 'rejected';
     final showBank = _bankVerified == 'rejected';
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F7),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.15),
-                      blurRadius: 20,
-                      spreadRadius: 3,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (showAadhaar) ...[
-                      _buildAadhaarSection(),
-                      const SizedBox(height: 24),
-                    ],
-                    if (showPan) ...[
-                      _buildPanSection(),
-                      const SizedBox(height: 24),
-                    ],
-                    if (showBank) ...[
-                      _buildBankSection(),
-                      const SizedBox(height: 24),
-                    ],
-                    if (!showAadhaar && !showPan && !showBank)
-                      const Center(
-                        child: Text(
-                          'No rejected sections found.',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                  ],
-                ),
+    return _buildScaffoldWithAppBar(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 3,
               ),
-            ),
+            ],
           ),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showAadhaar) ...[
+                _buildAadhaarSection(),
+                const SizedBox(height: 24),
+              ],
+              if (showPan) ...[_buildPanSection(), const SizedBox(height: 24)],
+              if (showBank) ...[
+                _buildBankSection(),
+                const SizedBox(height: 24),
+              ],
+              if (!showAadhaar && !showPan && !showBank)
+                const Center(
+                  child: Text(
+                    'No rejected sections found.',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -583,250 +575,195 @@ class _KycScreenState extends State<KycScreen> {
         _state == null ||
         _postalCode == null;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F7),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.15),
-                      blurRadius: 20,
-                      spreadRadius: 3,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (arePersonalDetailsMissing) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.orange),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning, color: Colors.orange),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Your profile is incomplete. Please update your profile before KYC submission.',
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+    return _buildScaffoldWithAppBar(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (arePersonalDetailsMissing) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning, color: Colors.orange),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Your profile is incomplete. Please update your profile before KYC submission.',
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 20),
                     ],
-                    const Text(
-                      "Aadhar Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      "Aadhar Number",
-                      "12-digit Aadhar number",
-                      _aadharController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 12,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildUploadBox(
-                            label: "Aadhar Front",
-                            icon: Icons.credit_card,
-                            image: _aadharFrontImage,
-                            onTap:
-                                () => _showImageSourceDialog(
-                                  (file) =>
-                                      setState(() => _aadharFrontImage = file),
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildUploadBox(
-                            label: "Aadhar Back",
-                            icon: Icons.credit_card,
-                            image: _aadharBackImage,
-                            onTap:
-                                () => _showImageSourceDialog(
-                                  (file) =>
-                                      setState(() => _aadharBackImage = file),
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(thickness: 1),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "PAN Card Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      "PAN Number",
-                      "10-character PAN",
-                      _panController,
-                      textCapitalization: TextCapitalization.characters,
-                      maxLength: 10,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildUploadBox(
-                      label: "Upload PAN Card",
-                      icon: Icons.image,
-                      fullWidth: true,
-                      image: _panImage,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+              const Text(
+                "Aadhar Details",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                "Aadhar Number",
+                "12-digit Aadhar number",
+                _aadharController,
+                keyboardType: TextInputType.number,
+                maxLength: 12,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildUploadBox(
+                      label: "Aadhar Front",
+                      icon: Icons.credit_card,
+                      image: _aadharFrontImage,
                       onTap:
                           () => _showImageSourceDialog(
-                            (file) => setState(() => _panImage = file),
+                            (file) => setState(() => _aadharFrontImage = file),
                           ),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(thickness: 1),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Bank Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      "Bank Name",
-                      "e.g., State Bank of India",
-                      _bankNameController,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      "Account Holder Name",
-                      "As per bank records",
-                      _accountHolderController,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      "Account Number",
-                      "Enter account number",
-                      _accountNumberController,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      "IFSC Code",
-                      "e.g., SBIN0001234",
-                      _ifscController,
-                      textCapitalization: TextCapitalization.characters,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      "Bank Branch",
-                      "e.g., Connaught Place",
-                      _branchController,
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed:
-                            arePersonalDetailsMissing
-                                ? null
-                                : (_isSubmitting ? null : _submitFullKyc),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2F6BFF),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildUploadBox(
+                      label: "Aadhar Back",
+                      icon: Icons.credit_card,
+                      image: _aadharBackImage,
+                      onTap:
+                          () => _showImageSourceDialog(
+                            (file) => setState(() => _aadharBackImage = file),
                           ),
-                        ),
-                        child:
-                            _isSubmitting
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : const Text(
-                                  "Submit KYC",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                      ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Divider(thickness: 1),
+              const SizedBox(height: 16),
+              const Text(
+                "PAN Card Details",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                "PAN Number",
+                "10-character PAN",
+                _panController,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 10,
+              ),
+              const SizedBox(height: 16),
+              _buildUploadBox(
+                label: "Upload PAN Card",
+                icon: Icons.image,
+                fullWidth: true,
+                image: _panImage,
+                onTap:
+                    () => _showImageSourceDialog(
+                      (file) => setState(() => _panImage = file),
+                    ),
+              ),
+              const SizedBox(height: 24),
+              const Divider(thickness: 1),
+              const SizedBox(height: 16),
+              const Text(
+                "Bank Details",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                "Bank Name",
+                "e.g., State Bank of India",
+                _bankNameController,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Account Holder Name",
+                "As per bank records",
+                _accountHolderController,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Account Number",
+                "Enter account number",
+                _accountNumberController,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "IFSC Code",
+                "e.g., SBIN0001234",
+                _ifscController,
+                textCapitalization: TextCapitalization.characters,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                "Bank Branch",
+                "e.g., Connaught Place",
+                _branchController,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      arePersonalDetailsMissing
+                          ? null
+                          : (_isSubmitting ? null : _submitFullKyc),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2F6BFF),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child:
+                      _isSubmitting
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : const Text(
+                            "Submit KYC",
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color.fromARGB(255, 33, 72, 3),
-            Color.fromARGB(255, 83, 137, 2),
-          ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            "KYC Verification",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }
 
+  // ---------- All helper widgets (unchanged) ----------
   Widget _buildAadhaarSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

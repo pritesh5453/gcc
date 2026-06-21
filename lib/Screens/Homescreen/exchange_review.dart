@@ -140,7 +140,7 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/almost_there.png'),
+                  image: AssetImage('assets/Images/almost_there.png'),
                   fit: BoxFit.fill,
                 ),
               ),

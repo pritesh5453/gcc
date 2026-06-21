@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:gcc/Models_nServices/Impact_Screen/impact_model.dart';
 import 'package:gcc/Models_nServices/Impact_Screen/impact_svc.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
 
@@ -64,7 +65,14 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
     if (_errorMessage.isNotEmpty) {
       return Scaffold(
         backgroundColor: const Color(0xFFF8FBF8),
-        appBar: _buildAppBar(),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(75),
+          child: CommonAppBar(
+            title: 'My Impact',
+            subtitle: 'See the positive change you\'re creating',
+            showHelp: false,
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -94,7 +102,14 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
       length: 4,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FBF8),
-        appBar: _buildAppBar(),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(75),
+          child: CommonAppBar(
+            title: 'My Impact',
+            subtitle: 'See the positive change you\'re creating',
+            showHelp: false,
+          ),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(

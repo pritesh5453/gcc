@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -8,36 +9,38 @@ class HelpSupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBF8),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Help & Support',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        centerTitle: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
           children: [
-            _buildSearchBar(),
-            const SizedBox(height: 20),
-            _buildFaqSection(),
-            const SizedBox(height: 20),
-            _buildContactSection(context),
-            const SizedBox(height: 20),
-            _buildReportIssueCard(context),
-            const SizedBox(height: 80),
+            const CommonAppBar(
+              title: 'Help & Support',
+              showHelp: false, // hide help icon if not needed
+              showBackButton: true,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildSearchBar(),
+                    const SizedBox(height: 20),
+                    _buildFaqSection(),
+                    const SizedBox(height: 20),
+                    _buildContactSection(context),
+                    const SizedBox(height: 20),
+                    _buildReportIssueCard(context),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  // ---------- All existing helper widgets remain unchanged ----------
 
   Widget _buildSearchBar() {
     return Container(
@@ -170,7 +173,6 @@ class HelpSupportScreen extends StatelessWidget {
             title: 'Live Chat',
             subtitle: 'Mon-Fri, 10 AM - 6 PM',
             onTap: () {
-              // Show live chat dialog or navigate
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Live chat feature coming soon!')),
               );

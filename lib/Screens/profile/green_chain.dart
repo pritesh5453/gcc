@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class AboutGreenChainScreen extends StatelessWidget {
   const AboutGreenChainScreen({super.key});
@@ -8,44 +9,42 @@ class AboutGreenChainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBF8),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'About GreenChain',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        centerTitle: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
           children: [
-            _buildHeroSection(),
-            const SizedBox(height: 20),
-            _buildMissionSection(),
-            const SizedBox(height: 20),
-            _buildHowItWorksSection(),
-            const SizedBox(height: 20),
-            _buildBlockchainSection(),
-            const SizedBox(height: 20),
-            _buildStatsSection(),
-            const SizedBox(height: 20),
-            _buildTeamSection(),
-            const SizedBox(height: 20),
-            _buildSocialLinks(context),
-            const SizedBox(height: 20),
-            _buildVersionSection(),
-            const SizedBox(height: 40),
+            const CommonAppBar(title: 'About GreenChain', showHelp: false),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildHeroSection(),
+                    const SizedBox(height: 20),
+                    _buildMissionSection(),
+                    const SizedBox(height: 20),
+                    _buildHowItWorksSection(),
+                    const SizedBox(height: 20),
+                    _buildBlockchainSection(),
+                    const SizedBox(height: 20),
+                    _buildStatsSection(),
+                    const SizedBox(height: 20),
+                    _buildTeamSection(),
+                    const SizedBox(height: 20),
+                    _buildSocialLinks(context),
+                    const SizedBox(height: 20),
+                    _buildVersionSection(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  // ---------- All helper widgets remain completely unchanged ----------
 
   Widget _buildHeroSection() {
     return Container(
@@ -73,10 +72,7 @@ class AboutGreenChainScreen extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'Blockchain for a Greener Tomorrow',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.white70),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -149,13 +145,29 @@ class AboutGreenChainScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _buildStepIcon(Icons.recycling, 'Recycle Waste', 'Deposit plastic, e-waste, or paper at partner centers'),
+          _buildStepIcon(
+            Icons.recycling,
+            'Recycle Waste',
+            'Deposit plastic, e-waste, or paper at partner centers',
+          ),
           const SizedBox(height: 16),
-          _buildStepIcon(Icons.park, 'Earn EcoPoints', 'Get rewarded with EcoPoints for every verified action'),
+          _buildStepIcon(
+            Icons.park,
+            'Earn EcoPoints',
+            'Get rewarded with EcoPoints for every verified action',
+          ),
           const SizedBox(height: 16),
-          _buildStepIcon(Icons.card_giftcard, 'Redeem Rewards', 'Use points for gift cards, plant trees, or donate'),
+          _buildStepIcon(
+            Icons.card_giftcard,
+            'Redeem Rewards',
+            'Use points for gift cards, plant trees, or donate',
+          ),
           const SizedBox(height: 16),
-          _buildStepIcon(Icons.verified_user, 'Blockchain Verified', 'All transactions are recorded on-chain for transparency'),
+          _buildStepIcon(
+            Icons.verified_user,
+            'Blockchain Verified',
+            'All transactions are recorded on-chain for transparency',
+          ),
         ],
       ),
     );
@@ -178,9 +190,18 @@ class AboutGreenChainScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -314,10 +335,26 @@ class AboutGreenChainScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildSocialIcon(Icons.web, 'Website', () => _launchUrl('https://greenchain.com')),
-              _buildSocialIcon(Icons.alternate_email, 'Twitter', () => _launchUrl('https://twitter.com/greenchain')),
-              _buildSocialIcon(Icons.camera_alt, 'Instagram', () => _launchUrl('https://instagram.com/greenchain')),
-              _buildSocialIcon(Icons.facebook, 'Facebook', () => _launchUrl('https://facebook.com/greenchain')),
+              _buildSocialIcon(
+                Icons.web,
+                'Website',
+                () => _launchUrl('https://greenchain.com'),
+              ),
+              _buildSocialIcon(
+                Icons.alternate_email,
+                'Twitter',
+                () => _launchUrl('https://twitter.com/greenchain'),
+              ),
+              _buildSocialIcon(
+                Icons.camera_alt,
+                'Instagram',
+                () => _launchUrl('https://instagram.com/greenchain'),
+              ),
+              _buildSocialIcon(
+                Icons.facebook,
+                'Facebook',
+                () => _launchUrl('https://facebook.com/greenchain'),
+              ),
             ],
           ),
         ],

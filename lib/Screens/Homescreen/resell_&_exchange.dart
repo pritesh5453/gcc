@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gcc/Screens/Homescreen/exchange_review.dart';
 import 'package:gcc/Models_nServices/Coin_sunmary/coin_summary_svc.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class ExchangeGCCScreen extends StatefulWidget {
   const ExchangeGCCScreen({super.key});
@@ -79,400 +80,347 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF8),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: Column(
+      body: Column(
+        children: [
+          // Fixed app bar (already has SafeArea inside)
+          const CommonAppBar(
+            title: 'Exchange GCC Units',
+            subtitle: 'Resell your GCC Units securely',
+            showHelp: true,
+            // onHelpTap: () {}, // optional
+          ),
+          // Scrollable content area
+          Expanded(child: _buildBodyContent()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBodyContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Exchange GCC Units',
-              style: TextStyle(
-                color: Color(0xFF2E4D31),
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
               ),
             ),
-            Text(
-              'Resell your GCC Units securely',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchCoinSummary,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+              ),
+              child: const Text('Retry'),
             ),
           ],
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.black),
-            onPressed: () {},
+      );
+    }
+
+    // Main content
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              image: const DecorationImage(
+                image: AssetImage('assets/Images/green.png'),
+                fit: BoxFit.fill,
+              ),
+            ),
           ),
-        ],
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage != null
-              ? Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.green.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user, color: Colors.green, size: 18),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Exchange is available as per platform rules and availability. Price may vary based on demand.',
+                    style: TextStyle(fontSize: 10, color: Colors.black87),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  child: const Text(
+                    'Know More >',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildBalanceColumn(
+                  'Your GCC Balance',
+                  _availableUnits.toStringAsFixed(3),
+                  'Units',
+                  '₹${_currentPrice.toStringAsFixed(2)} / Unit',
+                ),
+                const SizedBox(
+                  height: 50,
+                  child: VerticalDivider(color: Colors.black12, thickness: 1),
+                ),
+                _buildBalanceColumn(
+                  'Est. Value',
+                  '₹${_portfolioValue.toStringAsFixed(2)}',
+                  '',
+                  'At ₹${_currentPrice.toStringAsFixed(2)} / Unit',
+                ),
+                const CircleAvatar(
+                  backgroundColor: Color(0xFFE8F5E9),
+                  child: Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'How Much Do You Want to Exchange?',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                    const Row(
+                      children: [
+                        Text(
+                          'Enter Units',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.info_outline, size: 14, color: Colors.grey),
+                      ],
+                    ),
+                    OutlinedButton(
+                      onPressed: _availableUnits > 0 ? _useAllUnits : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green,
+                        side: const BorderSide(color: Colors.green),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        'Use All (${_availableUnits.toStringAsFixed(3)})',
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _fetchCoinSummary,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
-                      ),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/green.png'),
-                          fit: BoxFit.fill,
-                        ),
-                      ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _unitsController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Enter units',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.green.withOpacity(0.2),
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
+                    suffixText: 'Units',
+                  ),
+                  onChanged: _onUnitsChanged,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '${_enteredUnits.toStringAsFixed(3)} Units',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                const Text(
+                  'Minimum 10 Units',
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
                         children: [
-                          const Icon(
-                            Icons.verified_user,
-                            color: Colors.green,
-                            size: 18,
+                          const Text(
+                            'You Will Get (Est.)',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
                           ),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: Text(
-                              'Exchange is available as per platform rules and availability. Price may vary based on demand.',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                            ),
-                            child: const Text(
-                              'Know More >',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          Text(
+                            '₹${_estimatedPayout.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                              fontSize: 16,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
+                      const Text(
+                        '=',
+                        style: TextStyle(fontSize: 24, color: Colors.grey),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
                         children: [
-                          _buildBalanceColumn(
-                            'Your GCC Balance',
-                            _availableUnits.toStringAsFixed(3),
-                            'Units',
+                          const Text(
+                            'At Current Price',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                          Text(
                             '₹${_currentPrice.toStringAsFixed(2)} / Unit',
-                          ),
-                          const SizedBox(
-                            height: 50,
-                            child: VerticalDivider(
-                              color: Colors.black12,
-                              thickness: 1,
-                            ),
-                          ),
-                          _buildBalanceColumn(
-                            'Est. Value',
-                            '₹${_portfolioValue.toStringAsFixed(2)}',
-                            '',
-                            'At ₹${_currentPrice.toStringAsFixed(2)} / Unit',
-                          ),
-                          const CircleAvatar(
-                            backgroundColor: Color(0xFFE8F5E9),
-                            child: Icon(
-                              Icons.account_balance_wallet,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                               color: Colors.green,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'How Much Do You Want to Exchange?',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Row(
-                                children: [
-                                  Text(
-                                    'Enter Units',
-                                    style: TextStyle(color: Colors.black87),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ],
-                              ),
-                              OutlinedButton(
-                                onPressed:
-                                    _availableUnits > 0 ? _useAllUnits : null,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.green,
-                                  side: const BorderSide(color: Colors.green),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Use All (${_availableUnits.toStringAsFixed(3)})',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _unitsController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Enter units',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              suffixText: 'Units',
-                            ),
-                            onChanged: _onUnitsChanged,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '${_enteredUnits.toStringAsFixed(3)} Units',
-                            style: const TextStyle(
-                              fontSize: 26,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const Text(
-                            'Minimum 10 Units',
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9F9F9),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade100),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Column(
-                                  children: [
-                                    const Text(
-                                      'You Will Get (Est.)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      '₹${_estimatedPayout.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Text(
-                                  '=',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Column(
-                                  children: [
-                                    const Text(
-                                      'At Current Price',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      '₹${_currentPrice.toStringAsFixed(2)} / Unit',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildNoticeFooter(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Important Points',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoFeature(
-                          Icons.verified_outlined,
-                          'Safe & Secure',
-                          'Your transactions\nare 100% secure.',
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildNoticeFooter(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          const Text(
+            'Important Points',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildInfoFeature(
+                Icons.verified_outlined,
+                'Safe & Secure',
+                'Your transactions\nare 100% secure.',
+              ),
+              _buildInfoFeature(
+                Icons.analytics_outlined,
+                'Market Based',
+                'Price may vary based\non platform demand.',
+              ),
+              _buildInfoFeature(
+                Icons.access_time_outlined,
+                'Quick Processing',
+                'Once matched, amount\nwill be transferred soon.',
+              ),
+            ],
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => ExchangeReviewScreen(
+                          coinId: 8,
+                          enteredUnits: _enteredUnits,
+                          currentPrice: _currentPrice,
+                          estimatedPayout: _estimatedPayout,
+                          availableUnits: _availableUnits,
+                          grossAmount: _grossAmount,
+                          serviceCharge: _serviceCharge,
+                          gstCharge: _gstCharge,
                         ),
-                        _buildInfoFeature(
-                          Icons.analytics_outlined,
-                          'Market Based',
-                          'Price may vary based\non platform demand.',
-                        ),
-                        _buildInfoFeature(
-                          Icons.access_time_outlined,
-                          'Quick Processing',
-                          'Once matched, amount\nwill be transferred soon.',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 45,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => ExchangeReviewScreen(
-                                    coinId: 8,
-                                    enteredUnits: _enteredUnits,
-                                    currentPrice: _currentPrice,
-                                    estimatedPayout: _estimatedPayout,
-                                    availableUnits: _availableUnits,
-                                    grossAmount: _grossAmount,
-                                    serviceCharge: _serviceCharge,
-                                    gstCharge: _gstCharge,
-                                  ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Spacer(),
-                            CircleAvatar(
-                              backgroundColor: Colors.white,
-                              radius: 12,
-                              child: Icon(
-                                Icons.swap_horiz,
-                                color: Colors.green,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Continue to Exchange',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Spacer(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Spacer(),
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 12,
+                    child: Icon(Icons.swap_horiz, color: Colors.green),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Continue to Exchange',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Spacer(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

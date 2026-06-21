@@ -5,6 +5,7 @@ import 'package:gcc/api/api_endpoints.dart';
 import 'package:gcc/api/dio_client.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
 
 class AccountSecurityScreen extends StatefulWidget {
   const AccountSecurityScreen({super.key});
@@ -14,7 +15,7 @@ class AccountSecurityScreen extends StatefulWidget {
 }
 
 class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
-  // Profile data fields from API
+  // Profile data fields
   String _name = '';
   String _phone = '';
   String _dateOfBirth = '';
@@ -50,8 +51,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final data = response.data['data'];
         setState(() {
-          // Name might not be in this response; keep empty or try to get from other source
-          // For now we let the user provide it via the edit dialog.
           _name = data['name'] ?? '';
           _phone = data['phone'] ?? '';
           _dateOfBirth = data['date_of_birth'] ?? '';
@@ -95,7 +94,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
     );
 
     if (response.statusCode == 200 && response.data['success'] == true) {
-      // Update local state with new values
       setState(() {
         _name = updatedData['name']!;
         _phone = updatedData['phone']!;
@@ -202,7 +200,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Close button only
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -234,7 +231,6 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
     );
   }
 
-  // Helper widget to display a read-only field
   Widget _buildReadOnlyField(String label, String value, IconData icon) {
     return Container(
       decoration: BoxDecoration(
@@ -341,75 +337,74 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBF8),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B5E20)),
-          onPressed: () => Navigator.pop(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const CommonAppBar(title: 'Account & Security', showHelp: false),
+            Expanded(
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Error: $_error', textAlign: TextAlign.center),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _fetchProfileData,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      )
+                      : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildMenuTile(
+                                    icon: Icons.person_outline,
+                                    title: 'Personal Information',
+                                    subtitle: 'View and edit your profile',
+                                    onTap: _showPersonalInfoDialog,
+                                  ),
+                                  const Divider(height: 1, thickness: 1),
+                                  _buildMenuTile(
+                                    icon: Icons.delete_outline,
+                                    title: 'Delete Account',
+                                    subtitle: 'Permanently remove your account',
+                                    isDestructive: true,
+                                    onTap:
+                                        () => _showDeleteConfirmationDialog(
+                                          context,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+            ),
+          ],
         ),
-        title: const Text(
-          'Account & Security',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        centerTitle: false,
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: $_error', textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _fetchProfileData,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildMenuTile(
-                            icon: Icons.person_outline,
-                            title: 'Personal Information',
-                            subtitle: 'View and edit your profile',
-                            onTap: _showPersonalInfoDialog,
-                          ),
-                          const Divider(height: 1, thickness: 1),
-                          _buildMenuTile(
-                            icon: Icons.delete_outline,
-                            title: 'Delete Account',
-                            subtitle: 'Permanently remove your account',
-                            isDestructive: true,
-                            onTap: () => _showDeleteConfirmationDialog(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
     );
   }
 
