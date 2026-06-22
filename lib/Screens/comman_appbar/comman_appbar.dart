@@ -77,24 +77,6 @@ class CommonAppBar extends StatelessWidget {
             const SizedBox(width: 12),
 
             // Help Button
-            showHelp
-                ? GestureDetector(
-                  onTap: onHelpTap,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.help_outline,
-                      color: Colors.black87,
-                      size: 20,
-                    ),
-                  ),
-                )
-                : const SizedBox(width: 38),
           ],
         ),
       ),

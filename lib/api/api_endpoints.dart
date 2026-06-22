@@ -15,8 +15,10 @@ class ApiEndpoints {
   // Auth APIs
   static const String login = "$baseUrl/login";
   static const String verifyLoginOtp = "$baseUrl/login/verify-otp";
+  static const String resendOtp = "$baseUrl/login/resend-otp";
   static const String register = "$baseUrl/register";
   static const String verifyOtp = "$baseUrl/verify-otp";
+  static const String resendOtpSignup = "$baseUrl/resend-otp";
 
   // Profile API
   static const String dashboardOverview = "$baseUrl/dashboard/overview";

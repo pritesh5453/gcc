@@ -7,13 +7,9 @@ import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 
 class BuyGCCScreen extends StatefulWidget {
   final double purchaseAmount;
-  final int gccUnits;
+  final double gccUnits;
 
-  const BuyGCCScreen({
-    super.key,
-    required this.purchaseAmount,
-    required this.gccUnits,
-  });
+  const BuyGCCScreen({required this.purchaseAmount, required this.gccUnits});
 
   @override
   State<BuyGCCScreen> createState() => _BuyGCCScreenState();
@@ -86,7 +82,11 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Custom App Bar (no PreferredSize)
-              const CommonAppBar(title: 'Buy GCC Units', showHelp: false, subtitle: '',),
+              const CommonAppBar(
+                title: 'Buy GCC Units',
+                showHelp: false,
+                subtitle: '',
+              ),
               // Original content with padding
               Padding(
                 padding: const EdgeInsets.all(16.0),

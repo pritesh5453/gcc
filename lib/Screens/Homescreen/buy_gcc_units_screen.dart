@@ -25,16 +25,21 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   late Future<TradingCoinsResponse> _tradingCoinsFuture;
   Timer? _autoSlideTimer;
   late PageController _pageController;
+
+  // Custom amount mode: true = Amount→Coins, false = Coins→Amount
+  bool _isAmountToCoins = true;
   bool _isCustomAmount = false;
+
   final TextEditingController _customAmountController = TextEditingController();
   final FocusNode _customAmountFocusNode = FocusNode();
 
   List<PackModel> packs = [];
   double currentUnitPrice = 0.0;
 
-  // Custom amount properties
-  double? _customAmount;
-  int? _customUnits;
+  // Calculated values – now units are double (fractional allowed)
+  double? _enteredAmount; // the value user typed (INR or Units)
+  double? _computedAmount; // the other value (INR)
+  double? _computedUnits; // units (can be fractional)
 
   @override
   void initState() {
@@ -42,7 +47,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     _bannerFuture = fetchBanners();
     _tradingCoinsFuture = fetchTradingCoins();
     _pageController = PageController();
-
     _customAmountController.addListener(_onCustomAmountChanged);
   }
 
@@ -58,24 +62,39 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   void _onCustomAmountChanged() {
     final text = _customAmountController.text;
-    if (text.isNotEmpty) {
-      final amount = double.tryParse(text);
-      if (amount != null && amount > 0 && currentUnitPrice > 0) {
-        final units = (amount / currentUnitPrice).floor();
-        setState(() {
-          _customAmount = amount;
-          _customUnits = units;
-        });
+    if (text.isNotEmpty && currentUnitPrice > 0) {
+      final value = double.tryParse(text);
+      if (value != null && value > 0) {
+        if (_isAmountToCoins) {
+          // Amount → Units: user enters INR, compute units (fractional)
+          final units = value / currentUnitPrice;
+          setState(() {
+            _enteredAmount = value;
+            _computedUnits = units;
+            _computedAmount = units * currentUnitPrice;
+          });
+        } else {
+          // Units → Amount: user enters units (fractional allowed)
+          final units = value; // can be decimal
+          final amount = units * currentUnitPrice;
+          setState(() {
+            _enteredAmount = value;
+            _computedUnits = units;
+            _computedAmount = amount;
+          });
+        }
       } else {
         setState(() {
-          _customAmount = null;
-          _customUnits = null;
+          _enteredAmount = null;
+          _computedUnits = null;
+          _computedAmount = null;
         });
       }
     } else {
       setState(() {
-        _customAmount = null;
-        _customUnits = null;
+        _enteredAmount = null;
+        _computedUnits = null;
+        _computedAmount = null;
       });
     }
   }
@@ -86,9 +105,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
         if (_pageController.hasClients && mounted) {
           int nextPage = _currentBannerIndex + 1;
-          if (nextPage >= banners.length) {
-            nextPage = 0;
-          }
+          if (nextPage >= banners.length) nextPage = 0;
           _pageController.animateToPage(
             nextPage,
             duration: const Duration(milliseconds: 400),
@@ -102,7 +119,11 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   void _selectCustomAmount() {
     setState(() {
       _isCustomAmount = true;
-      selectedIndex = -1; // Deselect any pack
+      selectedIndex = -1;
+      _enteredAmount = null;
+      _computedUnits = null;
+      _computedAmount = null;
+      _customAmountController.clear();
     });
     Future.delayed(const Duration(milliseconds: 100), () {
       _customAmountFocusNode.requestFocus();
@@ -114,14 +135,27 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       selectedIndex = index;
       _isCustomAmount = false;
       _customAmountController.clear();
-      _customAmount = null;
-      _customUnits = null;
+      _enteredAmount = null;
+      _computedUnits = null;
+      _computedAmount = null;
     });
   }
 
+  void _toggleMode(bool isAmountToCoins) {
+    setState(() {
+      _isAmountToCoins = isAmountToCoins;
+      _enteredAmount = null;
+      _computedUnits = null;
+      _computedAmount = null;
+      _customAmountController.clear();
+    });
+    _customAmountFocusNode.requestFocus();
+  }
+
+  // Current selected amount (INR) for summary
   double get _selectedAmount {
-    if (_isCustomAmount && _customAmount != null && _customAmount! > 0) {
-      return _customAmount!;
+    if (_isCustomAmount && _computedAmount != null && _computedAmount! > 0) {
+      return _computedAmount!;
     }
     if (selectedIndex >= 0 && selectedIndex < packs.length) {
       return packs[selectedIndex].amount ?? 0;
@@ -129,30 +163,27 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     return 0;
   }
 
-  int get _selectedUnits {
-    if (_isCustomAmount && _customUnits != null && _customUnits! > 0) {
-      return _customUnits!;
+  // Current selected units (double)
+  double get _selectedUnits {
+    if (_isCustomAmount && _computedUnits != null && _computedUnits! > 0) {
+      return _computedUnits!;
     }
     if (selectedIndex >= 0 && selectedIndex < packs.length) {
-      return packs[selectedIndex].units ?? 0;
+      return (packs[selectedIndex].units ?? 0).toDouble();
     }
     return 0;
   }
 
   bool get _isButtonEnabled {
     if (_isCustomAmount) {
-      // For custom: valid amount and at least 1 unit
-      return _customAmount != null &&
-          _customAmount! > 0 &&
-          _customUnits != null &&
-          _customUnits! > 0;
+      return _computedUnits != null && _computedUnits! > 0;
     } else {
       return selectedIndex >= 0 && selectedIndex < packs.length;
     }
   }
 
   bool get _hasSelection {
-    return (_isCustomAmount && _customAmount != null && _customAmount! > 0) ||
+    return (_isCustomAmount && _computedUnits != null && _computedUnits! > 0) ||
         (selectedIndex >= 0 && selectedIndex < packs.length);
   }
 
@@ -629,12 +660,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                             ? const Color(0xFF1B6B2F)
                             : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color:
-                          _isCustomAmount
-                              ? const Color(0xFF1B6B2F)
-                              : const Color(0xFF1B6B2F),
-                    ),
+                    border: Border.all(color: const Color(0xFF1B6B2F)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -693,11 +719,22 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Custom Amount Card ────────────────────────────────────────────────────
+  // ── Custom Amount Card (now with fractional units) ──────────────────────
   Widget _buildCustomAmountCard() {
-    final bool showUnits = _customUnits != null && _customUnits! > 0;
+    final bool showResult = _computedUnits != null && _computedUnits! > 0;
     final bool showWarning =
-        _customAmount != null && _customAmount! > 0 && _customUnits == 0;
+        _enteredAmount != null &&
+        _enteredAmount! > 0 &&
+        (_computedUnits == null || _computedUnits! <= 0);
+
+    String inputLabel = _isAmountToCoins ? 'Enter Amount (₹)' : 'Enter Units';
+    String resultLabel = _isAmountToCoins ? 'You get' : 'You pay';
+    String resultValue = '';
+    if (_isAmountToCoins && _computedUnits != null) {
+      resultValue = '${_computedUnits!.toStringAsFixed(2)} Units';
+    } else if (!_isAmountToCoins && _computedAmount != null) {
+      resultValue = '₹${_computedAmount!.toStringAsFixed(2)}';
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -709,85 +746,100 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.currency_rupee, color: Color(0xFF1B6B2F), size: 18),
-              SizedBox(width: 8),
-              Text(
-                'Enter Custom Amount',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Mode toggle
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _customAmountController,
-                  focusNode: _customAmountFocusNode,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    prefixText: '₹ ',
-                    prefixStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                child: SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment<bool>(
+                      value: true,
+                      label: Text('₹ → Units'),
+                      icon: Icon(Icons.currency_rupee, size: 16),
                     ),
-                    hintText: 'Enter amount',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ButtonSegment<bool>(
+                      value: false,
+                      label: Text('Units → ₹'),
+                      icon: Icon(Icons.square_foot, size: 16),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B6B2F),
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
+                  ],
+                  selected: {_isAmountToCoins},
+                  onSelectionChanged: (Set<bool> newSelection) {
+                    _toggleMode(newSelection.first);
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                      states,
+                    ) {
+                      if (states.contains(WidgetState.selected)) {
+                        return const Color(0xFF1B6B2F);
+                      }
+                      return Colors.white;
+                    }),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                      states,
+                    ) {
+                      if (states.contains(WidgetState.selected)) {
+                        return Colors.white;
+                      }
+                      return Colors.black87;
+                    }),
+                    side: WidgetStateProperty.resolveWith<BorderSide>((states) {
+                      return BorderSide(
+                        color:
+                            states.contains(WidgetState.selected)
+                                ? const Color(0xFF1B6B2F)
+                                : Colors.grey.shade300,
+                      );
+                    }),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: () {
-                  _customAmountController.clear();
-                  setState(() {
-                    _isCustomAmount = false;
-                    _customAmount = null;
-                    _customUnits = null;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade200,
-                  foregroundColor: Colors.black87,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Cancel'),
               ),
             ],
           ),
-          if (showUnits) ...[
-            const SizedBox(height: 12),
+          const SizedBox(height: 16),
+
+          // Input field
+          TextField(
+            controller: _customAmountController,
+            focusNode: _customAmountFocusNode,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: inputLabel,
+              hintText: _isAmountToCoins ? 'e.g., 500' : 'e.g., 10.5',
+              prefixText: _isAmountToCoins ? '₹ ' : null,
+              suffixText: _isAmountToCoins ? null : ' Units',
+              suffixStyle: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1B6B2F),
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Result display
+          if (showResult && resultValue.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -797,34 +849,22 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'You will get:',
-                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  Text(
+                    resultLabel,
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '$_customUnits Units',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B6B2F),
-                        ),
-                      ),
-                      Text(
-                        '₹${currentUnitPrice.toStringAsFixed(2)} / Unit',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    resultValue,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B6B2F),
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+
           if (showWarning) ...[
             const SizedBox(height: 12),
             Container(
@@ -850,7 +890,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ],
           const SizedBox(height: 8),
           const Text(
-            'Minimum amount: ₹1',
+            'Minimum 0.001 unit required.',
             style: TextStyle(fontSize: 11, color: Colors.grey),
           ),
         ],
@@ -858,7 +898,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Summary Card ──────────────────────────────────────────────────────────
+  // ── Summary Card (units displayed with 2 decimals) ──────────────────────
   Widget _buildSummaryCard() {
     final totalAmount = _selectedAmount.toStringAsFixed(2);
     final units = _selectedUnits;
@@ -936,7 +976,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  '$units Units',
+                  '${units.toStringAsFixed(2)} Units',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
@@ -977,7 +1017,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   // ── Impact Card ───────────────────────────────────────────────────────────
   Widget _buildImpactCard() {
     final units = _selectedUnits;
-    final treesSupported = (units * 0.5).toInt();
+    final treesSupported = (units * 0.5).toInt(); // floor to whole trees
 
     return Container(
       height: 140,
@@ -1081,7 +1121,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$units Units = Supports ~${treesSupported} Trees',
+                  '${units.toStringAsFixed(2)} Units = Supports ~$treesSupported Trees',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -1123,29 +1163,27 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children:
-            features
-                .map(
-                  (f) => Column(
-                    children: [
-                      Icon(
-                        f['icon'] as IconData,
-                        color: const Color(0xFF1B6B2F),
-                        size: 24,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        f['label'] as String,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.black54,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
+            features.map((f) {
+              return Column(
+                children: [
+                  Icon(
+                    f['icon'] as IconData,
+                    color: const Color(0xFF1B6B2F),
+                    size: 24,
                   ),
-                )
-                .toList(),
+                  const SizedBox(height: 4),
+                  Text(
+                    f['label'] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.black54,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
       ),
     );
   }
@@ -1156,9 +1194,9 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     if (_isCustomAmount) {
       if (_customAmountController.text.isEmpty) {
         validationMessage = 'Please enter an amount';
-      } else if (_customAmount == null || _customAmount! <= 0) {
-        validationMessage = 'Please enter a valid amount';
-      } else if (_customUnits == null || _customUnits! <= 0) {
+      } else if (_enteredAmount == null || _enteredAmount! <= 0) {
+        validationMessage = 'Please enter a valid value';
+      } else if (_computedUnits == null || _computedUnits! <= 0) {
         validationMessage = 'Amount is too low to receive any units';
       }
     }
@@ -1221,14 +1259,14 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   Future<void> _handleBuyUnits() async {
     double amount;
-    int units;
+    double units;
 
-    if (_isCustomAmount && _customAmount != null && _customAmount! > 0) {
-      amount = _customAmount!;
-      units = _customUnits ?? 0;
+    if (_isCustomAmount && _computedAmount != null && _computedAmount! > 0) {
+      amount = _computedAmount!;
+      units = _computedUnits ?? 0;
     } else if (selectedIndex >= 0 && selectedIndex < packs.length) {
       amount = packs[selectedIndex].amount ?? 0;
-      units = packs[selectedIndex].units ?? 0;
+      units = (packs[selectedIndex].units ?? 0).toDouble();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select or enter an amount')),
@@ -1245,6 +1283,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
     debugPrint('Buy request amount: $amount, units: $units');
 
+    // ⚠️ You must change BuyGCCScreen's `gccUnits` parameter from `int` to `double`
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1254,6 +1293,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   }
 }
 
+// ── Pack Card (unchanged) ──────────────────────────────────────────────────
 class _PackCard extends StatelessWidget {
   final PackModel pack;
   final bool isSelected;

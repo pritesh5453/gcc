@@ -594,11 +594,6 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(
-                          Icons.info_outline,
-                          size: 14,
-                          color: Colors.grey.shade400,
-                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -700,11 +695,6 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(
-                            Icons.info_outline,
-                            size: 14,
-                            color: Colors.grey.shade400,
-                          ),
                         ],
                       ),
                       const SizedBox(height: 8),

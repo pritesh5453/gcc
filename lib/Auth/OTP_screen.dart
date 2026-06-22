@@ -1,14 +1,16 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:gcc/Models_nServices/resend_otp_login/resend_otp_svc.dart'; // new
+import 'package:gcc/Models_nServices/signup_resend_otp/signup_resend_otp_svc.dart';
 import 'package:gcc/Models_nServices/verify_otp/verify_services.dart';
 import 'package:gcc/Navbar/navbar.dart';
-import 'package:gcc/Models_nServices/login/login_services.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 
 class OtpScreen extends StatefulWidget {
-  final String mobileNumber; // Pass the mobile number from login screen
+  final String mobileNumber;
   final String sessionId;
-  final bool isLoginFlow; // true for login, false for registration
+  final bool isLoginFlow;
 
   const OtpScreen({
     super.key,
@@ -22,6 +24,8 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  late String _sessionId;
+
   final List<TextEditingController> _otpControllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -33,14 +37,18 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _canResend = false;
   String? _errorMessage;
 
+  Timer? _resendTimer;
+
   @override
   void initState() {
     super.initState();
+    _sessionId = widget.sessionId;
     _startResendTimer();
   }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     for (var controller in _otpControllers) {
       controller.dispose();
     }
@@ -50,15 +58,14 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
+  // ─── VERIFY OTP ──────────────────────────────────────────────────────────
   Future<void> _handleVerifyOtp() async {
     String otp = _otpControllers.map((e) => e.text).join();
 
-    // Clear previous error
     setState(() {
       _errorMessage = null;
     });
 
-    // Validate OTP
     if (otp.length != 6) {
       setState(() {
         _errorMessage = 'Please enter the 6-digit OTP';
@@ -80,46 +87,41 @@ class _OtpScreenState extends State<OtpScreen> {
 
       final response =
           widget.isLoginFlow
-              ? await verifyLoginOtp(sessionId: widget.sessionId, otp: otp)
-              : await verifyOtp(sessionId: widget.sessionId, otp: otp);
+              ? await verifyLoginOtp(sessionId: _sessionId, otp: otp)
+              : await verifyOtp(sessionId: _sessionId, otp: otp);
 
       setState(() {
         _isVerifying = false;
       });
 
       if (response.status == true) {
-        // Save using AppPreference to keep app-wide consistency
+        // Save user data
         if (response.token != null && response.token!.isNotEmpty) {
           await AppPreference().setString(
             PreferencesKey.authToken,
             response.token!,
           );
         }
-
         if (response.user?.name != null && response.user!.name!.isNotEmpty) {
           await AppPreference().setString(
             PreferencesKey.userName,
             response.user!.name!,
           );
         }
-
         if (response.user?.phone != null && response.user!.phone!.isNotEmpty) {
           await AppPreference().setString(
             PreferencesKey.userMobile,
             response.user!.phone!,
           );
         }
-
         if (response.user?.id != null && response.user!.id != 0) {
           await AppPreference().setInt(
             PreferencesKey.userId,
             response.user!.id!,
           );
         }
-
         await AppPreference().setBool(PreferencesKey.isLoggedIn, true);
 
-        // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -131,7 +133,6 @@ class _OtpScreenState extends State<OtpScreen> {
           );
         }
 
-        // Navigate to main screen and remove all previous routes
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -143,8 +144,6 @@ class _OtpScreenState extends State<OtpScreen> {
         setState(() {
           _errorMessage = response.message ?? "Invalid OTP. Please try again.";
         });
-
-        // Clear OTP fields on error
         _clearOtpFields();
       }
     } catch (e) {
@@ -153,10 +152,7 @@ class _OtpScreenState extends State<OtpScreen> {
         _errorMessage =
             'Network error. Please check your connection and try again.';
       });
-
       debugPrint('OTP Verification Error: $e');
-
-      // Clear OTP fields on error
       _clearOtpFields();
     }
   }
@@ -170,6 +166,7 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
+  // ─── RESEND OTP ──────────────────────────────────────────────────────────
   Future<void> _handleResendOtp() async {
     if (!_canResend) return;
 
@@ -180,16 +177,23 @@ class _OtpScreenState extends State<OtpScreen> {
     });
 
     try {
-      final authApiService = AuthApiService();
-
-      final response = await authApiService.login(phone: widget.mobileNumber);
+      // Choose the correct resend service based on flow
+      final response =
+          widget.isLoginFlow
+              ? await ResendOtpService().resendOtp(_sessionId)
+              : await ResendOtpSignupService().resendOtpSignup(_sessionId);
 
       setState(() {
         _isVerifying = false;
       });
 
       if (response.status == true) {
-        // Reset timer
+        // Update session ID
+        setState(() {
+          _sessionId = response.sessionId;
+        });
+
+        // Reset the timer
         _startResendTimer();
 
         if (mounted) {
@@ -203,13 +207,14 @@ class _OtpScreenState extends State<OtpScreen> {
           );
         }
 
-        // Clear OTP fields for new code
         _clearOtpFields();
       } else {
         setState(() {
           _canResend = true;
           _errorMessage =
-              response.message ?? 'Failed to resend OTP. Please try again.';
+              response.message.isNotEmpty
+                  ? response.message
+                  : 'Failed to resend OTP. Please try again.';
         });
       }
     } catch (e) {
@@ -218,29 +223,32 @@ class _OtpScreenState extends State<OtpScreen> {
         _canResend = true;
         _errorMessage = 'Network error. Please check your connection.';
       });
-
       debugPrint('Resend OTP Error: $e');
     }
   }
 
   void _startResendTimer() {
+    _resendTimer?.cancel();
     _canResend = false;
     _resendTimerSeconds = 30;
 
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() {
         if (_resendTimerSeconds > 0) {
           _resendTimerSeconds--;
         } else {
           _canResend = true;
+          timer.cancel();
         }
       });
-      return _resendTimerSeconds > 0;
     });
   }
 
+  // ─── BUILD ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -254,7 +262,6 @@ class _OtpScreenState extends State<OtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(flex: 1),
-              // Header with tree icon (matching login/signup)
               Center(
                 child: Column(
                   children: [
@@ -308,14 +315,12 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              // OTP Input Fields (6 boxes)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(6, (index) {
                   return _buildOtpTextField(index, screenWidth);
                 }),
               ),
-              // Error message display
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -350,7 +355,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              // Verify Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -385,7 +389,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Resend row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -412,10 +415,9 @@ class _OtpScreenState extends State<OtpScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Edit number link
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Go back to login screen
+                  Navigator.pop(context);
                 },
                 child: Text(
                   'Edit Mobile Number',
@@ -427,7 +429,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               const Spacer(flex: 1),
-              // Footer (same as other screens)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 20),
@@ -460,10 +461,9 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
+  // ─── HELPERS ─────────────────────────────────────────────────────────────
   Widget _buildOtpTextField(int index, double screenWidth) {
-    // Responsive box size
-    double boxSize =
-        (screenWidth - 48 - 40) / 6; // 48 = horizontal padding, 40 = spacing
+    double boxSize = (screenWidth - 48 - 40) / 6;
     if (boxSize > 56) boxSize = 56;
 
     return SizedBox(
@@ -501,23 +501,18 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
         onChanged: (value) {
-          // Clear error when user starts typing
           if (_errorMessage != null) {
             setState(() {
               _errorMessage = null;
             });
           }
 
-          // Move to next field
           if (value.length == 1 && index < 5) {
             _focusNodes[index + 1].requestFocus();
-          }
-          // Move to previous field on delete
-          else if (value.isEmpty && index > 0) {
+          } else if (value.isEmpty && index > 0) {
             _focusNodes[index - 1].requestFocus();
           }
 
-          // Auto-submit when all 6 digits are filled
           if (index == 5 && _otpControllers.every((c) => c.text.isNotEmpty)) {
             _handleVerifyOtp();
           }
