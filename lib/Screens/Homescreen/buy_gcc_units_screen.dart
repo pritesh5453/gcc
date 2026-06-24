@@ -754,7 +754,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   segments: const [
                     ButtonSegment<bool>(
                       value: true,
-                      label: Text('₹ → Units'),
+                      label: Text('₹ → Amount'),
                       icon: Icon(Icons.currency_rupee, size: 16),
                     ),
                     ButtonSegment<bool>(
