@@ -223,8 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             _buildProfileHeader(name, email, mobile, profileImageUrl),
-            const SizedBox(height: 20),
-            _buildImpactStats(),
+            // const SizedBox(height: 20),
+            // _buildImpactStats(),
             const SizedBox(height: 20),
             _buildContributorBanner(),
             const SizedBox(height: 20),

@@ -78,11 +78,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         children: [
-                          _buildImpactCard(),
+                          _buildImpactCard(), // ← now dynamic
                           const SizedBox(height: 20),
                           _buildWhatsNextSection(),
                           const SizedBox(height: 20),
-                          _buildTransactionDetails(), // Only for buy
+                          _buildTransactionDetails(),
                           const SizedBox(height: 12),
                           _buildReceiptNote(),
                           const SizedBox(height: 16),
@@ -148,9 +148,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Confetti pieces
               ..._buildConfettiPieces(),
-              // Check circle
               child!,
             ],
           );
@@ -327,10 +325,26 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     );
   }
 
-  // ── Impact Card ───────────────────────────────────────────────────────────
+  // ── Impact Card (Now Dynamic) ────────────────────────────────────────────
   Widget _buildImpactCard() {
-    final amountCoin =
-        widget.transactionData?.amountCoin?.toStringAsFixed(0) ?? '55';
+    // Get units from transaction data
+    final double units = widget.transactionData?.amountCoin ?? 0.0;
+
+    // Calculate trees and CO₂ offset
+    final double trees = units / 100;          // 100 units = 1 tree
+    final double co2Kg = trees * 0.14;         // 1 tree = 0.14 kg CO₂
+
+    // Format strings
+    final String treesDisplay = trees % 1 == 0
+        ? trees.toInt().toString()           // show integer if whole
+        : trees.toStringAsFixed(1);          // otherwise 1 decimal
+
+    final String co2Display = co2Kg.toStringAsFixed(2); // 2 decimals
+
+    // Units for the third stat (already a string from previous)
+    final String unitDisplay =
+        widget.transactionData?.amountCoin?.toStringAsFixed(0) ?? '0';
+
     return Container(
       decoration: BoxDecoration(
         color: lightGreenBg,
@@ -360,10 +374,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           IntrinsicHeight(
             child: Row(
               children: [
+                // 🌳 Trees Supported (dynamic)
                 Expanded(
                   child: _ImpactStat(
                     emoji: '🌳',
-                    value: '5',
+                    value: treesDisplay,
                     unit: 'Trees',
                     label: 'Supported',
                   ),
@@ -373,9 +388,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                   thickness: 1,
                   width: 1,
                 ),
+                // 🌍 CO₂ Offset (dynamic)
                 Expanded(
                   child: _ImpactStatCO2(
-                    value: '12',
+                    value: co2Display,
                     unit: 'kg',
                     label: 'CO₂ Offset',
                   ),
@@ -385,11 +401,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                   thickness: 1,
                   width: 1,
                 ),
+                // 🍃 GCC Units added (dynamic, already had)
                 Expanded(
                   child: _ImpactStat(
                     emoji: '🍃',
-                    value: amountCoin,
-                    unit: 'Trees',
+                    value: unitDisplay,
+                    unit: 'Trees',   // as in original, kept
                     label: 'GCC Units\nAdded to your account',
                     isGreen: true,
                   ),
@@ -460,57 +477,56 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         ),
         const SizedBox(height: 12),
         Row(
-          children:
-              items.map((item) {
-                return Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 12,
+          children: items.map((item) {
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      item['emoji']!,
+                      style: const TextStyle(fontSize: 28),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade200),
+                    const SizedBox(height: 6),
+                    Text(
+                      item['title']!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          item['emoji']!,
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          item['title']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item['sub']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      item['sub']!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey,
+                        height: 1.3,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
-  // ── Transaction Details (for Buy) ────────────────────────────────────────
+  // ── Transaction Details ──────────────────────────────────────────────────
   Widget _buildTransactionDetails() {
     final tx = widget.transactionData;
     if (tx == null) return const SizedBox.shrink();
@@ -576,7 +592,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   // ── Receipt Note ──────────────────────────────────────────────────────────
   Widget _buildReceiptNote() {
-    // Replace with actual user email later
     const email = 'your@email.com';
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -584,7 +599,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         const Icon(Icons.verified_user_outlined, size: 14, color: primaryGreen),
         const SizedBox(width: 6),
         Text(
-          'A receipt has been sent to $email',
+          'A receipt has been sent to your registered email',
           style: TextStyle(fontSize: 11, color: Colors.grey[600]),
         ),
       ],
@@ -676,46 +691,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (i) {
-              final selected = _selectedNav == i;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedNav = i),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      items[i]['icon'] as IconData,
-                      color: selected ? primaryGreen : Colors.grey,
-                      size: 24,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      items[i]['label'] as String,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: selected ? primaryGreen : Colors.grey,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
+      // Bottom nav is commented out – kept as is.
     );
   }
 }
 
-// ─── Helper Classes (unchanged) ──────────────────────────────────────────────
+// ─── Helper Classes ──────────────────────────────────────────────────────────
 
 class _ConfettiData {
   final double angle;
@@ -838,9 +819,9 @@ class _ImpactStatCO2 extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                const TextSpan(
-                  text: ' kg',
-                  style: TextStyle(
+                TextSpan(
+                  text: ' $unit',
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,

@@ -2,21 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 
-class GreenExchangeApp extends StatelessWidget {
-  const GreenExchangeApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'sans-serif', useMaterial3: true),
-      home: const ExchangeSuccessfulScreen(),
-    );
-  }
-}
-
 class ExchangeSuccessfulScreen extends StatelessWidget {
-  const ExchangeSuccessfulScreen({super.key});
+  final double unitsExchanged;
+  final double estimatedPayout;
+  final double rate;
+  final String? transactionId;
+  final DateTime transactionDate;
+
+  const ExchangeSuccessfulScreen({
+    super.key,
+    required this.unitsExchanged,
+    required this.estimatedPayout,
+    required this.rate,
+    this.transactionId,
+    required this.transactionDate,
+  });
+
+  String _formatDate(DateTime date) {
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final hour = date.hour > 12 ? date.hour - 12 : date.hour;
+    final minute = date.minute.toString().padLeft(2, '0');
+    final amPm = date.hour >= 12 ? 'PM' : 'AM';
+    return '${date.day} ${monthNames[date.month - 1]} ${date.year} • $hour:$minute $amPm';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +39,11 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.push(
+            // Go to Home and clear stack
+            Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const MainScreen(initialIndex: 0),
-              ),
+              MaterialPageRoute(builder: (context) => const MainScreen()),
+              (route) => false,
             );
           },
         ),
@@ -44,17 +55,6 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.headset_mic_outlined,
-              size: 18,
-              color: Colors.grey,
-            ),
-            label: const Text('Support', style: TextStyle(color: Colors.grey)),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -66,10 +66,10 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // --- UPDATED TOP HDR IMAGE CARD ---
+            // Image Card
             Container(
               width: double.infinity,
-              height: 150, // Adjusted to fit the HDR artwork aspect ratio
+              height: 150,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -81,22 +81,14 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Stack(
-                children: [
-                  // The background HDR Image
-                  // Note: Ensure this path matches your pubspec.yaml exactly
-                  Image.asset(
-                    'assets/Images/exchange_complete.png',
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.high,
-                  ),
-                ],
+              child: Image.asset(
+                'assets/Images/exchange_complete.png',
+                width: double.infinity,
+                height: 150,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
             ),
-
-            // --- END OF UPDATED CARD ---
             const SizedBox(height: 16),
 
             // Payout Processing Status
@@ -140,18 +132,11 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
                     ),
                     child: const Row(
                       children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.green,
-                          ),
-                        ),
+                        Icon(Icons.access_time, size: 12, color: Colors.orange),
                         SizedBox(width: 8),
                         Text(
-                          "Processing",
-                          style: TextStyle(fontSize: 11, color: Colors.green),
+                          "Pending",
+                          style: TextStyle(fontSize: 11, color: Colors.orange),
                         ),
                       ],
                     ),
@@ -161,7 +146,7 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Transaction Summary
+            // ✅ DYNAMIC TRANSACTION SUMMARY
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -171,16 +156,16 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         "Transaction Summary",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        "Today, 20 May 2024 • 09:41 AM",
-                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                        _formatDate(transactionDate),
+                        style: const TextStyle(color: Colors.grey, fontSize: 10),
                       ),
                     ],
                   ),
@@ -191,17 +176,17 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
                       _buildSummaryItem(
                         Icons.eco_outlined,
                         "Units Exchanged",
-                        "100 Units",
+                        "${unitsExchanged.toStringAsFixed(3)} Units",
                       ),
                       _buildSummaryItem(
                         Icons.currency_rupee,
                         "You Will Get (Est.)",
-                        "₹1,000.00",
+                        "₹${estimatedPayout.toStringAsFixed(2)}",
                       ),
                       _buildSummaryItem(
                         Icons.bar_chart,
                         "Rate",
-                        "₹10.00 / Unit",
+                        "₹${rate.toStringAsFixed(2)} / Unit",
                       ),
                       _buildSummaryItem(
                         Icons.account_balance_wallet_outlined,
@@ -304,9 +289,11 @@ class ExchangeSuccessfulScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.push(
+                  // Clear the stack and go to Home
+                  Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const MainScreen()),
+                    (route) => false,
                   );
                 },
                 icon: const Icon(Icons.home),

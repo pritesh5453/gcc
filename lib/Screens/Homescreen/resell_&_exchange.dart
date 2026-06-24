@@ -74,7 +74,7 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
   double get _grossAmount => _enteredUnits * _currentPrice;
   double get _serviceCharge => _grossAmount * _serviceChargePercent / 100;
   double get _gstCharge => _serviceCharge * _gstPercent / 100;
-  double get _estimatedPayout => _grossAmount - _serviceCharge - _gstCharge;
+  double get _estimatedPayout => _grossAmount;
 
   @override
   Widget build(BuildContext context) {
@@ -372,30 +372,33 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
             width: double.infinity,
             height: 45,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => ExchangeReviewScreen(
-                          coinId: 8,
-                          enteredUnits: _enteredUnits,
-                          currentPrice: _currentPrice,
-                          estimatedPayout: _estimatedPayout,
-                          availableUnits: _availableUnits,
-                          grossAmount: _grossAmount,
-                          serviceCharge: _serviceCharge,
-                          gstCharge: _gstCharge,
-                        ),
-                  ),
-                );
-              },
+              onPressed: _enteredUnits > 0
+    ? () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ExchangeReviewScreen(
+              coinId: 8,
+              enteredUnits: _enteredUnits,
+              currentPrice: _currentPrice,
+              estimatedPayout: _estimatedPayout,
+              availableUnits: _availableUnits,
+              grossAmount: _grossAmount,
+              serviceCharge: _serviceCharge,
+              gstCharge: _gstCharge,
+            ),
+          ),
+        );
+      }
+    : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+  backgroundColor: _enteredUnits > 0
+      ? const Color(0xFF2E7D32)
+      : Colors.grey.shade400,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(12),
+  ),
+),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

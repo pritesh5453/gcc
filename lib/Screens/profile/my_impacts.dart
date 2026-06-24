@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:gcc/Models_nServices/Impact_Screen/impact_model.dart';
 import 'package:gcc/Models_nServices/Impact_Screen/impact_svc.dart';
+import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
 import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
@@ -224,7 +225,7 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.calendar_today, color: Colors.white, size: 12),
+                    Icon(Icons.timer, color: Colors.white, size: 12),
                     SizedBox(width: 4),
                     Text(
                       'All Time',
@@ -572,7 +573,10 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(context, 
+              MaterialPageRoute(builder: (context) => const BuyGCCUnitsScreen()));
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,

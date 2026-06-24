@@ -3,7 +3,7 @@ import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/Models_nServices/transaction/transaction_model.dart';
 import 'package:gcc/Models_nServices/transaction/transaction_svc.dart';
-import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -161,8 +161,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         return (Colors.green, Icons.arrow_downward);
       case 'sell':
         return (Colors.red, Icons.arrow_upward);
-      case 'deposit':
-        return (Colors.orange, Icons.arrow_downward);
       default:
         return (Colors.grey, Icons.remove);
     }
@@ -181,8 +179,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _buildSummaryCard(),
-                    const SizedBox(height: 20),
                     _buildFilterChips(),
                     const SizedBox(height: 16),
                     Expanded(child: _buildTransactionList()),
@@ -196,79 +192,50 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  Widget _buildSummaryCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green[700]!, Colors.green[800]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _summaryItem('Total Held', '₹$totalAmountHeld'),
-          _summaryItem('Utilized', '₹$utilizedBalance'),
-          _summaryItem('Unutilized', '₹$unutilizedBalance'),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
+  // ─── FILTER CHIPS – CENTERED ──────────────────────────────────────────────
   Widget _buildFilterChips() {
-    final filters = ['All', 'buy', 'sell', 'deposit'];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children:
-            filters.map((label) {
-              final isSelected = selectedFilter == label;
-              return Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: FilterChip(
-                  label: Text(label[0].toUpperCase() + label.substring(1)),
-                  selected: isSelected,
-                  onSelected: (_) => _onFilterSelected(label),
-                  backgroundColor: Colors.white,
-                  selectedColor: Colors.green[100],
-                  checkmarkColor: Colors.green[700],
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.green[700] : Colors.grey[600],
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                  side: BorderSide(color: Colors.grey.shade300),
+    final filters = ['All', 'buy', 'sell'];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: filters.map((label) {
+            final isSelected = selectedFilter == label;
+            return Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: FilterChip(
+                label: Text(label[0].toUpperCase() + label.substring(1)),
+                selected: isSelected,
+                onSelected: (_) => _onFilterSelected(label),
+                backgroundColor: Colors.white,
+                selectedColor: Colors.green[800],
+                checkmarkColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
-              );
-            }).toList(),
+                side: BorderSide(
+                  color: isSelected ? Colors.green[800]! : Colors.grey.shade300,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
 
+  // ─── TRANSACTION LIST – WITH ARROW INDICATOR ─────────────────────────────
   Widget _buildTransactionList() {
     if (isLoading && allTransactions.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -327,29 +294,37 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               tx.createdAt,
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
+            // ─── TRAILING NOW INCLUDES A CHEVRON ARROW ─────────────────────
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  "₹${tx.amountInr.toStringAsFixed(2)}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: color,
-                  ),
-                ),
-                if (tx.type.toLowerCase() == 'deposit')
-                  Text(
-                    displayStatus,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color:
-                          displayStatus == 'Approved'
-                              ? Colors.green
-                              : Colors.orange,
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "₹${tx.amountInr.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: color,
+                      ),
                     ),
-                  ),
+                    if (tx.type.toLowerCase() == 'deposit')
+                      Text(
+                        displayStatus,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color:
+                              displayStatus == 'Approved'
+                                  ? Colors.green
+                                  : Colors.orange,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
               ],
             ),
             onTap: () => _showTransactionDetails(context, tx),
@@ -359,6 +334,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  // ─── DETAILS BOTTOM SHEET ─────────────────────────────────────────────────
   void _showTransactionDetails(BuildContext context, TransactionItemModel tx) {
     final (color, icon) = _getTypeStyle(tx.type);
     final displayStatus = _getDisplayStatus(tx);
@@ -434,7 +410,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   _detailRow('UTR Number', tx.utrNumber!),
                 if (tx.type != 'deposit' && tx.coin != null) ...[
                   _detailRow('Coin', '${tx.coin!.name} (${tx.coin!.symbol})'),
-                  _detailRow('Amount Coin', tx.amountCoin.toStringAsFixed(4)),
+                  _detailRow('Coin Qty', tx.amountCoin.toStringAsFixed(4)),
                   _detailRow(
                     'Price per unit',
                     '₹${tx.priceAtTransaction.toStringAsFixed(2)}',
@@ -451,7 +427,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Close'),
+                    child: const Text('Close',
+                    style : TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

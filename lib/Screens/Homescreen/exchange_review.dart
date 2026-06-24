@@ -54,14 +54,20 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const GreenExchangeApp()),
+        MaterialPageRoute(
+          builder: (context) => ExchangeSuccessfulScreen(
+            unitsExchanged: widget.enteredUnits,
+            estimatedPayout: widget.estimatedPayout,
+            rate: widget.currentPrice,
+            transactionDate: DateTime.now(),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     } finally {
       if (!mounted) return;
       setState(() {
@@ -147,7 +153,7 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
             ),
             const SizedBox(height: 10),
 
-            // 2. Exchange Summary Card
+            // ── Exchange Summary Card ──────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -204,13 +210,15 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // 🔁 REPLACED "Exchange Type" with "Service Charge + GST"
                   Row(
                     children: [
                       Expanded(
                         child: _buildSummaryItem(
-                          Icons.calendar_today_outlined,
-                          'Exchange Type',
-                          'Instant Payout',
+                          Icons.money_off_outlined,
+                          'Service Charge + GST',
+                          '₹${(widget.serviceCharge + widget.gstCharge).toStringAsFixed(2)}',
                           valueColor: Colors.green,
                         ),
                       ),
@@ -230,7 +238,7 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 3. Current Holdings Card
+            // ── Current Holdings ──────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -289,14 +297,7 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 4. Information Box
-            _buildInfoBox(
-              'Exchange price is based on current market demand and platform rules.',
-              true,
-            ),
-            const SizedBox(height: 16),
-
-            // 5. Important Note Card
+            // ── Important Note ────────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -338,7 +339,7 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
             ),
             const SizedBox(height: 32),
 
-            // 6. Confirm Button
+            // ── Confirm Button ─────────────────────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -350,33 +351,32 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child:
-                    _isSubmitting
-                        ? const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
+                child: _isSubmitting
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.lock, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Confirm Exchange',
+                            style: TextStyle(
                               color: Colors.white,
-                              strokeWidth: 2,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        )
-                        : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.lock, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text(
-                              'Confirm Exchange',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                        ],
+                      ),
               ),
             ),
             const SizedBox(height: 12),
@@ -398,6 +398,8 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
       ),
     );
   }
+
+  // ─── Helper widgets ────────────────────────────────────────────────────────
 
   Widget _buildSummaryRow({
     required IconData icon,
@@ -452,16 +454,6 @@ class _ExchangeReviewScreenState extends State<ExchangeReviewScreen> {
             ],
           ),
         ),
-        if (showEdit)
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              foregroundColor: Colors.grey,
-            ),
-            child: const Text('Edit', style: TextStyle(fontSize: 12)),
-          ),
-        if (showArrow) const Icon(Icons.chevron_right, color: Colors.grey),
       ],
     );
   }

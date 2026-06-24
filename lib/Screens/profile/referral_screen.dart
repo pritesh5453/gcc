@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
 
 class ReferralGrowthScreen extends StatelessWidget {
   const ReferralGrowthScreen({super.key});
@@ -7,10 +7,10 @@ class ReferralGrowthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 👈 force white background
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
-          color: Colors.white, // 👈 explicit white, no gradient
+          color: Colors.white,
           child: Column(
             children: [
               const CommonAppBar(
@@ -35,7 +35,7 @@ class ReferralGrowthScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildForestClubCard(),
+                        _buildInviteDetailsCard(),
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -45,13 +45,9 @@ class ReferralGrowthScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        _buildMonthlyRewardsCard(),
+                        _buildMonthlyAverageCard(),
                         const SizedBox(height: 25),
-                        _buildClubLevelsSection(),
-                        const SizedBox(height: 20),
-                        _buildInviteFriendsCard(),
-                        const SizedBox(height: 30),
-                        _buildInviteButton(),
+                        _buildInstructionsButton(context),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -65,9 +61,8 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  // ---------- All existing helper widgets (unchanged) ----------
-
-  Widget _buildForestClubCard() {
+  // ─── Invite Details Card ──────────────────────────────────────────────────
+  Widget _buildInviteDetailsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -89,7 +84,7 @@ class ReferralGrowthScreen extends StatelessWidget {
                     radius: 45,
                     backgroundColor: Colors.green.shade50,
                     child: const Icon(
-                      Icons.park,
+                      Icons.person_add,
                       size: 45,
                       color: Colors.green,
                     ),
@@ -103,7 +98,7 @@ class ReferralGrowthScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.eco,
+                        Icons.share,
                         color: Colors.white,
                         size: 12,
                       ),
@@ -125,7 +120,7 @@ class ReferralGrowthScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         const Text(
-                          "Your Club",
+                          "Your Referral",
                           style: TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                       ],
@@ -133,23 +128,23 @@ class ReferralGrowthScreen extends StatelessWidget {
                     const Row(
                       children: [
                         Text(
-                          "Forest Club",
+                          "GCC123",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         SizedBox(width: 5),
-                        Icon(Icons.eco, color: Colors.green, size: 20),
+                        Icon(Icons.copy, color: Colors.green, size: 20),
                       ],
                     ),
                     const Text.rich(
                       TextSpan(
-                        text: "Progress to next level: ",
+                        text: "Total Invites: ",
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                         children: [
                           TextSpan(
-                            text: "Amazon Club",
+                            text: "12",
                             style: TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
@@ -159,34 +154,6 @@ class ReferralGrowthScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: 0.68,
-                  minHeight: 10,
-                  backgroundColor: Colors.grey.shade100,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF1B6B2F),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Text(
-                  "68%",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
                 ),
               ),
             ],
@@ -206,7 +173,7 @@ class ReferralGrowthScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                "Contribution Volume: ",
+                "Contribution Volume : ",
                 style: TextStyle(color: Colors.grey),
               ),
               const Text(
@@ -224,6 +191,7 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
+  // ─── Reward Boost Card ──────────────────────────────────────────────────
   Widget _buildRewardBoostCard() {
     return _smallCardLayout(
       Column(
@@ -266,6 +234,7 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
+  // ─── Network Impact Card ────────────────────────────────────────────────
   Widget _buildNetworkImpactCard() {
     return _smallCardLayout(
       Column(
@@ -290,7 +259,8 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthlyRewardsCard() {
+  // ─── Monthly Average Card ──────────────────────────────────────────────
+  Widget _buildMonthlyAverageCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -302,10 +272,10 @@ class ReferralGrowthScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.card_giftcard, color: Colors.green.shade700),
+              Icon(Icons.calendar_today, color: Colors.green.shade700),
               const SizedBox(width: 8),
               const Text(
-                "Monthly Rewards",
+                "Monthly Average",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -314,14 +284,13 @@ class ReferralGrowthScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _rewardColumn("Base Rewards", "1,000 pts"),
-              const Icon(Icons.add, color: Colors.green, size: 18),
-              _rewardColumn("Club Boost", "+250 pts"),
-              const Text(
-                "=",
-                style: TextStyle(fontSize: 24, color: Colors.grey),
+              _statColumn("Monthly Average", "₹15,000"),
+              Container(
+                width: 1,
+                height: 40,
+                color: Colors.grey.shade200,
               ),
-              _rewardColumn("Total", "1,250 pts", isHighlight: true),
+              _statColumn("This Month", "₹18,200"),
             ],
           ),
         ],
@@ -329,47 +298,27 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildClubLevelsSection() {
+  Widget _statColumn(String label, String value) {
     return Column(
       children: [
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.workspace_premium, size: 18, color: Colors.green),
-                SizedBox(width: 5),
-                Text(
-                  "Club Levels",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Text(
-              "More about levels >",
-              style: TextStyle(color: Colors.green, fontSize: 12),
-            ),
-          ],
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
         ),
-        const SizedBox(height: 15),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _levelIcon("Earth", "1.0x", Icons.eco_outlined, false),
-              _levelIcon("Forest", "1.25x", Icons.eco, true),
-              _levelIcon("Amazon", "1.5x", Icons.park, false),
-              _levelIcon("Atmosphere", "1.75x", Icons.public, false),
-              _levelIcon("Ozone", "2.0x", Icons.cloud_queue, false),
-            ],
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1B6B2F),
           ),
         ),
       ],
     );
   }
 
-  // --- Helper Widgets (unchanged) ---
-
+  // ─── Helper Widgets ─────────────────────────────────────────────────────
   Widget _smallCardLayout(Widget child) {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -404,191 +353,158 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  Widget _rewardColumn(String label, String pts, {bool isHighlight = false}) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(
-          pts,
-          style: TextStyle(
-            fontSize: isHighlight ? 20 : 15,
-            fontWeight: FontWeight.bold,
-            color: isHighlight ? Colors.green : Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _levelIcon(String name, String value, IconData icon, bool isCurrent) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      width: 85,
-      decoration: BoxDecoration(
-        color: isCurrent ? Colors.white : Colors.white.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: isCurrent ? Colors.green : Colors.grey.shade200,
-        ),
-        boxShadow:
-            isCurrent
-                ? [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.1),
-                    blurRadius: 10,
-                  ),
-                ]
-                : null,
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: isCurrent ? Colors.green : Colors.grey, size: 28),
-          const SizedBox(height: 5),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: 12,
-              color: isCurrent ? Colors.black : Colors.grey,
-            ),
-          ),
-          if (isCurrent)
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: Colors.green.shade100,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                "CURRENT",
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInviteFriendsCard() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.mark_as_unread, size: 45, color: Colors.green),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Invite Friends",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const Text(
-                  "Grow your network. Grow the planet.",
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green.shade100),
-                      ),
-                      child: const Text(
-                        "GCC123",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _iconBtn(Icons.copy_outlined, "Copy"),
-                    const SizedBox(width: 10),
-                    _iconBtn(Icons.share_outlined, "Share"),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _iconBtn(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: Colors.green),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 10)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInviteButton() {
-    return Container(
+  // ─── Instructions Button ──────────────────────────────────────────────────
+  Widget _buildInstructionsButton(BuildContext context) {
+    return SizedBox(
       width: double.infinity,
       height: 55,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B6B2F).withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1B6B2F),
+      child: OutlinedButton.icon(
+        onPressed: () => _showInstructionsPopup(context),
+        icon: const Icon(Icons.info_outline, color: Colors.green),
+        label: const Text(
+          "Instructions",
+          style: TextStyle(color: Colors.green, fontSize: 18),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.green, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Invite & Grow",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  // ─── Enhanced Instruction Popup ──────────────────────────────────────────
+  void _showInstructionsPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: 8,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header with gradient background ──
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.shade700,
+                        Colors.green.shade400,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline,
+                          color: Colors.white, size: 28),
+                      SizedBox(width: 10),
+                      Text(
+                        "Instructions",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Instruction Steps ──
+                _instructionStep("1", "Share your unique referral code with friends."),
+                _instructionStep("2", "Earn rewards when your referrals make their first contribution."),
+                _instructionStep("3", "Unlock higher reward multipliers as your network grows."),
+                _instructionStep("4", "Track your monthly average to stay on top."),
+                _instructionStep("5", "For any queries, contact our support team."),
+
+                const SizedBox(height: 24),
+
+                // ── Close Button ──
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      "Got It",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _instructionStep(String number, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
-            SizedBox(width: 8),
-            Icon(Icons.eco, color: Colors.white),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
