@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- ADDED for SystemNavigator
+import 'package:flutter/services.dart';
+import 'package:gcc/Models_nServices/Notification_count/count_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Screens/Homescreen/Redeem_screen.dart';
+import 'package:gcc/Screens/Homescreen/notification_screen.dart';
 import 'package:gcc/Screens/Homescreen/resell_&_exchange.dart';
 import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
 import 'package:gcc/Models_nServices/home_screen/home_screen_model.dart';
 import 'package:gcc/Models_nServices/home_screen/home_screen_svc.dart';
+import 'package:gcc/Models_nServices/notification/notification_svc.dart';
 import 'package:gcc/Screens/profile/help_n_support.dart';
 import 'package:gcc/Screens/profile/my_impacts.dart';
 import 'package:gcc/Screens/profile/referral_screen.dart';
 import 'package:gcc/Screens/reward/rewards_store_screen.dart';
 import 'package:gcc/exception/daily_streak_card.dart';
 import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
+import 'package:gcc/main.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
+
+// ---------- Import your DioClient ----------
+// If you have a DioClient class, use this:
+import 'package:gcc/api/dio_client.dart';
+// OR if you don't, use direct Dio with base URL:
+// import 'package:dio/dio.dart';
+// import 'package:gcc/api/api_endpoints.dart';
+// -------------------------------------------
 
 class GCCHomeScreen extends StatefulWidget {
   const GCCHomeScreen({super.key});
@@ -22,7 +34,7 @@ class GCCHomeScreen extends StatefulWidget {
   State<GCCHomeScreen> createState() => _GCCHomeScreenState();
 }
 
-class _GCCHomeScreenState extends State<GCCHomeScreen> {
+class _GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
   static const Color primaryGreen = Color(0xFF1B6B2F);
   static const Color lightGreen = Color(0xFF4CAF50);
   static const Color bgColor = Color(0xFFF5F5F5);
@@ -31,29 +43,54 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   HomeScreenData? _homeScreenData;
+  HomeScreenUser? _homeScreenUser;
   String _userName = '';
   double? _walletInrBalance;
+
+  // ─── Notification count ──────────────────────────────────────────
+  int _notificationCount = 0;
+
+  // ✅ Instantiate service with required dependencies (like in RedeemScreen)
+  final UnreadNotificationService _notificationService = UnreadNotificationService(
+    DioClient.dio,      // <-- use your static Dio instance
+    AppPreference(),
+  );
+
+  // 🔄 Alternative if you don't have DioClient:
+  // final NotificationService _notificationService = NotificationService(
+  //   Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl)),
+  //   AppPreference(),
+  // );
 
   @override
   void initState() {
     super.initState();
     _loadHomeScreen();
+    _fetchNotificationCount(); // fetch count on load
   }
 
-  // Future<void> _loadWalletDetails() async {
-  //   try {
-  //     final resp = await fetchWalletDetails();
-  //     if (resp.success == true && resp.data?.walletBalance != null) {
-  //       setState(() {
-  //         _walletInrBalance = resp.data!.walletBalance!.inrBalance ?? 0.0;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     // silently ignore wallet fetch errors; top bar will show placeholder
-  //     debugPrint('Wallet fetch error: $e');
-  //   }
-  // }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
 
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // ─── Refresh notification count when we come back ──────────────────
+  @override
+  void didPopNext() {
+    _fetchNotificationCount();
+  }
+
+  // ─── Load home screen data ────────────────────────────────────────────
   Future<void> _loadHomeScreen() async {
     setState(() {
       _isLoading = true;
@@ -65,6 +102,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       if (response.success == true && response.data != null) {
         setState(() {
           _homeScreenData = response.data!.homeScreen;
+          _homeScreenUser = response.data!.user;
           _userName =
               response.data!.user?.name ??
               AppPreference().getString(PreferencesKey.userName);
@@ -82,6 +120,24 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  // ─── Fetch unread notification count ────────────────────────────────
+  Future<void> _fetchNotificationCount() async {
+    try {
+      final response = await _notificationService.fetchUnreadCount();
+      if (mounted) {
+        setState(() {
+          _notificationCount = response.data.unreadCount;
+        });
+      }
+    } catch (e) {
+      // Silently fail – keep existing count or set to 0
+      print('Notification count error: $e');
+      if (mounted) {
+        setState(() => _notificationCount = 0);
+      }
     }
   }
 
@@ -131,12 +187,8 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                     const SizedBox(height: 12),
                     _buildGCCUnitsCard(),
                     const SizedBox(height: 12),
-                    // _buildDailyActionCard(),
-                    const SizedBox(height: 12),
                     _buildQuickActionsSection(),
                     const SizedBox(height: 12),
-                    // _buildLeaderboardBanner(),
-                    // const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -167,10 +219,10 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                 ],
               ),
         ) ??
-        false; // if dialog dismissed (tap outside), treat as "No"
+        false;
   }
 
-  // ─── TOP BAR WITH WALLET AMOUNT ───────────────────────────────────────────
+  // ─── TOP BAR WITH NOTIFICATION COUNT ─────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: Colors.white,
@@ -208,88 +260,15 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               ],
             ),
 
-            /// Wallet Section (commented out)
-            // Positioned(
-            //   left: 0,
-            //   child: GestureDetector(
-            //     onTap: () {
-            //       Navigator.push(
-            //         context,
-            //         MaterialPageRoute(builder: (_) => const WalletScreen()),
-            //       );
-            //     },
-            //     child: Container(
-            //       width: 100,
-            //       padding: const EdgeInsets.symmetric(
-            //         horizontal: 8,
-            //         vertical: 6,
-            //       ),
-            //       decoration: BoxDecoration(
-            //         color: primaryGreen.withOpacity(0.1),
-            //         borderRadius: BorderRadius.circular(14),
-            //         border: Border.all(color: primaryGreen.withOpacity(0.3)),
-            //       ),
-            //       child: Column(
-            //         crossAxisAlignment: CrossAxisAlignment.start,
-            //         mainAxisSize: MainAxisSize.min,
-            //         children: [
-            //           Row(
-            //             children: const [
-            //               Icon(
-            //                 Icons.account_balance_wallet_outlined,
-            //                 size: 12,
-            //                 color: primaryGreen,
-            //               ),
-            //               SizedBox(width: 4),
-            //               Text(
-            //                 'Wallet',
-            //                 style: TextStyle(
-            //                   fontSize: 8,
-            //                   color: Colors.grey,
-            //                   fontWeight: FontWeight.w500,
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //           const SizedBox(height: 2),
-            //           Text(
-            //             _walletInrBalance != null
-            //                 ? '₹${_walletInrBalance!.toStringAsFixed(2)}'
-            //                 : '₹--',
-            //             maxLines: 1,
-            //             overflow: TextOverflow.ellipsis,
-            //             style: const TextStyle(
-            //               fontSize: 15,
-            //               fontWeight: FontWeight.bold,
-            //               color: primaryGreen,
-            //             ),
-            //           ),
-            //           const SizedBox(height: 1),
-            //           // Text(
-            //           //   '${_homeScreenData?.totalGccUnitsOwned ?? 0} GCC',
-            //           //   maxLines: 1,
-            //           //   overflow: TextOverflow.ellipsis,
-            //           //   style: const TextStyle(
-            //           //     fontSize: 8,
-            //           //     fontWeight: FontWeight.w600,
-            //           //     color: primaryGreen,
-            //           //   ),
-            //           // ),
-            //         ],
-            //       ),
-            //     ),
-            //   ),
-            // ),
-
-            /// Notification Icon
+            /// Notification Icon with dynamic badge
             Positioned(
               right: 0,
               child: GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Notifications coming soon!'),
-                      duration: Duration(seconds: 2),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
                     ),
                   );
                 },
@@ -307,28 +286,32 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                         color: Colors.black87,
                       ),
                     ),
-                    Positioned(
-                      right: 2,
-                      top: 2,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: primaryGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '3',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                    // ─── Dynamic Badge ────────────────────────────────
+                    if (_notificationCount > 0)
+                      Positioned(
+                        right: 2,
+                        top: 2,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            color: primaryGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _notificationCount > 9
+                                  ? '9+'
+                                  : _notificationCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -338,224 +321,219 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       ),
     );
   }
+  
+  // ─── HERO FOREST CARD (unchanged) ──────────────────────────────────────
+ Widget _buildHeroForestCard() {
+  // ─── Dynamic Progress Calculation ────────────────────
+  final treeValue = _homeScreenData?.treeValue ?? 0;
+  final nextTree = _homeScreenData?.nextTree ?? 0;
+  double progress = 0.0;
+  String percentText = '0%';
 
-  // ─── HERO FOREST CARD ──────────────────────────────────────────────────────
-  Widget _buildHeroForestCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: primaryGreen.withOpacity(0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
-          child: Column(
-            children: [
-              /// HERO IMAGE SECTION
-              SizedBox(
-                height: 220,
-                child: Stack(
-                  children: [
-                    /// Background Image
-                    Positioned.fill(
-                      child: Image.asset(
-                        'assets/Images/hero_screen.png',
-                        fit: BoxFit.cover,
-                      ),
+  if (nextTree > 0) {
+    progress = (treeValue / nextTree).clamp(0.0, 1.0);
+    percentText = '${(progress * 100).toInt()}%';
+  }
+
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: [
+        BoxShadow(
+          color: primaryGreen.withOpacity(0.25),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
+        child: Column(
+          children: [
+            /// ─── HERO IMAGE SECTION ──────────────────────
+            SizedBox(
+              height: 220,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/Images/hero_screen.png',
+                      fit: BoxFit.cover,
                     ),
-
-                    /// Dark Overlay for better text visibility
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Colors.black.withOpacity(0.45),
-                              Colors.black.withOpacity(0.15),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    /// Hello Text
-                    Positioned(
-                      top: 18,
-                      left: 18,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.eco,
-                            color: Color(0xFFB2FF59),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Hello, ${_userName.isNotEmpty ? _userName : 'Friend'}!',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// Main Heading
-                    const Positioned(
-                      top: 45,
-                      left: 18,
-                      child: Text(
-                        'Grow Your\nDigital Forest',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          height: 1.1,
-                        ),
-                      ),
-                    ),
-
-                    /// Subtitle
-                    const Positioned(
-                      top: 125,
-                      left: 18,
-                      child: Text(
-                        'Your small steps create\na big impact.',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-
-                    /// You're Doing Great Badge
-                    Positioned(
-                      top: 75,
-                      right: 18,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryGreen.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Column(
-                          children: [
-                            Text(
-                              "You're doing\nGreat! 🌿",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.black.withOpacity(0.45),
+                            Colors.black.withOpacity(0.15),
+                            Colors.transparent,
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              /// BOTTOM STATS SECTION
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: const BoxDecoration(color: Color(0xFF1B5E20)),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  Positioned(
+                    top: 18,
+                    left: 18,
+                    child: Row(
                       children: [
-                        _ForestStatNew(
-                          icon: Icons.park,
-                          label: 'Trees Supported',
-                          value: '${_homeScreenData?.treeValue ?? 0}',
-                          unit: 'Trees',
+                        const Icon(
+                          Icons.eco,
+                          color: Color(0xFFB2FF59),
+                          size: 14,
                         ),
-                        Container(width: 1, height: 50, color: Colors.white24),
-                        _ForestStatNew(
-                          icon: Icons.cloud_outlined,
-                          label: 'CO₂ Offset',
-                          value: '${_homeScreenData?.totalCo2Impact ?? 0}',
-                          unit: 'kg',
-                        ),
-                        Container(width: 1, height: 50, color: Colors.white24),
-                        _ForestStatNew(
-                          icon: Icons.flag_outlined,
-                          label: 'Next Milestone',
-                          value: '${_homeScreenData?.nextTree ?? 0}',
-                          unit: 'Trees',
+                        const SizedBox(width: 4),
+                        Text(
+                          'Hello, ${_userName.isNotEmpty ? _userName : 'Friend'}!',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 12),
-
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: 0.85,
-                        backgroundColor: Colors.white24,
-                        color: lightGreen,
-                        minHeight: 8,
+                  ),
+                  const Positioned(
+                    top: 45,
+                    left: 18,
+                    child: Text(
+                      'Grow Your\nDigital Forest',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
                       ),
                     ),
-
-                    const SizedBox(height: 8),
-
-                    RichText(
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                  const Positioned(
+                    top: 125,
+                    left: 18,
+                    child: Text(
+                      'Your small steps create\na big impact.',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 75,
+                    right: 18,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: primaryGreen.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: const Column(
                         children: [
-                          TextSpan(text: 'You are '),
-                          TextSpan(
-                            text: '85%',
+                          Text(
+                            "You're doing\nGreat! 🌿",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF76FF03),
+                              color: Colors.white,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          TextSpan(text: ' closer to your next milestone!'),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            /// ─── BOTTOM STATS SECTION ────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: const BoxDecoration(color: Color(0xFF1B5E20)),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _ForestStatNew(
+                        icon: Icons.park,
+                        label: 'Trees Supported',
+                        value: '${_homeScreenData?.treeValue ?? 0}',
+                        unit: 'Trees',
+                      ),
+                      Container(width: 1, height: 50, color: Colors.white24),
+                      _ForestStatNew(
+                        icon: Icons.cloud_outlined,
+                        label: 'CO₂ Offset',
+                        value: '${_homeScreenUser?.co2 ?? 0}',
+                        unit: 'kg',
+                      ),
+                      Container(width: 1, height: 50, color: Colors.white24),
+                      _ForestStatNew(
+                        icon: Icons.flag_outlined,
+                        label: 'Next Milestone',
+                        value: '${_homeScreenData?.nextTree ?? 0}',
+                        unit: 'Trees',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  /// ─── DYNAMIC PROGRESS BAR ──────────────
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.white24,
+                      color: lightGreen,
+                      minHeight: 8,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  /// ─── DYNAMIC PERCENTAGE TEXT ────────────
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      children: [
+                        const TextSpan(text: 'You are '),
+                        TextSpan(
+                          text: percentText,
+                          style: const TextStyle(
+                            color: Color(0xFF76FF03),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const TextSpan(text: ' closer to your next milestone!'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  // ─── GCC UNITS CARD ────────────────────────────────────────────────────────
+    ),
+  );
+}
+  // ─── GCC UNITS CARD (unchanged) ────────────────────────────────────────
   Widget _buildGCCUnitsCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14),
@@ -827,7 +805,6 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               ),
               GestureDetector(
                 onTap: () {
-                  // Show learn more dialog
                   _showLearnMoreDialog(context);
                 },
                 child: const Row(
@@ -866,191 +843,6 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Got it'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  // ─── DAILY ACTION CARD ─────────────────────────────────────────────────────
-  Widget _buildDailyActionCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Row(
-                  children: [
-                    Text('🔥', style: TextStyle(fontSize: 18)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Daily Action',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text('🔥', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 4),
-                      Text(
-                        '5 Day Streak',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Action card inside
-          Container(
-            margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FAF0),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: lightGreen.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: lightGreen.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text('🪴', style: TextStyle(fontSize: 28)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Water your tree today!',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const Text(
-                        'Small actions. Big difference.',
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Text(
-                            '1/1 Completed',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: primaryGreen,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: const LinearProgressIndicator(
-                                value: 1.0,
-                                backgroundColor: Color(0xFFDCEDC8),
-                                color: primaryGreen,
-                                minHeight: 6,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                OutlinedButton(
-                  onPressed: () {
-                    // Show completion dialog
-                    _showCompletionDialog(context);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: primaryGreen,
-                    side: const BorderSide(color: primaryGreen),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: const Text(
-                    'Complete',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCompletionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Text('🎉', style: TextStyle(fontSize: 24)),
-                SizedBox(width: 8),
-                Text('Task Completed!'),
-              ],
-            ),
-            content: const Text(
-              'Great job! You earned 10 Eco Points for completing your daily action. Keep up the momentum!',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Awesome!'),
               ),
             ],
           ),
@@ -1130,9 +922,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                             a['emoji'] as String,
                             style: const TextStyle(fontSize: 28),
                           ),
-
                           const SizedBox(height: 8),
-
                           Text(
                             a['title'] as String,
                             maxLines: 2,
@@ -1143,9 +933,7 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-
                           const SizedBox(height: 4),
-
                           Text(
                             a['subtitle'] as String,
                             maxLines: 2,
@@ -1166,172 +954,9 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> {
       ),
     );
   }
-
-  // ─── LEADERBOARD BANNER ────────────────────────────────────────────────────
-  Widget _buildLeaderboardBanner() {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to leaderboard
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Leaderboard coming soon!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E7),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.orange.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            const Text('🏆', style: TextStyle(fontSize: 32)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: RichText(
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 12, color: Colors.black87),
-                  children: [
-                    TextSpan(
-                      text: 'You are ahead of 82% of users this week! 🎉\n',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text: 'Keep going and lead the green movement.',
-                      style: TextStyle(color: Colors.grey, fontSize: 10),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.orange,
-                size: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-// ─── HELPER WIDGETS ──────────────────────────────────────────────────────────
-
-class _BirdIcon extends StatelessWidget {
-  const _BirdIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      '~',
-      style: TextStyle(color: Colors.black45, fontSize: 12),
-    );
-  }
-}
-
-class _TreeWidget extends StatelessWidget {
-  final double height;
-  final Color color;
-  const _TreeWidget({required this.height, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(height * 0.6, height),
-      painter: _TreePainter(color: color),
-    );
-  }
-}
-
-class _TreePainter extends CustomPainter {
-  final Color color;
-  const _TreePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final path = Path();
-    path.moveTo(size.width / 2, 0);
-    path.lineTo(0, size.height * 0.65);
-    path.lineTo(size.width, size.height * 0.65);
-    path.close();
-    canvas.drawPath(path, paint);
-    final trunkPaint = Paint()..color = const Color(0xFF5D4037);
-    canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.4,
-        size.height * 0.65,
-        size.width * 0.2,
-        size.height * 0.35,
-      ),
-      trunkPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_TreePainter old) => old.color != color;
-}
-
-// Hills background painter
-class _HillsPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFF388E3C).withOpacity(0.5);
-    final path = Path();
-    path.moveTo(0, size.height * 0.6);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      0,
-      size.width * 0.5,
-      size.height * 0.4,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.8,
-      size.width,
-      size.height * 0.3,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    canvas.drawPath(path, paint);
-
-    final paint2 = Paint()..color = const Color(0xFF2E7D32).withOpacity(0.4);
-    final path2 = Path();
-    path2.moveTo(0, size.height * 0.8);
-    path2.quadraticBezierTo(
-      size.width * 0.3,
-      size.height * 0.2,
-      size.width * 0.6,
-      size.height * 0.7,
-    );
-    path2.quadraticBezierTo(
-      size.width * 0.8,
-      size.height,
-      size.width,
-      size.height * 0.6,
-    );
-    path2.lineTo(size.width, size.height);
-    path2.lineTo(0, size.height);
-    path2.close();
-    canvas.drawPath(path2, paint2);
-  }
-
-  @override
-  bool shouldRepaint(_HillsPainter old) => false;
-}
+// ─── HELPER WIDGETS (unchanged) ──────────────────────────────────────────
 
 class _ForestStatNew extends StatelessWidget {
   final IconData icon;

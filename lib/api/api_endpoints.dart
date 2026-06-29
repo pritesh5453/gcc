@@ -9,7 +9,11 @@ class ApiEndpoints {
   static const String coinSummary = "$baseUrl/coin/summary";
   static const String sellTrading = "$baseUrl/trading/sell";
 
-  //Buy Screen API
+
+  //Notifications 
+  static const String notifications = "$baseUrl/notifications?type=unread";
+  static const String notificationsUnreadCount = '/notifications/unread-count';
+
   static const String buyCoin = "$baseUrl/trading/buy";
 
   // Auth APIs
@@ -30,6 +34,10 @@ class ApiEndpoints {
   static const String kycPanSave = "$baseUrl/kyc/pan/save";
   static const String kycBankVerify = "$baseUrl/kyc/bank/verify";
 
+  //Invite Screen API
+  static const String inviteScreen = "$baseUrl/invite-screen";
+  static const String inviteIntroduction = "$baseUrl/invite-introduction";
+
   // Transaction API
   static const String transactions = "$baseUrl/dashboard/transactions";
 
@@ -37,6 +45,7 @@ class ApiEndpoints {
   static const String earnRewards = "$baseUrl/earn-rewards";
   static const String claimTrackImpact = "$baseUrl/claim-track-your-impact";
   static const String trackImpact = "$baseUrl/track-your-impact";
+  static const String claimBuyReward = "$baseUrl/claim-buy-reward";
 
   // Reward Status Summary (replaces old daily login status)
   static const String rewardStatusSummary = "$baseUrl/reward-status-summary";

@@ -17,17 +17,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   final TransactionService _service = TransactionService();
   final AppPreference _appPref = AppPreference();
 
-  List<TransactionItemModel> allTransactions = [];
-  List<TransactionItemModel> filteredTransactions = [];
+  List<Transaction> allTransactions = [];
+  List<Transaction> filteredTransactions = [];
   bool isLoading = false;
   bool isLoadingMore = false;
   String? errorMessage;
   String selectedFilter = 'All';
 
-  // Wallet balances
-  int totalAmountHeld = 0;
-  int utilizedBalance = 0;
-  int unutilizedBalance = 0;
+  // Portfolio summary (from API)
+  double totalHoldingUnits = 0;
+  double currentUnitPrice = 0;
+  double portfolioValue = 0;
 
   // Pagination
   int currentPage = 1;
@@ -81,7 +81,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Future<void> _fetchTransactions({required bool reset}) async {
     try {
       final token = _appPref.getString(PreferencesKey.authToken);
-
       print("===== AUTH TOKEN =====");
       print(token);
       if (token.isEmpty) {
@@ -89,22 +88,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       }
 
       final response = await _service.getTransactions(
-        token: token,
+        token,
         page: currentPage,
         perPage: 10,
       );
 
-      if (response != null && response.success) {
+      if (response.success) {
         setState(() {
           if (reset) {
             allTransactions = response.data.transactions;
-            // Update wallet balances only on first page
-            totalAmountHeld =
-                response.data.wallet.walletBalance.totalAmountHeld;
-            utilizedBalance =
-                response.data.wallet.walletBalance.utilizedBalance;
-            unutilizedBalance =
-                response.data.wallet.walletBalance.unutilizedBalance;
+            totalHoldingUnits = response.portfolio.totalHoldingUnits;
+            currentUnitPrice = response.portfolio.currentUnitPrice;
+            portfolioValue = response.portfolio.portfolioValue;
           } else {
             allTransactions.addAll(response.data.transactions);
           }
@@ -113,7 +108,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           _applyFilter();
         });
       } else {
-        throw Exception('Failed to load transactions');
+        throw Exception(response.message);
       }
     } catch (e) {
       setState(() {
@@ -147,12 +142,30 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     _applyFilter();
   }
 
-  String _getDisplayStatus(TransactionItemModel tx) {
-    if (tx.type.toLowerCase() == 'deposit') {
-      if (tx.status.toLowerCase() == 'pending') return 'Pending';
-      if (tx.status.toLowerCase() == 'completed') return 'Approved';
+  // ─── Status display logic ─────────────────────────────────────────────
+  String _getDisplayStatus(Transaction tx) {
+    final status = tx.status.toLowerCase();
+    // For sell transactions, map statuses as requested
+    if (tx.type.toLowerCase() == 'sell') {
+      if (status == 'completed') return 'Approved';
+      if (status == 'pending') return 'Pending';
+      if (status == 'rejected') return 'Rejected';
+      // fallback
+      return status[0].toUpperCase() + status.substring(1);
     }
-    return tx.status;
+    // For buy or other types, just capitalize
+    return status[0].toUpperCase() + status.substring(1);
+  }
+
+  // ─── Status color ──────────────────────────────────────────────────────
+  Color _getStatusColor(String displayStatus) {
+    if (displayStatus == 'Approved' || displayStatus == 'Completed') {
+      return Colors.green;
+    } else if (displayStatus == 'Pending') {
+      return Colors.orange;
+    } else {
+      return Colors.red; // Rejected or unknown
+    }
   }
 
   (Color color, IconData icon) _getTypeStyle(String type) {
@@ -179,8 +192,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    _buildPortfolioSummary(),
+                    const SizedBox(height: 12),
                     _buildFilterChips(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Expanded(child: _buildTransactionList()),
                   ],
                 ),
@@ -192,7 +207,48 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  // ─── FILTER CHIPS – CENTERED ──────────────────────────────────────────────
+  // ─── Portfolio Summary Card ──────────────────────────────────────────
+  Widget _buildPortfolioSummary() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green[100]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _summaryItem('Holding Units', totalHoldingUnits.toStringAsFixed(2)),
+          _summaryItem('Unit Price', '₹${currentUnitPrice.toStringAsFixed(2)}'),
+          _summaryItem(
+            'Portfolio Value',
+            '₹${portfolioValue.toStringAsFixed(2)}',
+            isValue: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryItem(String label, String value, {bool isValue = false}) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: isValue ? Colors.green[700] : Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Filter Chips ──────────────────────────────────────────────────────
   Widget _buildFilterChips() {
     final filters = ['All', 'buy', 'sell'];
     return Container(
@@ -215,7 +271,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 selected: isSelected,
                 onSelected: (_) => _onFilterSelected(label),
                 backgroundColor: Colors.white,
-                selectedColor: Colors.green[800],
+                selectedColor: Colors.green[800]!,
                 checkmarkColor: Colors.white,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : Colors.grey[600],
@@ -235,7 +291,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  // ─── TRANSACTION LIST – WITH ARROW INDICATOR ─────────────────────────────
+  // ─── Transaction List ──────────────────────────────────────────────────
   Widget _buildTransactionList() {
     if (isLoading && allTransactions.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -275,6 +331,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         final tx = filteredTransactions[index];
         final (color, icon) = _getTypeStyle(tx.type);
         final displayStatus = _getDisplayStatus(tx);
+        final statusColor = _getStatusColor(displayStatus);
 
         return Container(
           decoration: BoxDecoration(
@@ -294,7 +351,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               tx.createdAt,
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
-            // ─── TRAILING NOW INCLUDES A CHEVRON ARROW ─────────────────────
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -310,17 +366,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         color: color,
                       ),
                     ),
-                    if (tx.type.toLowerCase() == 'deposit')
-                      Text(
-                        displayStatus,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color:
-                              displayStatus == 'Approved'
-                                  ? Colors.green
-                                  : Colors.orange,
-                        ),
+                    Text(
+                      displayStatus,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: statusColor,
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 8),
@@ -334,109 +387,120 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  // ─── DETAILS BOTTOM SHEET ─────────────────────────────────────────────────
-  void _showTransactionDetails(BuildContext context, TransactionItemModel tx) {
-    final (color, icon) = _getTypeStyle(tx.type);
-    final displayStatus = _getDisplayStatus(tx);
+  // ─── Details Bottom Sheet ─────────────────────────────────────────────
+  void _showTransactionDetails(BuildContext context, Transaction tx) {
+  final (color, icon) = _getTypeStyle(tx.type);
+  final displayStatus = _getDisplayStatus(tx);
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (ctx) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // ✅ Allows the sheet to expand
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => Container(
+      padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView( // ✅ Makes the content scrollable
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                CircleAvatar(
+                  backgroundColor: color.withOpacity(0.1),
+                  child: Icon(icon, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tx.type[0].toUpperCase() + tx.type.substring(1),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        displayStatus,
+                        style: TextStyle(
+                          color: _getStatusColor(displayStatus),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: color.withOpacity(0.1),
-                      child: Icon(icon, color: color),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tx.type[0].toUpperCase() + tx.type.substring(1),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Text(
-                            displayStatus,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      "₹${tx.amountInr.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 12),
-                _detailRow('Transaction ID', tx.id.toString()),
-                _detailRow('Date & Time', tx.createdAt),
-                _detailRow('Status', displayStatus),
-                if (tx.type == 'deposit' && tx.utrNumber != null)
-                  _detailRow('UTR Number', tx.utrNumber!),
-                if (tx.type != 'deposit' && tx.coin != null) ...[
-                  _detailRow('Coin', '${tx.coin!.name} (${tx.coin!.symbol})'),
-                  _detailRow('Coin Qty', tx.amountCoin.toStringAsFixed(4)),
-                  _detailRow(
-                    'Price per unit',
-                    '₹${tx.priceAtTransaction.toStringAsFixed(2)}',
-                  ),
-                ],
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Close',
-                    style : TextStyle(color: Colors.white)),
+                Text(
+                  "₹${tx.amountInr.toStringAsFixed(2)}",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
                 ),
               ],
             ),
-          ),
-    );
-  }
-
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            _detailRow('Transaction ID', tx.id.toString()),
+            _detailRow('Date & Time', tx.createdAt),
+            _detailRow('Status', displayStatus),
+            if (tx.utrNumber != null && tx.utrNumber!.isNotEmpty)
+              _detailRow('UTR Number', tx.utrNumber!),
+            _detailRow('Coin', '${tx.coin.name} (${tx.coin.symbol})'),
+            _detailRow('Coin Qty', tx.amountCoin.toStringAsFixed(4)),
+            _detailRow(
+              'Price per unit',
+              '₹${tx.priceAtTransaction.toStringAsFixed(2)}',
+            ),
+            if (tx.serviceCharge > 0)
+              _detailRow(
+                'Service Charge',
+                '₹${tx.serviceCharge.toStringAsFixed(2)}',
+              ),
+            if (tx.gstCharges > 0)
+              _detailRow('GST Charges', '₹${tx.gstCharges.toStringAsFixed(2)}'),
+            if (tx.rejectionReason != null && tx.rejectionReason!.isNotEmpty)
+              _detailRow('Rejection Reason', tx.rejectionReason!),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
   Widget _detailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

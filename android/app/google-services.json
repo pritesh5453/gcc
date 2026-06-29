@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "493964491999",
+    "project_id": "green-contribution-certificate",
+    "storage_bucket": "green-contribution-certificate.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493964491999:android:51081c5df99c17ebd87d6a",
+        "android_client_info": {
+          "package_name": "com.example.gcc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwIJXhurlTvCa3cM1f2SCpRxDbs5qyMIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493964491999:android:99f2c84009122126d87d6a",
+        "android_client_info": {
+          "package_name": "com.gccltd.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwIJXhurlTvCa3cM1f2SCpRxDbs5qyMIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

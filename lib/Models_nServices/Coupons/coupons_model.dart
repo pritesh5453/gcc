@@ -1,16 +1,14 @@
-// ==============================
-// COUPONS LISTING RESPONSE
-// ==============================
-
 class CouponsResponse {
   final bool status;
   final int rewardPoints;
   final List<CouponData> data;
+  final int total_cashback_earned;
 
   CouponsResponse({
     required this.status,
     required this.rewardPoints,
     required this.data,
+    required this.total_cashback_earned,
   });
 
   factory CouponsResponse.fromJson(Map<String, dynamic> json) {
@@ -22,6 +20,7 @@ class CouponsResponse {
               ?.map((e) => CouponData.fromJson(e))
               .toList() ??
           [],
+          total_cashback_earned: json['total_cashback_earned'] ?? 0,
     );
   }
 }
@@ -45,6 +44,7 @@ class CouponData {
     required this.maxRewardAmount,
     required this.isEligible,
     required this.isScratch,
+    
   });
 
   factory CouponData.fromJson(Map<String, dynamic> json) {
@@ -57,6 +57,7 @@ class CouponData {
       maxRewardAmount: json['max_reward_amount'] ?? 0,
       isEligible: json['is_eligible'] ?? false,
       isScratch: json['is_scratch'] ?? false, // key must match API
+    
     );
   }
 }

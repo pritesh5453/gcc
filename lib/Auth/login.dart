@@ -1,9 +1,11 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:gcc/Auth/OTP_screen.dart';
 import 'package:gcc/Auth/signup.dart';
 import 'package:gcc/Models_nServices/login/login_services.dart';
 import 'package:gcc/Navbar/navbar.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -67,11 +69,17 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       setState(() {
         _isLoading = true;
       });
+final authApiService = AuthApiService();
 
-      final authApiService = AuthApiService();
-      final response = await authApiService.login(
-        phone: _mobilecontroller.text.trim(),
-      );
+final firebaseToken =
+    await FirebaseMessaging.instance.getToken();
+
+debugPrint("Firebase Token => $firebaseToken");
+
+final response = await authApiService.login(
+  phone: _mobilecontroller.text.trim(),
+  firebaseToken: firebaseToken ?? "",
+);
 
       setState(() {
         _isLoading = false;

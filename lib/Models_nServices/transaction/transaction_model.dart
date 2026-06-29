@@ -1,61 +1,51 @@
-// lib/Models_nServices/transaction/transaction_model.dart
+// transaction_model.dart
 
-class TransactionResponseModel {
+class TransactionResponse {
   final bool success;
-  final TransactionDataModel data;
+  final PortfolioSummary portfolio;
+  final List<Transaction> transactions;
+  final TransactionData data;
   final String message;
 
-  TransactionResponseModel({
+  TransactionResponse({
     required this.success,
+    required this.portfolio,
+    required this.transactions,
     required this.data,
     required this.message,
   });
 
-  factory TransactionResponseModel.fromJson(Map<String, dynamic> json) {
-    return TransactionResponseModel(
-      success: json['success'] ?? false,
-      data: TransactionDataModel.fromJson(json['data'] ?? {}),
-      message: json['message'] ?? '',
+  factory TransactionResponse.fromJson(Map<String, dynamic> json) {
+    return TransactionResponse(
+      success: json['success'] as bool,
+      portfolio: PortfolioSummary.fromJson(json['portfolio'] as Map<String, dynamic>),
+      transactions: (json['transactions'] as List)
+          .map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      data: TransactionData.fromJson(json['data'] as Map<String, dynamic>),
+      message: json['message'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'success': success,
+        'portfolio': portfolio.toJson(),
+        'transactions': transactions.map((e) => e.toJson()).toList(),
+        'data': data.toJson(),
+        'message': message,
+      };
 }
 
-class TransactionDataModel {
-  final WalletModel wallet;
-  final List<TransactionItemModel> transactions;
-  final FiltersModel filters;
-  final PaginationModel pagination;
-
-  TransactionDataModel({
-    required this.wallet,
-    required this.transactions,
-    required this.filters,
-    required this.pagination,
-  });
-
-  factory TransactionDataModel.fromJson(Map<String, dynamic> json) {
-    return TransactionDataModel(
-      wallet: WalletModel.fromJson(json['wallet'] ?? {}),
-      transactions:
-          (json['transactions'] as List?)
-              ?.map((e) => TransactionItemModel.fromJson(e))
-              .toList() ??
-          [],
-      filters: FiltersModel.fromJson(json['filters'] ?? {}),
-      pagination: PaginationModel.fromJson(json['pagination'] ?? {}),
-    );
-  }
-}
-
-// ---------- Helper to parse int from dynamic ----------
-int _parseInt(dynamic value) {
+// ─── Helper to safely convert dynamic to int ──────────────────────────
+int _safeInt(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
+  if (value is double) return value.toInt();
   if (value is String) return int.tryParse(value) ?? 0;
-  return value.toInt();
+  return 0;
 }
 
-double _parseDouble(dynamic value) {
+double _safeDouble(dynamic value) {
   if (value == null) return 0.0;
   if (value is double) return value;
   if (value is int) return value.toDouble();
@@ -63,109 +53,44 @@ double _parseDouble(dynamic value) {
   return 0.0;
 }
 
-// ---------- Wallet & Balance ----------
-class WalletModel {
-  final WalletBalanceModel walletBalance;
-  final ReferralEarningsModel referralEarnings;
-  final UserInfoModel userInfo;
+// ─── Portfolio Summary ──────────────────────────────────────────────
+class PortfolioSummary {
+  final double totalHoldingUnits;
+  final double currentUnitPrice;
+  final double portfolioValue;
 
-  WalletModel({
-    required this.walletBalance,
-    required this.referralEarnings,
-    required this.userInfo,
+  PortfolioSummary({
+    required this.totalHoldingUnits,
+    required this.currentUnitPrice,
+    required this.portfolioValue,
   });
 
-  factory WalletModel.fromJson(Map<String, dynamic> json) {
-    return WalletModel(
-      walletBalance: WalletBalanceModel.fromJson(json['wallet_balance'] ?? {}),
-      referralEarnings: ReferralEarningsModel.fromJson(
-        json['referral_earnings'] ?? {},
-      ),
-      userInfo: UserInfoModel.fromJson(json['user_info'] ?? {}),
+  factory PortfolioSummary.fromJson(Map<String, dynamic> json) {
+    return PortfolioSummary(
+      totalHoldingUnits: _safeDouble(json['total_holding_units']),
+      currentUnitPrice: _safeDouble(json['current_unit_price']),
+      portfolioValue: _safeDouble(json['portfolio_value']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'total_holding_units': totalHoldingUnits,
+        'current_unit_price': currentUnitPrice,
+        'portfolio_value': portfolioValue,
+      };
 }
 
-class WalletBalanceModel {
-  final int totalAmountHeld;
-  final int utilizedBalance;
-  final int unutilizedBalance;
-  final int inrBalance;
-
-  WalletBalanceModel({
-    required this.totalAmountHeld,
-    required this.utilizedBalance,
-    required this.unutilizedBalance,
-    required this.inrBalance,
-  });
-
-  factory WalletBalanceModel.fromJson(Map<String, dynamic> json) {
-    return WalletBalanceModel(
-      totalAmountHeld: _parseInt(json['total_amount_held']),
-      utilizedBalance: _parseInt(json['utilized_balance']),
-      unutilizedBalance: _parseInt(json['unutilized_balance']),
-      inrBalance: _parseInt(json['inr_balance']),
-    );
-  }
-}
-
-class ReferralEarningsModel {
-  final int totalReferralEarned;
-  final int pendingReferralEarned;
-  final int totalReferrals;
-  final int activeReferrals;
-
-  ReferralEarningsModel({
-    required this.totalReferralEarned,
-    required this.pendingReferralEarned,
-    required this.totalReferrals,
-    required this.activeReferrals,
-  });
-
-  factory ReferralEarningsModel.fromJson(Map<String, dynamic> json) {
-    return ReferralEarningsModel(
-      totalReferralEarned: _parseInt(json['total_referral_earned']),
-      pendingReferralEarned: _parseInt(json['pending_referral_earned']),
-      totalReferrals: _parseInt(json['total_referrals']),
-      activeReferrals: _parseInt(json['active_referrals']),
-    );
-  }
-}
-
-class UserInfoModel {
-  final int userId;
-  final String username;
-  final String email;
-  final String referralCode;
-
-  UserInfoModel({
-    required this.userId,
-    required this.username,
-    required this.email,
-    required this.referralCode,
-  });
-
-  factory UserInfoModel.fromJson(Map<String, dynamic> json) {
-    return UserInfoModel(
-      userId: _parseInt(json['user_id']),
-      username: json['username'] ?? '',
-      email: json['email'] ?? '',
-      referralCode: json['referral_code'] ?? '',
-    );
-  }
-}
-
-// ---------- Transaction Item ----------
-class TransactionItemModel {
+// ─── Transaction ─────────────────────────────────────────────────────
+class Transaction {
   final int id;
   final String type;
-  final CoinModel? coin;
+  final Coin coin;
   final double amountCoin;
-  final int amountInr;
-  final int actualAmount;
+  final double amountInr;
+  final double actualAmount;
   final double priceAtTransaction;
-  final int serviceCharge;
-  final int gstCharges;
+  final double serviceCharge;
+  final double gstCharges;
   final String status;
   final String? utrNumber;
   final String? verificationStatus;
@@ -174,10 +99,10 @@ class TransactionItemModel {
   final String createdAt;
   final String updatedAt;
 
-  TransactionItemModel({
+  Transaction({
     required this.id,
     required this.type,
-    this.coin,
+    required this.coin,
     required this.amountCoin,
     required this.amountInr,
     required this.actualAmount,
@@ -193,46 +118,105 @@ class TransactionItemModel {
     required this.updatedAt,
   });
 
-  factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
-    return TransactionItemModel(
-      id: _parseInt(json['id']),
-      type: json['type'] ?? '',
-      coin: json['coin'] != null ? CoinModel.fromJson(json['coin']) : null,
-      amountCoin: _parseDouble(json['amount_coin']),
-      amountInr: _parseInt(json['amount_inr']),
-      actualAmount: _parseInt(json['actual_amount']),
-      priceAtTransaction: _parseDouble(json['price_at_transaction']),
-      serviceCharge: _parseInt(json['service_charge']),
-      gstCharges: _parseInt(json['gst_charges']),
-      status: json['status'] ?? '',
-      utrNumber: json['utr_number'],
-      verificationStatus: json['verification_status'],
-      rejectionReason: json['rejection_reason'],
-      scImage: json['sc_image'],
-      createdAt: json['created_at'] ?? '',
-      updatedAt: json['updated_at'] ?? '',
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: _safeInt(json['id']),
+      type: json['type'] as String,
+      coin: Coin.fromJson(json['coin'] as Map<String, dynamic>),
+      amountCoin: _safeDouble(json['amount_coin']),
+      amountInr: _safeDouble(json['amount_inr']),
+      actualAmount: _safeDouble(json['actual_amount']),
+      priceAtTransaction: _safeDouble(json['price_at_transaction']),
+      serviceCharge: _safeDouble(json['service_charge']),
+      gstCharges: _safeDouble(json['gst_charges']),
+      status: json['status'] as String,
+      utrNumber: json['utr_number'] as String?,
+      verificationStatus: json['verification_status'] as String?,
+      rejectionReason: json['rejection_reason'] as String?,
+      scImage: json['sc_image'] as String?,
+      createdAt: json['created_at'] as String,
+      updatedAt: json['updated_at'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'coin': coin.toJson(),
+        'amount_coin': amountCoin,
+        'amount_inr': amountInr,
+        'actual_amount': actualAmount,
+        'price_at_transaction': priceAtTransaction,
+        'service_charge': serviceCharge,
+        'gst_charges': gstCharges,
+        'status': status,
+        'utr_number': utrNumber,
+        'verification_status': verificationStatus,
+        'rejection_reason': rejectionReason,
+        'sc_image': scImage,
+        'created_at': createdAt,
+        'updated_at': updatedAt,
+      };
 }
 
-class CoinModel {
+// ─── Coin ──────────────────────────────────────────────────────────────
+class Coin {
   final int id;
   final String name;
   final String symbol;
 
-  CoinModel({required this.id, required this.name, required this.symbol});
+  Coin({
+    required this.id,
+    required this.name,
+    required this.symbol,
+  });
 
-  factory CoinModel.fromJson(Map<String, dynamic> json) {
-    return CoinModel(
-      id: _parseInt(json['id']),
-      name: json['name'] ?? '',
-      symbol: json['symbol'] ?? '',
+  factory Coin.fromJson(Map<String, dynamic> json) {
+    return Coin(
+      id: _safeInt(json['id']),
+      name: json['name'] as String,
+      symbol: json['symbol'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'symbol': symbol,
+      };
 }
 
-// ---------- Filters & Pagination ----------
-class FiltersModel {
+// ─── Transaction Data ────────────────────────────────────────────────
+class TransactionData {
+  final List<Transaction> transactions;
+  final Filters filters;
+  final Pagination pagination;
+
+  TransactionData({
+    required this.transactions,
+    required this.filters,
+    required this.pagination,
+  });
+
+  factory TransactionData.fromJson(Map<String, dynamic> json) {
+    return TransactionData(
+      transactions: (json['transactions'] as List)
+          .map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      filters: Filters.fromJson(json['filters'] as Map<String, dynamic>),
+      pagination: Pagination.fromJson(json['pagination'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'transactions': transactions.map((e) => e.toJson()).toList(),
+        'filters': filters.toJson(),
+        'pagination': pagination.toJson(),
+      };
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────
+class Filters {
   final String? type;
   final String? status;
   final int? coinId;
@@ -242,7 +226,7 @@ class FiltersModel {
   final String sort;
   final int perPage;
 
-  FiltersModel({
+  Filters({
     this.type,
     this.status,
     this.coinId,
@@ -253,21 +237,33 @@ class FiltersModel {
     required this.perPage,
   });
 
-  factory FiltersModel.fromJson(Map<String, dynamic> json) {
-    return FiltersModel(
-      type: json['type'],
-      status: json['status'],
-      coinId: json['coin_id'] != null ? _parseInt(json['coin_id']) : null,
-      startDate: json['start_date'],
-      endDate: json['end_date'],
-      search: json['search'],
-      sort: json['sort'] ?? 'desc',
-      perPage: _parseInt(json['per_page']),
+  factory Filters.fromJson(Map<String, dynamic> json) {
+    return Filters(
+      type: json['type'] as String?,
+      status: json['status'] as String?,
+      coinId: json['coin_id'] != null ? _safeInt(json['coin_id']) : null,
+      startDate: json['start_date'] as String?,
+      endDate: json['end_date'] as String?,
+      search: json['search'] as String?,
+      sort: json['sort'] as String? ?? 'desc',
+      perPage: _safeInt(json['per_page']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'status': status,
+        'coin_id': coinId,
+        'start_date': startDate,
+        'end_date': endDate,
+        'search': search,
+        'sort': sort,
+        'per_page': perPage,
+      };
 }
 
-class PaginationModel {
+// ─── Pagination ───────────────────────────────────────────────────────
+class Pagination {
   final int currentPage;
   final int lastPage;
   final int perPage;
@@ -275,7 +271,7 @@ class PaginationModel {
   final int from;
   final int to;
 
-  PaginationModel({
+  Pagination({
     required this.currentPage,
     required this.lastPage,
     required this.perPage,
@@ -284,14 +280,23 @@ class PaginationModel {
     required this.to,
   });
 
-  factory PaginationModel.fromJson(Map<String, dynamic> json) {
-    return PaginationModel(
-      currentPage: _parseInt(json['current_page']),
-      lastPage: _parseInt(json['last_page']),
-      perPage: _parseInt(json['per_page']),
-      total: _parseInt(json['total']),
-      from: _parseInt(json['from']),
-      to: _parseInt(json['to']),
+  factory Pagination.fromJson(Map<String, dynamic> json) {
+    return Pagination(
+      currentPage: _safeInt(json['current_page']),
+      lastPage: _safeInt(json['last_page']),
+      perPage: _safeInt(json['per_page']),
+      total: _safeInt(json['total']),
+      from: _safeInt(json['from']),
+      to: _safeInt(json['to']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'current_page': currentPage,
+        'last_page': lastPage,
+        'per_page': perPage,
+        'total': total,
+        'from': from,
+        'to': to,
+      };
 }

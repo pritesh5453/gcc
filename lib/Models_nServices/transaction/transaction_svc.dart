@@ -1,15 +1,17 @@
-// lib/Models_nServices/transaction/transaction_svc.dart
 import 'package:dio/dio.dart';
 import 'package:gcc/Models_nServices/transaction/transaction_model.dart';
 import 'package:gcc/api/api_endpoints.dart';
 import 'package:gcc/api/dio_client.dart';
 
 class TransactionService {
-  Future<TransactionResponseModel?> getTransactions({
-    required String token,
+  final Dio _dio = DioClient.dio;
+
+  // ─── Fetch Transactions ──────────────────────────────────────────────
+  Future<TransactionResponse> getTransactions(
+    String token, {
     int page = 1,
     int perPage = 10,
-    String? type,
+    String? type, // "buy" or "sell"
     String? status,
     int? coinId,
     String? startDate,
@@ -18,36 +20,63 @@ class TransactionService {
     String sort = 'desc',
   }) async {
     try {
-      final queryParams = <String, dynamic>{
+      final queryParams = {
         'page': page,
         'per_page': perPage,
+        if (type != null) 'type': type,
+        if (status != null) 'status': status,
+        if (coinId != null) 'coin_id': coinId,
+        if (startDate != null) 'start_date': startDate,
+        if (endDate != null) 'end_date': endDate,
+        if (search != null && search.isNotEmpty) 'search': search,
         'sort': sort,
       };
-      if (type != null && type.isNotEmpty) queryParams['type'] = type;
-      if (status != null && status.isNotEmpty) queryParams['status'] = status;
-      if (coinId != null) queryParams['coin_id'] = coinId;
-      if (startDate != null && startDate.isNotEmpty)
-        queryParams['start_date'] = startDate;
-      if (endDate != null && endDate.isNotEmpty)
-        queryParams['end_date'] = endDate;
-      if (search != null && search.isNotEmpty) queryParams['search'] = search;
 
-      final response = await DioClient.dio.get(
+      final response = await _dio.get(
         ApiEndpoints.transactions,
         queryParameters: queryParams,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        return TransactionResponseModel.fromJson(response.data);
+      if (response.statusCode == 200) {
+        return TransactionResponse.fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          message: 'Failed to fetch transactions: ${response.statusCode}',
+        );
       }
-      return null;
     } on DioException catch (e) {
-      print("Transaction API Error: ${e.response?.data}");
-      return null;
-    } catch (e) {
-      print("Unexpected Error: $e");
-      return null;
+      rethrow;
     }
+  }
+
+  // ─── Get Next Page ──────────────────────────────────────────────────
+  Future<TransactionResponse> getNextPage(
+    String token,
+    TransactionResponse currentResponse,
+  ) async {
+    final nextPage = currentResponse.data.pagination.currentPage + 1;
+    if (nextPage > currentResponse.data.pagination.lastPage) {
+      throw Exception('No more pages available');
+    }
+    return getTransactions(token, page: nextPage);
+  }
+
+  // ─── Get Previous Page ──────────────────────────────────────────────
+  Future<TransactionResponse> getPreviousPage(
+    String token,
+    TransactionResponse currentResponse,
+  ) async {
+    final prevPage = currentResponse.data.pagination.currentPage - 1;
+    if (prevPage < 1) {
+      throw Exception('Already on first page');
+    }
+    return getTransactions(token, page: prevPage);
   }
 }

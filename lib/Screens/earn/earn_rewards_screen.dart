@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcc/Auth/login.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_model.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
@@ -24,32 +25,21 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   int _rewardPointsBalance = 0;
   List<EarnRewardsActivity> _activities = [];
 
-  int _selectedTab = 0;
-  final List<String> _tabs = [
-    'Daily Tasks',
-    'One Time Tasks',
-    'Challenges',
-    'Achievements',
-  ];
-
   // Reward statuses from new API
   bool _isDailyLoginClaimed = false;
   bool _isBuyRewardClaimed = false;
   bool _isReferralRewardClaimed = false;
-  bool _isTrackImpactClaimed =
-      false; // kept for compatibility, but use _trackImpactStatus
-
-  // New: track impact status (0=not tracked, 1=eligible, 2=claimed)
+  bool _isTrackImpactClaimed = false;
   int _trackImpactStatus = 0;
 
   bool _isClaiming = false;
-  bool _isProcessingImpact = false; // for both Track and Claim actions
+  bool _isProcessingImpact = false;
 
   @override
   void initState() {
     super.initState();
     _fetchRewardsData();
-    _fetchRewardStatuses(); // uses new consolidated API
+    _fetchRewardStatuses();
   }
 
   @override
@@ -70,6 +60,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     _fetchRewardsData();
   }
 
+  // ─── Fetch Rewards Data ────────────────────────────────────────────────
   Future<void> _fetchRewardsData() async {
     setState(() {
       _isLoading = true;
@@ -77,12 +68,9 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     });
 
     try {
-      final token = AppPreference().getString(PreferencesKey.authToken);
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
       if (token.isEmpty) {
-        setState(() {
-          _errorMessage = 'User not authenticated. Please login again.';
-          _isLoading = false;
-        });
+        _setError('User not authenticated. Please login again.');
         return;
       }
 
@@ -94,23 +82,18 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
           _isLoading = false;
         });
       } else {
-        setState(() {
-          _errorMessage = response?.message ?? 'Failed to load rewards data';
-          _isLoading = false;
-        });
+        _setError(response?.message ?? 'Failed to load rewards data');
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      _handleError(e);
     }
   }
 
-  // Fetches all statuses from consolidated API
+  // ─── Fetch Reward Statuses ─────────────────────────────────────────────
   Future<void> _fetchRewardStatuses() async {
     try {
-      final token = AppPreference().getString(PreferencesKey.authToken);
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
+      print("🔑 Token from SharedPreferences: $token");
       if (token.isEmpty) return;
 
       final summary = await _rewardsService.getRewardStatusSummary(
@@ -121,25 +104,71 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
           _isDailyLoginClaimed = summary.data.dailyLoginStatus == 1;
           _isBuyRewardClaimed = summary.data.buyRewardStatus == 1;
           _isReferralRewardClaimed = summary.data.referralRewardStatus == 1;
-          // Store the raw status for impact
           _trackImpactStatus = summary.data.trackYourImpactStatus;
-          _isTrackImpactClaimed =
-              (_trackImpactStatus == 2); // backward compatible
+          _isTrackImpactClaimed = (_trackImpactStatus == 2);
           _rewardPointsBalance = summary.data.totalRewardPoints;
         });
       }
     } catch (e) {
       debugPrint('Error fetching reward statuses: $e');
+      // If we get an error, we don't want to show a full-screen error,
+      // just log it – the main data fetch will handle it.
     }
   }
 
-  // ---------- Impact Flow ----------
-  // Step 1: Track → call track API, navigate to impact screen
+  // ─── Error Helpers ──────────────────────────────────────────────────────
+  void _setError(String message) {
+    setState(() {
+      _errorMessage = message;
+      _isLoading = false;
+    });
+  }
+
+  void _handleError(dynamic error) {
+    String message = error.toString();
+    // Check for 401 Unauthorized
+    if (message.contains('401') || message.contains('Unauthenticated')) {
+      message = 'Session expired. Please login again.';
+      _showSessionExpiredDialog();
+    }
+    _setError(message);
+  }
+
+  void _showSessionExpiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Session Expired'),
+        content: const Text('Your session has expired. Please login again.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _logoutAndGoToLogin();
+            },
+            child: const Text('Login Again'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _logoutAndGoToLogin() async {
+    await AppPreference().clearSharedPreferences();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const MobileLoginScreen()), // Adjust to your login screen
+      (route) => false,
+    );
+  }
+
+  // ─── Impact Flow ────────────────────────────────────────────────────────
   Future<void> _trackImpact() async {
-    if (_trackImpactStatus != 0) return; // only if not tracked
+    if (_trackImpactStatus != 0) return;
     setState(() => _isProcessingImpact = true);
     try {
-      final token = AppPreference().getString(PreferencesKey.authToken);
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
       if (token.isEmpty) {
         _showSnackBar('Please login again');
         return;
@@ -147,12 +176,10 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
       final response = await _rewardsService.trackImpact(token: token);
       if (response != null && response.success) {
-        // Navigate to impact screen
         await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const MyImpactScreen()),
         );
-        // Refresh statuses after returning (didPopNext will also handle this)
         await _fetchRewardStatuses();
         await _fetchRewardsData();
         _showSnackBar('Impact tracked! You can now claim your reward.');
@@ -166,12 +193,11 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     }
   }
 
-  // Step 2: Claim → call claim API, no navigation
   Future<void> _claimImpact() async {
-    if (_trackImpactStatus != 1) return; // only if eligible
+    if (_trackImpactStatus != 1) return;
     setState(() => _isProcessingImpact = true);
     try {
-      final token = AppPreference().getString(PreferencesKey.authToken);
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
       if (token.isEmpty) {
         _showSnackBar('Please login again');
         return;
@@ -179,12 +205,10 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
       final response = await _rewardsService.claimTrackImpact(token: token);
       if (response != null && response.success) {
-        // Refresh statuses (the button will become "Claimed")
         await _fetchRewardStatuses();
         await _fetchRewardsData();
         _showSnackBar('Reward claimed! +${response.claimedPoints} points');
       } else {
-        // If already claimed, refresh status anyway
         await _fetchRewardStatuses();
         _showSnackBar(response?.message ?? 'Claim failed');
       }
@@ -194,12 +218,12 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       setState(() => _isProcessingImpact = false);
     }
   }
-  // ---------------------------------
 
+  // ─── Claim Daily Login ──────────────────────────────────────────────────
   Future<void> _claimDailyLoginReward() async {
     setState(() => _isClaiming = true);
     try {
-      final token = AppPreference().getString(PreferencesKey.authToken);
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
       if (token.isEmpty) {
         _showSnackBar('Please login again');
         return;
@@ -207,14 +231,42 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
       final response = await _rewardsService.claimLoginReward(token: token);
       if (response != null && response.success) {
-        await _fetchRewardStatuses(); // refresh all statuses and balance
-        await _fetchRewardsData(); // refresh activities (optional)
+        await _fetchRewardStatuses();
+        await _fetchRewardsData();
         _updateDailyLoginActivityPoints(response.claimedPoints);
         _showSnackBar(
           'Daily login reward claimed! +${response.claimedPoints} points',
         );
       } else {
         _showSnackBar(response?.message ?? 'Claim failed');
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    } finally {
+      setState(() => _isClaiming = false);
+    }
+  }
+
+  // ─── Claim Buy Reward ──────────────────────────────────────────────────
+  Future<void> _claimBuyReward() async {
+    if (_isBuyRewardClaimed) return;
+    setState(() => _isClaiming = true);
+    try {
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
+      if (token.isEmpty) {
+        _showSnackBar('Please login again');
+        return;
+      }
+
+      final response = await _rewardsService.claimBuyReward(token: token);
+      if (response.status) {
+        await _fetchRewardStatuses();
+        await _fetchRewardsData();
+        _showSnackBar(
+          'Buy reward claimed! +${response.claimedPoints} points',
+        );
+      } else {
+        _showSnackBar(response.message ?? 'Claim failed');
       }
     } catch (e) {
       _showSnackBar('Error: $e');
@@ -243,6 +295,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     );
   }
 
+  // ─── Build ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -295,6 +348,8 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   }
 
   Widget _buildErrorWidget() {
+    final isSessionExpired =
+        _errorMessage?.contains('Session expired') ?? false;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -305,14 +360,21 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
             const SizedBox(height: 16),
             Text(_errorMessage!, textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                _fetchRewardsData();
-                _fetchRewardStatuses();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-              child: const Text('Retry'),
-            ),
+            if (isSessionExpired)
+              ElevatedButton(
+                onPressed: _logoutAndGoToLogin,
+                style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+                child: const Text('Login Again'),
+              )
+            else
+              ElevatedButton(
+                onPressed: () {
+                  _fetchRewardsData();
+                  _fetchRewardStatuses();
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+                child: const Text('Retry'),
+              ),
           ],
         ),
       ),
@@ -539,6 +601,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
     final name = activity.activityName.toLowerCase();
 
+    // ─── Determine action type ──────────────────────────────────────────
     if (name.contains('buy')) {
       iconData = Icons.shopping_bag_outlined;
       if (_isBuyRewardClaimed) {
@@ -546,7 +609,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         actionType = 'claimed';
       } else {
         actionText = 'Claim';
-        actionType = 'go';
+        actionType = 'buy_claim';
       }
     } else if (name.contains('login')) {
       iconData = Icons.calendar_today_outlined;
@@ -555,7 +618,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         actionType = 'claimed';
       } else {
         actionText = 'Claim';
-        actionType = 'claim';
+        actionType = 'login_claim';
       }
     } else if (name.contains('invite')) {
       iconData = Icons.group_add_outlined;
@@ -574,7 +637,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       progressLabel = '0/1';
     } else if (name.contains('impact')) {
       iconData = Icons.eco_outlined;
-      // Determine button based on _trackImpactStatus
       if (_trackImpactStatus == 2) {
         actionText = 'Claimed';
         actionType = 'claimed';
@@ -582,7 +644,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         actionText = 'Claim';
         actionType = 'impact_claim';
       } else {
-        // status == 0
         actionText = 'Track';
         actionType = 'impact_track';
       }
@@ -596,10 +657,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       actionType = 'go';
     }
 
-    final isClaimButton = actionType == 'claim';
-    final isButtonEnabled =
-        isClaimButton ? !_isDailyLoginClaimed && !_isClaiming : true;
-
+    // ─── Build UI ────────────────────────────────────────────────────────
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -657,12 +715,14 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
             ),
           ),
           const SizedBox(width: 8),
-          if (actionType == 'claim')
+
+          // ─── Action Button ─────────────────────────────────────────────
+          if (actionType == 'buy_claim')
             SizedBox(
               width: 70,
               height: 34,
               child: ElevatedButton(
-                onPressed: isButtonEnabled ? _claimDailyLoginReward : null,
+                onPressed: _isBuyRewardClaimed ? null : _claimBuyReward,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,
                   foregroundColor: Colors.white,
@@ -675,20 +735,54 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                 child:
                     _isClaiming
                         ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text(
-                          'Claim',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            'Claim',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+              ),
+            )
+          else if (actionType == 'login_claim')
+            SizedBox(
+              width: 70,
+              height: 34,
+              child: ElevatedButton(
+                onPressed: _isDailyLoginClaimed ? null : _claimDailyLoginReward,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child:
+                    _isClaiming
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Claim',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
               ),
             )
           else if (actionType == 'impact_track')
@@ -709,20 +803,20 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                 child:
                     _isProcessingImpact
                         ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text(
-                          'Track',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            'Track',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
               ),
             )
           else if (actionType == 'impact_claim')
@@ -743,20 +837,20 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                 child:
                     _isProcessingImpact
                         ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text(
-                          'Claim',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            'Claim',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
               ),
             )
           else if (actionType == 'claimed')

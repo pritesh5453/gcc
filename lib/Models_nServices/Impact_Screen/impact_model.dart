@@ -18,18 +18,36 @@ class ImpactSummaryResponse {
   }
 }
 
+// ─── Helper functions for safe parsing ──────────────────────────────
+int _toInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+double _toDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+// ─── Impact Data ──────────────────────────────────────────────────────
 class ImpactData {
   final double totalUnits;
   final double currentUnitPrice;
   final double portfolioValue;
   final int totalReferrals;
   final int treeSupported;
-  final int co2Offset;
+  final double co2Offset;      // ✅ Changed to double
   final int ecoRewardsEarned;
   final TreeDetails tree;
-  final int ifCarEmissionsAvoided;
-  final int hoursOfElectricitySaved;
-  final int litersOfWaterConserved;
+  final double ifCarEmissionsAvoided;      // ✅ Changed to double
+  final double hoursOfElectricitySaved;    // ✅ Changed to double
+  final double litersOfWaterConserved;     // ✅ Changed to double
 
   ImpactData({
     required this.totalUnits,
@@ -47,17 +65,17 @@ class ImpactData {
 
   factory ImpactData.fromJson(Map<String, dynamic> json) {
     return ImpactData(
-      totalUnits: (json['total_units'] ?? 0).toDouble(),
-      currentUnitPrice: (json['current_unit_price'] ?? 0).toDouble(),
-      portfolioValue: (json['portfolio_value'] ?? 0).toDouble(),
-      totalReferrals: json['total_referrals'] ?? 0,
-      treeSupported: json['tree_supported'] ?? 0,
-      co2Offset: json['co2_offset'] ?? 0,
-      ecoRewardsEarned: json['eco_rewards_earned'] ?? 0,
+      totalUnits: _toDouble(json['total_units']),
+      currentUnitPrice: _toDouble(json['current_unit_price']),
+      portfolioValue: _toDouble(json['portfolio_value']),
+      totalReferrals: _toInt(json['total_referrals']),
+      treeSupported: _toInt(json['tree_supported']),
+      co2Offset: _toDouble(json['co2_offset']),
+      ecoRewardsEarned: _toInt(json['eco_rewards_earned']),
       tree: TreeDetails.fromJson(json['tree'] ?? {}),
-      ifCarEmissionsAvoided: json['if_car_emissions_avoided'] ?? 0,
-      hoursOfElectricitySaved: json['hours_of_electricity_saved'] ?? 0,
-      litersOfWaterConserved: json['liters_of_water_conserved'] ?? 0,
+      ifCarEmissionsAvoided: _toDouble(json['if_car_emissions_avoided']),
+      hoursOfElectricitySaved: _toDouble(json['hours_of_electricity_saved']),
+      litersOfWaterConserved: _toDouble(json['liters_of_water_conserved']),
     );
   }
 }
@@ -77,10 +95,10 @@ class TreeDetails {
 
   factory TreeDetails.fromJson(Map<String, dynamic> json) {
     return TreeDetails(
-      totalTree: json['total_tree'] ?? 0,
-      unitsTree: json['units_tree'] ?? 0,
-      referralTree: json['referral_tree'] ?? 0,
-      rewardsTree: json['rewards_tree'] ?? 0,
+      totalTree: _toInt(json['total_tree']),
+      unitsTree: _toInt(json['units_tree']),
+      referralTree: _toInt(json['referral_tree']),
+      rewardsTree: _toInt(json['rewards_tree']),
     );
   }
 }

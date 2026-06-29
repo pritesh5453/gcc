@@ -331,7 +331,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     final double units = widget.transactionData?.amountCoin ?? 0.0;
 
     // Calculate trees and CO₂ offset
-    final double trees = units / 100;          // 100 units = 1 tree
+    final double trees = units / 10;          // 10 units = 1 tree
     final double co2Kg = trees * 0.14;         // 1 tree = 0.14 kg CO₂
 
     // Format strings

@@ -22,9 +22,9 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   bool _isRefreshing = false;
   String? _errorMessage;
   int _rewardPoints = 0;
+  int total_cashback_earned = 0;
   List<CouponData> _coupons = [];
 
-  // Store claimed reward amounts per coupon ID (for display after scratching)
   final Map<int, int> _claimedRewards = {};
 
   @override
@@ -33,7 +33,6 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     _fetchCoupons(showLoading: true);
   }
 
-  // ─── Fetch coupons (with optional loading indicator) ────────────────────
   Future<void> _fetchCoupons({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
@@ -62,6 +61,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
       if (response != null && response.status) {
         setState(() {
           _rewardPoints = response.rewardPoints;
+          total_cashback_earned = response.total_cashback_earned;
           _coupons = response.data;
           if (showLoading) _isLoading = false;
           _isRefreshing = false;
@@ -85,17 +85,15 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     }
   }
 
-  // ─── Refresh callback for RefreshIndicator ──────────────────────────────
   Future<void> _onRefresh() async {
     await _fetchCoupons(showLoading: false);
   }
 
-  // ─── Called when a coupon is successfully scratched ──────────────────────
   void _onCouponClaimed(int couponId, int rewardAmountWon, int newPoints) {
     setState(() {
       _claimedRewards[couponId] = rewardAmountWon;
       _rewardPoints = newPoints;
-      // Mark the coupon as claimed locally (isEligible = false)
+      total_cashback_earned = newPoints;
       final index = _coupons.indexWhere((c) => c.id == couponId);
       if (index != -1) {
         _coupons[index] = CouponData(
@@ -272,6 +270,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     );
   }
 
+  // ─── Updated Balance Card with Red Gift Box ─────────────────────────────
   Widget _buildBalanceCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -282,94 +281,200 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
       ),
       child: Column(
         children: [
+          // Heading Row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: const [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Your balance',
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          _rewardPoints.toString(),
-                          style: const TextStyle(
-                            fontSize: 38,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.recycling,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Text(
-                      'Points available',
-                      style: TextStyle(fontSize: 13, color: Colors.white70),
-                    ),
-                  ],
+                flex: 2,
+                child: Text(
+                  "Reward Points",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
                 ),
               ),
-              const SizedBox(
-                width: 80,
-                height: 70,
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Text('🎁', style: TextStyle(fontSize: 52)),
-                    ),
-                    Positioned(
-                      left: 0,
-                      bottom: 8,
-                      child: Text('🪙', style: TextStyle(fontSize: 20)),
-                    ),
-                  ],
+              Expanded(
+                flex: 1,
+                child: SizedBox.shrink(),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  "Cashback",
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('🌿', style: TextStyle(fontSize: 13)),
-                SizedBox(width: 6),
-                Text(
-                  'Earn more by completing tasks and challenges',
-                  style: TextStyle(fontSize: 11, color: Colors.white70),
+          const SizedBox(height: 5),
+          // Values Row with Red Gift Box
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  _rewardPoints.toString(),
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    height: 1,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // ─── Gift Box ───────────────────────────────────
+                        // Box body
+                        Container(
+                          width: 50,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFD32F2F), // Dark Red
+                                Color(0xFFB71C1C), // Deeper Red
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        // ─── Ribbon (Vertical) ──────────────────────────
+                        Container(
+                          width: 8,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFD700), // Gold
+                                Color(0xFFFFC107), // Light Gold
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        // ─── Ribbon (Horizontal) ────────────────────────
+                        Container(
+                          width: 50,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFD700), // Gold
+                                Color(0xFFFFC107), // Light Gold
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        // ─── Bow on Top ──────────────────────────────────
+                        Positioned(
+                          top: -4,
+                          child: const Text(
+                            '🎀',
+                            style: TextStyle(
+                              fontSize: 24,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black26,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // ─── Sparkle (small) ─────────────────────────────
+                        Positioned(
+                          top: -6,
+                          right: -4,
+                          child: const Text(
+                            '✨',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -4,
+                          left: -6,
+                          child: const Text(
+                            '✨',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  '₹' + total_cashback_earned.toString(),
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Labels Row
+          Row(
+            children: const [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  "Available",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: SizedBox.shrink(),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  "Total Earned",
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -429,7 +534,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   }
 }
 
-// ─── Scratch Card Widget (unchanged) ──────────────────────────────────────
+// ─── Scratch Card Widget ──────────────────────────────────────────────────
 class _ScratchCard extends StatefulWidget {
   final CouponData coupon;
   final int userPoints;
@@ -732,7 +837,7 @@ class _ScratchCardState extends State<_ScratchCard>
   }
 }
 
-// ─── Scratch Layer (CustomPainter) – unchanged ────────────────────────────
+// ─── Scratch Layer (CustomPainter) ────────────────────────────────────────
 class _ScratchLayer extends StatefulWidget {
   final Color scratchColor;
   final VoidCallback onRevealed;

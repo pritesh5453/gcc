@@ -623,9 +623,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             separatorBuilder: (_, __) => SizedBox(width: rw(12)),
             itemBuilder: (context, index) {
               return _statCard(
-                label: stats[index].$1,
+                label: '',
                 value: stats[index].$2,
-                subtitle: "Approx.",
+                subtitle: stats[index].$1,
                 bg: stats[index].$3,
                 icon: stats[index].$4,
                 iconColor: stats[index].$5,
@@ -646,7 +646,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     required Color iconColor,
   }) {
     return Container(
-      width: rw(140),
+      width: rw(95),
       padding: EdgeInsets.fromLTRB(rw(12), rh(10), rw(12), rh(10)),
       decoration: BoxDecoration(
         color: bg,
@@ -662,7 +662,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: rs(17),
+              fontSize: rs(13),
               color: iconColor,
             ),
             overflow: TextOverflow.ellipsis,

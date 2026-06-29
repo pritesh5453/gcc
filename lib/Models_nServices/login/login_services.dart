@@ -5,13 +5,15 @@ import 'package:gcc/api/dio_client.dart';
 
 class AuthApiService {
   Future<LoginModel> login({
-    required String phone,
-  }) async {
+  required String phone,
+  required String firebaseToken,
+}) async {
     try {
       Response response = await DioClient.dio.post(
         ApiEndpoints.login,
         data: {
           "phone": phone,
+          "firebase_token": firebaseToken,
         },
       );
 

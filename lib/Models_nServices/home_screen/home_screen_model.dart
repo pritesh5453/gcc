@@ -40,7 +40,7 @@ class HomeScreenUser {
   final String? email;
   final String? phone;
   final int? tree;
-  final int? co2;
+  final double? co2;
   final int? nextTree;
 
   HomeScreenUser({
@@ -60,7 +60,7 @@ class HomeScreenUser {
       email: json['email'],
       phone: json['phone'],
       tree: json['tree'],
-      co2: json['co2'],
+      co2: (json['co2'] as num?)?.toDouble(),
       nextTree: json['next_tree'],
     );
   }

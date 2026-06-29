@@ -1,8 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For Clipboard
+import 'package:dio/dio.dart';
+import 'package:gcc/Models_nServices/refer_n_invite/refer_n_invite_model.dart';
+import 'package:gcc/Models_nServices/refer_n_invite/refer_n_invite_svc.dart';
 import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
+import 'package:gcc/prefs/PreferencesKey.dart';
+import 'package:gcc/prefs/app_preference.dart';
+import 'package:intl/intl.dart';
 
-class ReferralGrowthScreen extends StatelessWidget {
+class ReferralGrowthScreen extends StatefulWidget {
   const ReferralGrowthScreen({super.key});
+
+  @override
+  State<ReferralGrowthScreen> createState() => _ReferralGrowthScreenState();
+}
+
+class _ReferralGrowthScreenState extends State<ReferralGrowthScreen> {
+  late Future<InviteScreenResponse> _futureData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() {
+    final token = AppPreference().getString(PreferencesKey.authToken);
+    print('🔑 ReferralGrowthScreen - Token: "$token"');
+
+    if (token.isEmpty) {
+      _futureData = Future.error('Authentication token missing. Please login again.');
+      return;
+    }
+
+    _futureData = InviteScreenService()
+        .getInviteScreen(token.trim())
+        .catchError((dynamic error) {
+      print('❌ API Error: $error');
+      if (error is DioException) {
+        print('DioException type: ${error.type}');
+        print('Status code: ${error.response?.statusCode}');
+        print('Response data: ${error.response?.data}');
+        print('Message: ${error.message}');
+        throw error;
+      } else {
+        throw error;
+      }
+    });
+  }
+
+  Future<List<InviteIntroduction>> _loadInstructions() async {
+    final token = AppPreference().getString(PreferencesKey.authToken);
+    if (token.isEmpty) throw Exception('Authentication token missing');
+    return InviteScreenService().getInviteIntroduction(token.trim());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,39 +70,68 @@ class ReferralGrowthScreen extends StatelessWidget {
                 showHelp: true,
               ),
               Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 5,
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInviteDetailsCard(),
-                        const SizedBox(height: 20),
-                        Row(
+                child: FutureBuilder<InviteScreenResponse>(
+                  future: _futureData,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      final error = snapshot.error;
+                      String errorMsg = 'Something went wrong';
+
+                      if (error is DioException) {
+                        final statusCode = error.response?.statusCode;
+                        final data = error.response?.data;
+                        String serverMsg = '';
+                        if (data is Map && data.containsKey('message')) {
+                          serverMsg = data['message'] as String;
+                        }
+                        if (statusCode == 401) {
+                          errorMsg = 'Session expired. Please login again.';
+                        } else if (statusCode == 404) {
+                          errorMsg = 'API endpoint not found.';
+                        } else if (statusCode != null) {
+                          errorMsg = 'Error $statusCode: ${serverMsg.isNotEmpty ? serverMsg : error.message}';
+                        } else {
+                          errorMsg = 'Network error: ${error.message}';
+                        }
+                      } else if (error is String) {
+                        errorMsg = error;
+                      } else {
+                        errorMsg = error.toString();
+                      }
+
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Expanded(child: _buildRewardBoostCard()),
-                            const SizedBox(width: 15),
-                            Expanded(child: _buildNetworkImpactCard()),
+                            const Icon(Icons.error_outline, size: 50, color: Colors.red),
+                            const SizedBox(height: 10),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                errorMsg,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() => _loadData());
+                              },
+                              child: const Text('Retry'),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        _buildMonthlyAverageCard(),
-                        const SizedBox(height: 25),
-                        _buildInstructionsButton(context),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
+                      );
+                    } else if (snapshot.hasData) {
+                      final data = snapshot.data!.data;
+                      return _buildContent(data);
+                    } else {
+                      return const Center(child: Text('No data'));
+                    }
+                  },
                 ),
               ),
             ],
@@ -61,8 +141,45 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  // ─── Invite Details Card ──────────────────────────────────────────────────
-  Widget _buildInviteDetailsCard() {
+  Widget _buildContent(InviteScreenData data) {
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        child: Column(
+          children: [
+            _buildInviteDetailsCard(data),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: _buildRewardBoostCard(data)),
+                const SizedBox(width: 15),
+                Expanded(child: _buildNetworkImpactCard(data)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildMonthlyAverageCard(data),
+            const SizedBox(height: 25),
+            _buildInstructionsButton(context),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Invite Details Card ──────────────────────────────────────────────
+  Widget _buildInviteDetailsCard(InviteScreenData data) {
+    final volume = data.contributionVolume;
+    final volumeStr = _formatCurrency(volume);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -125,27 +242,35 @@ class ReferralGrowthScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const Row(
+                    Row(
                       children: [
                         Text(
-                          "GCC123",
-                          style: TextStyle(
+                          data.referralCode,
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(width: 5),
-                        Icon(Icons.copy, color: Colors.green, size: 20),
+                        const SizedBox(width: 5),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: data.referralCode));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Referral code copied!')),
+                            );
+                          },
+                          child: const Icon(Icons.copy, color: Colors.green, size: 20),
+                        ),
                       ],
                     ),
-                    const Text.rich(
+                    Text.rich(
                       TextSpan(
                         text: "Total Invites: ",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
                         children: [
                           TextSpan(
-                            text: "12",
-                            style: TextStyle(
+                            text: '${data.totalInvites}',
+                            style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
                             ),
@@ -176,9 +301,9 @@ class ReferralGrowthScreen extends StatelessWidget {
                 "Contribution Volume : ",
                 style: TextStyle(color: Colors.grey),
               ),
-              const Text(
-                "₹1.8 Cr",
-                style: TextStyle(
+              Text(
+                volumeStr,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Color(0xFF1B6B2F),
@@ -192,7 +317,8 @@ class ReferralGrowthScreen extends StatelessWidget {
   }
 
   // ─── Reward Boost Card ──────────────────────────────────────────────────
-  Widget _buildRewardBoostCard() {
+  Widget _buildRewardBoostCard(InviteScreenData data) {
+    final multiplier = data.rewardBoost.multiplier;
     return _smallCardLayout(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,9 +337,9 @@ class ReferralGrowthScreen extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                "1.25x",
-                style: TextStyle(
+              Text(
+                multiplier,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -235,7 +361,7 @@ class ReferralGrowthScreen extends StatelessWidget {
   }
 
   // ─── Network Impact Card ────────────────────────────────────────────────
-  Widget _buildNetworkImpactCard() {
+  Widget _buildNetworkImpactCard(InviteScreenData data) {
     return _smallCardLayout(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,16 +377,19 @@ class ReferralGrowthScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _networkRow(Icons.person_outline, "Total Referrals", "12"),
+          _networkRow(Icons.person_outline, "Total Referrals", '${data.network.totalReferrals}'),
           const SizedBox(height: 8),
-          _networkRow(Icons.check_circle_outline, "Active Contrib.", "8"),
+          _networkRow(Icons.check_circle_outline, "Active Contrib.", '${data.network.activeContributors}'),
         ],
       ),
     );
   }
 
   // ─── Monthly Average Card ──────────────────────────────────────────────
-  Widget _buildMonthlyAverageCard() {
+  Widget _buildMonthlyAverageCard(InviteScreenData data) {
+    final avg = data.monthlyAverage.currentMonthAvgAmount;
+    final avgStr = _formatCurrency(avg);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -269,52 +398,38 @@ class ReferralGrowthScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.calendar_today, color: Colors.green.shade700),
               const SizedBox(width: 8),
               const Text(
-                "Monthly Average",
+                "This Month's Average",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _statColumn("Monthly Average", "₹15,000"),
-              Container(
-                width: 1,
-                height: 40,
-                color: Colors.grey.shade200,
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              avgStr,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1B6B2F),
               ),
-              _statColumn("This Month", "₹18,200"),
-            ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              "Average contribution per user this month",
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _statColumn(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1B6B2F),
-          ),
-        ),
-      ],
     );
   }
 
@@ -353,7 +468,7 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  // ─── Instructions Button ──────────────────────────────────────────────────
+  // ─── Instructions Button ──────────────────────────────────────────────
   Widget _buildInstructionsButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -375,97 +490,131 @@ class ReferralGrowthScreen extends StatelessWidget {
     );
   }
 
-  // ─── Enhanced Instruction Popup ──────────────────────────────────────────
+  // ─── Dynamic Instructions Popup ──────────────────────────────────────
   void _showInstructionsPopup(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
           ),
           elevation: 8,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header with gradient background ──
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.green.shade700,
-                        Colors.green.shade400,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Row(
+          child: FutureBuilder<List<InviteIntroduction>>(
+            future: _loadInstructions(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  padding: const EdgeInsets.all(32),
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.lightbulb_outline,
-                          color: Colors.white, size: 28),
-                      SizedBox(width: 10),
-                      Text(
-                        "Instructions",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Loading instructions...'),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
+                );
+              } else if (snapshot.hasError) {
+                final fallback = _getStaticInstructions();
+                return _buildPopupContent(context, fallback);
+              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                // ✅ FIX: Use correct generic type
+                final sorted = List<InviteIntroduction>.from(snapshot.data!);
+                sorted.sort((a, b) => a.sequence.compareTo(b.sequence));
+                return _buildPopupContent(context, sorted);
+              } else {
+                return _buildPopupContent(context, _getStaticInstructions());
+              }
+            },
+          ),
+        );
+      },
+    );
+  }
 
-                // ── Instruction Steps ──
-                _instructionStep("1", "Share your unique referral code with friends."),
-                _instructionStep("2", "Earn rewards when your referrals make their first contribution."),
-                _instructionStep("3", "Unlock higher reward multipliers as your network grows."),
-                _instructionStep("4", "Track your monthly average to stay on top."),
-                _instructionStep("5", "For any queries, contact our support team."),
+  List<InviteIntroduction> _getStaticInstructions() {
+    return [
+      InviteIntroduction(id: 1, sequence: 1, introduction: 'Share your unique referral code with friends.'),
+      InviteIntroduction(id: 2, sequence: 2, introduction: 'Earn rewards when your referrals make their first contribution.'),
+      InviteIntroduction(id: 3, sequence: 3, introduction: 'Unlock higher reward multipliers as your network grows.'),
+      InviteIntroduction(id: 4, sequence: 4, introduction: 'Track your monthly average to stay on top.'),
+      InviteIntroduction(id: 5, sequence: 5, introduction: 'For any queries, contact our support team.'),
+    ];
+  }
 
-                const SizedBox(height: 24),
-
-                // ── Close Button ──
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text(
-                      "Got It",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+  Widget _buildPopupContent(BuildContext context, List<InviteIntroduction> instructions) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 16,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.shade700,
+                  Colors.green.shade400,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.lightbulb_outline, color: Colors.white, size: 28),
+                SizedBox(width: 10),
+                Text(
+                  "Instructions",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+          const SizedBox(height: 20),
+          ...instructions.map((item) => _instructionStep(
+                item.sequence.toString(),
+                item.introduction,
+              )),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                "Got It",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -507,5 +656,22 @@ class ReferralGrowthScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // ─── Currency Formatter ──────────────────────────────────────────────
+  String _formatCurrency(int amount) {
+    if (amount == 0) return '₹0';
+    if (amount >= 10000000) {
+      return '₹${(amount / 10000000).toStringAsFixed(1)} Cr';
+    } else if (amount >= 100000) {
+      return '₹${(amount / 100000).toStringAsFixed(1)} L';
+    } else {
+      final formatter = NumberFormat.currency(
+        locale: 'en_IN',
+        symbol: '₹',
+        decimalDigits: 0,
+      );
+      return formatter.format(amount);
+    }
   }
 }
