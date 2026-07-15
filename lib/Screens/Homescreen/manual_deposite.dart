@@ -1,9 +1,12 @@
-// lib/Screens/Homescreen/buy_gcc_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:gcc/Models_nServices/deposite/deposite_svc.dart';
+import 'package:gcc/Models_nServices/payment/verify_payment_service.dart';
 import 'package:gcc/Screens/Homescreen/payment_screen.dart';
 import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
+import 'package:gcc/Helpers/razorpay_service.dart';
+import 'package:gcc/Models_nServices/payment/create_order_service.dart';
+import 'package:gcc/prefs/app_preference.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class BuyGCCScreen extends StatefulWidget {
   final double purchaseAmount;
@@ -19,6 +22,19 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
   static const Color primaryGreen = Color(0xFF1B6B2F);
   bool _isBuying = false;
   String? _errorMessage;
+
+  late RazorpayService _razorpayService;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _razorpayService = RazorpayService(
+      onSuccess: _handlePaymentSuccess,
+      onError: _handlePaymentError,
+      onExternalWallet: _handleExternalWallet,
+    );
+  }
 
   Future<void> _buyGCCUnits() async {
     setState(() {
@@ -69,6 +85,83 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
         setState(() => _isBuying = false);
       }
     }
+  }
+
+  Future<void> _createOrder() async {
+    try {
+      final response = await createOrder(
+        coinId: 8,
+        inrAmount: widget.purchaseAmount,
+      );
+
+      if (response.success && response.data != null) {
+        _razorpayService.openCheckout(
+          key: response.data!.key,
+          orderId: response.data!.orderId,
+          amount: response.data!.amount,
+          currency: response.data!.currency,
+          name: AppPreference().uName,
+          email: AppPreference().userEmail,
+          contact: AppPreference().userMobile,
+        );
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      final verifyResponse = await verifyPayment(
+        coinId: 8,
+        inrAmount: widget.purchaseAmount,
+        coinAmount: widget.gccUnits,
+        paymentId: response.paymentId!,
+        orderId: response.orderId!,
+        signature: response.signature!,
+      );
+
+      if (!mounted) return;
+
+      if (verifyResponse.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Payment Successful"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => PaymentSuccessScreen(
+                  transactionData: verifyResponse.transaction,
+                ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(verifyResponse.message)));
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    debugPrint(response.message);
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    debugPrint(response.walletName ?? "");
+  }
+
+  @override
+  void dispose() {
+    _razorpayService.dispose();
+    super.dispose();
   }
 
   @override
@@ -222,7 +315,7 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: _isBuying ? null : _buyGCCUnits,
+                        onPressed: _isBuying ? null : _createOrder,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryGreen,
                           foregroundColor: Colors.white,

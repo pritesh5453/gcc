@@ -62,4 +62,9 @@ class ApiEndpoints {
   // Scratch Coupon APIs
   static const String coupons = "$baseUrl/coupons";
   static const String scratchCoupon = "$baseUrl/scratch-coupon";
+
+
+  // Payment APIs
+  static const String createOrder = "$baseUrl/payment/create-order";
+  static const String verifyPayment = "$baseUrl/payment/verify";
 }
