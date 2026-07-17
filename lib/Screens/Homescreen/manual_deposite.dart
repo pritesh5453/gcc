@@ -166,21 +166,21 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Display rounded-up amount (e.g., 55.02 → 56)
+    final int roundedAmount = widget.purchaseAmount.ceil();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      // No appBar property – the custom header lives inside the body
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Custom App Bar (no PreferredSize)
               const CommonAppBar(
                 title: 'Buy GCC Units',
                 showHelp: false,
                 subtitle: '',
               ),
-              // Original content with padding
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -209,7 +209,7 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                '₹${widget.purchaseAmount.toStringAsFixed(2)}',
+                                '₹$roundedAmount', // ✅ rounded up (no decimals)
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -230,7 +230,7 @@ class _BuyGCCScreenState extends State<BuyGCCScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                '${widget.gccUnits}',
+                                '${widget.gccUnits.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,

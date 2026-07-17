@@ -8,20 +8,21 @@ import 'package:gcc/Screens/profile/referral_screen.dart';
 import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/main.dart'; // ✅ import for routeObserver
 
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key});
 
   @override
-  State<PortfolioScreen> createState() => _PortfolioScreenState();
+  PortfolioScreenState createState() => PortfolioScreenState();
 }
 
-class _PortfolioScreenState extends State<PortfolioScreen> {
+class PortfolioScreenState extends State<PortfolioScreen> with RouteAware {
   final PortfolioService _portfolioService = PortfolioService();
   final AppPreference _appPref = AppPreference();
   late Future<PortfolioResponse> _portfolioFuture;
 
-  // Responsive helpers (baseline: 375 width, 812 height)
+  // Responsive helpers
   double get _width => MediaQuery.of(context).size.width;
   double get _height => MediaQuery.of(context).size.height;
   double rw(double value) => value * (_width / 375);
@@ -34,12 +35,40 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     _loadPortfolio();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route); // ✅ subscribe
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this); // ✅ unsubscribe
+    super.dispose();
+  }
+
+  // ─── Refresh when returning from a pushed screen ──────────
+  @override
+  void didPopNext() {
+    _loadPortfolio(); // ✅ reload data
+  }
+
+  // ─── Public refresh method for MainScreen tab switch ──────
+  void refreshData() {
+    _loadPortfolio();
+  }
+
   void _loadPortfolio() {
     final token = _appPref.getString(PreferencesKey.authToken);
     if (token.isEmpty) {
       _portfolioFuture = Future.error('Authentication token missing');
     } else {
-      _portfolioFuture = _portfolioService.fetchPortfolio(token);
+      setState(() {
+        _portfolioFuture = _portfolioService.fetchPortfolio(token);
+      });
     }
   }
 
@@ -56,7 +85,6 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -76,80 +104,90 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         ),
         centerTitle: true,
       ),
-      body: FutureBuilder<PortfolioResponse>(
-        future: _portfolioFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: const Color(0xFF1B5E20)),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  SizedBox(height: rh(16)),
-                  Text('Error: ${snapshot.error}'),
-                  SizedBox(height: rh(16)),
-                  ElevatedButton(
-                    onPressed: () => setState(() => _loadPortfolio()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B5E20),
-                    ),
-                    child: const Text(
-                      'Retry',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } else if (snapshot.hasData) {
-            final portfolioData = snapshot.data!.data;
-            final portfolio = portfolioData.portfolio;
-            final holdingsSummary = portfolioData.holdingsSummary;
-            final quickStats = portfolioData.quickStats;
-
-            return SafeArea(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(rw(16), rh(8), rw(16), rh(16)),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadPortfolio();
+          await _portfolioFuture; // wait for data load
+        },
+        color: const Color(0xFF1B5E20),
+        child: FutureBuilder<PortfolioResponse>(
+          future: _portfolioFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF1B5E20),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildMainCard(
-                      totalUnits: portfolio.totalUnits,
-                      unitPrice: portfolio.unitPrice,
-                      totalValue: portfolio.totalValue,
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    SizedBox(height: rh(16)),
+                    Text('Error: ${snapshot.error}'),
+                    SizedBox(height: rh(16)),
+                    ElevatedButton(
+                      onPressed: () => setState(() => _loadPortfolio()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                      ),
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
-                    SizedBox(height: rh(16)),
-                    _buildActionGrid(),
-                    SizedBox(height: rh(16)),
-                    _buildHoldingsSummary(
-                      totalUnits: holdingsSummary.totalUnits,
-                      totalValue: holdingsSummary.currentValue,
-                      unitPrice: portfolio.unitPrice,
-                    ),
-                    SizedBox(height: rh(16)),
-                    _buildKeepGrowingBanner(),
-                    SizedBox(height: rh(16)),
-                    _buildQuickStats(
-                      co2Offset: quickStats.co2Offset,
-                      waterSaved: quickStats.waterSaved,
-                      energySaved: quickStats.energySaved,
-                      treesPlanted: quickStats.treesPlanted,
-                    ),
-                    SizedBox(height: rh(16)),
-                    _buildDisclaimer(),
-                    SizedBox(height: rh(16)),
                   ],
                 ),
-              ),
-            );
-          } else {
-            return const Center(child: Text('No portfolio data found'));
-          }
-        },
+              );
+            } else if (snapshot.hasData) {
+              final portfolioData = snapshot.data!.data;
+              final portfolio = portfolioData.portfolio;
+              final holdingsSummary = portfolioData.holdingsSummary;
+              final quickStats = portfolioData.quickStats;
+
+              return SafeArea(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(), // ✅ needed for RefreshIndicator
+                  padding: EdgeInsets.fromLTRB(rw(16), rh(8), rw(16), rh(16)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMainCard(
+                        totalUnits: portfolio.totalUnits,
+                        unitPrice: portfolio.unitPrice,
+                        totalValue: portfolio.totalValue,
+                      ),
+                      SizedBox(height: rh(16)),
+                      _buildActionGrid(),
+                      SizedBox(height: rh(16)),
+                      _buildHoldingsSummary(
+                        totalUnits: holdingsSummary.totalUnits,
+                        totalValue: holdingsSummary.currentValue,
+                        unitPrice: portfolio.unitPrice,
+                      ),
+                      SizedBox(height: rh(16)),
+                      _buildKeepGrowingBanner(),
+                      SizedBox(height: rh(16)),
+                      _buildQuickStats(
+                        co2Offset: quickStats.co2Offset,
+                        waterSaved: quickStats.waterSaved,
+                        energySaved: quickStats.energySaved,
+                        treesPlanted: quickStats.treesPlanted,
+                      ),
+                      SizedBox(height: rh(16)),
+                      _buildDisclaimer(),
+                      SizedBox(height: rh(16)),
+                    ],
+                  ),
+                ),
+              );
+            } else {
+              return const Center(child: Text('No portfolio data found'));
+            }
+          },
+        ),
       ),
     );
   }

@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gcc/Auth/login.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_model.dart';
 import 'package:gcc/Models_nServices/earn_rewards/earn_svc.dart';
+import 'package:gcc/Models_nServices/earn_rewards/reffereal_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Screens/profile/my_impacts.dart';
 import 'package:gcc/main.dart';
@@ -20,12 +22,14 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   static const Color lightGreenBg = Color(0xFFF0FAF2);
 
   final EarnRewardsService _rewardsService = EarnRewardsService();
+  final ReferralService _referralService = ReferralService(); // 👈 new
+
   bool _isLoading = true;
   String? _errorMessage;
   int _rewardPointsBalance = 0;
   List<EarnRewardsActivity> _activities = [];
 
-  // Reward statuses from new API
+  // Reward statuses
   bool _isDailyLoginClaimed = false;
   bool _isBuyRewardClaimed = false;
   bool _isReferralRewardClaimed = false;
@@ -34,10 +38,17 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
   bool _isClaiming = false;
   bool _isProcessingImpact = false;
+  bool _isClaimingReferral = false; // 👈 new
 
   @override
   void initState() {
     super.initState();
+    _fetchRewardsData();
+    _fetchRewardStatuses();
+  }
+
+  // ─── Refresh method (fixed) ──────────────────────────────────────────
+  void refreshData() {
     _fetchRewardsData();
     _fetchRewardStatuses();
   }
@@ -93,7 +104,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   Future<void> _fetchRewardStatuses() async {
     try {
       final token = AppPreference().getString(PreferencesKey.authToken).trim();
-      print("🔑 Token from SharedPreferences: $token");
       if (token.isEmpty) return;
 
       final summary = await _rewardsService.getRewardStatusSummary(
@@ -111,8 +121,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       }
     } catch (e) {
       debugPrint('Error fetching reward statuses: $e');
-      // If we get an error, we don't want to show a full-screen error,
-      // just log it – the main data fetch will handle it.
     }
   }
 
@@ -126,7 +134,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
   void _handleError(dynamic error) {
     String message = error.toString();
-    // Check for 401 Unauthorized
     if (message.contains('401') || message.contains('Unauthenticated')) {
       message = 'Session expired. Please login again.';
       _showSessionExpiredDialog();
@@ -158,7 +165,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     await AppPreference().clearSharedPreferences();
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const MobileLoginScreen()), // Adjust to your login screen
+      MaterialPageRoute(builder: (_) => const MobileLoginScreen()),
       (route) => false,
     );
   }
@@ -262,9 +269,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       if (response.status) {
         await _fetchRewardStatuses();
         await _fetchRewardsData();
-        _showSnackBar(
-          'Buy reward claimed! +${response.claimedPoints} points',
-        );
+        _showSnackBar('Buy reward claimed! +${response.claimedPoints} points');
       } else {
         _showSnackBar(response.message ?? 'Claim failed');
       }
@@ -272,6 +277,37 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
       _showSnackBar('Error: $e');
     } finally {
       setState(() => _isClaiming = false);
+    }
+  }
+
+  // ─── Claim Referral Reward (new) ──────────────────────────────────────
+  Future<void> _claimReferralReward() async {
+    if (_isReferralRewardClaimed) return;
+    setState(() => _isClaimingReferral = true);
+    try {
+      final token = AppPreference().getString(PreferencesKey.authToken).trim();
+      if (token.isEmpty) {
+        _showSnackBar('Please login again');
+        return;
+      }
+
+      final response = await _referralService.claimReferral(token: token);
+      if (response.status) {
+        await _fetchRewardStatuses();
+        await _fetchRewardsData();
+        _showSnackBar(
+          'Referral reward claimed! +${response.claimedPoints} points & 🌳 ${response.treesAwarded} tree${response.treesAwarded > 1 ? 's' : ''} awarded!',
+        );
+      } else {
+        _showSnackBar(response.message.isNotEmpty ? response.message : 'Claim failed');
+      }
+    } on DioException catch (e) {
+      String errorMsg = e.response?.data['message'] ?? 'Something went wrong';
+      _showSnackBar(errorMsg);
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    } finally {
+      setState(() => _isClaimingReferral = false);
     }
   }
 
@@ -305,41 +341,36 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
           children: [
             _buildAppBar(),
             Expanded(
-              child:
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _errorMessage != null
-                      ? _buildErrorWidget()
-                      : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              child: _buildBalanceCard(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                  ? _buildErrorWidget()
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: _buildBalanceCard(),
+                          ),
+                          const SizedBox(height: 14),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Column(
+                              children: [
+                                _buildTasksSection(),
+                                const SizedBox(height: 14),
+                                _buildAchievementsSection(),
+                                const SizedBox(height: 14),
+                                _buildBottomBannerCard(),
+                                const SizedBox(height: 16),
+                              ],
                             ),
-                            const SizedBox(height: 14),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              child: Column(
-                                children: [
-                                  _buildTasksSection(),
-                                  const SizedBox(height: 14),
-                                  _buildAchievementsSection(),
-                                  const SizedBox(height: 14),
-                                  _buildBottomBannerCard(),
-                                  const SizedBox(height: 16),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
             ),
           ],
         ),
@@ -348,8 +379,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   }
 
   Widget _buildErrorWidget() {
-    final isSessionExpired =
-        _errorMessage?.contains('Session expired') ?? false;
+    final isSessionExpired = _errorMessage?.contains('Session expired') ?? false;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -490,10 +520,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                       right: 10,
                       child: Text(
                         '✦',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFFFFD700),
-                        ),
+                        style: TextStyle(fontSize: 10, color: Color(0xFFFFD700)),
                       ),
                     ),
                     Positioned(
@@ -621,13 +648,14 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         actionType = 'login_claim';
       }
     } else if (name.contains('invite')) {
+      // 👈 Changed: invite now shows Claim button (referral_claim)
       iconData = Icons.group_add_outlined;
       if (_isReferralRewardClaimed) {
-        actionText = 'Invite';
+        actionText = 'Claimed';
         actionType = 'claimed';
       } else {
-        actionText = 'Invite';
-        actionType = 'go';
+        actionText = 'Claim';
+        actionType = 'referral_claim';
       }
     } else if (name.contains('share')) {
       iconData = Icons.share_outlined;
@@ -732,23 +760,22 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child:
-                    _isClaiming
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Claim',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                child: _isClaiming
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Claim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             )
           else if (actionType == 'login_claim')
@@ -766,23 +793,55 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child:
-                    _isClaiming
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Claim',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                child: _isClaiming
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Claim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            )
+          else if (actionType == 'referral_claim') // 👈 New case
+            SizedBox(
+              width: 70,
+              height: 34,
+              child: ElevatedButton(
+                onPressed: _isClaimingReferral ? null : _claimReferralReward,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isClaimingReferral
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Claim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             )
           else if (actionType == 'impact_track')
@@ -800,23 +859,22 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child:
-                    _isProcessingImpact
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Track',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                child: _isProcessingImpact
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Track',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             )
           else if (actionType == 'impact_claim')
@@ -834,23 +892,22 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child:
-                    _isProcessingImpact
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Claim',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                child: _isProcessingImpact
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Claim',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             )
           else if (actionType == 'claimed')
@@ -877,27 +934,25 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
               width: 70,
               height: 34,
               child: OutlinedButton(
-                onPressed: () {
-                  if (name.contains('buy')) {
-                    // Navigate to buy section
-                  } else if (name.contains('invite')) {
-                    // Navigate to invite friends
-                  } else if (name.contains('video')) {
-                    // Play video
-                  }
-                },
+                onPressed: () {},
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primaryGreen,
                   side: const BorderSide(color: primaryGreen),
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(90, 34),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text(
-                  actionText,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Watch',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -986,70 +1041,69 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         ),
         const SizedBox(height: 12),
         Row(
-          children:
-              achievements.map((a) {
-                return Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 12,
+          children: achievements.map((a) {
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      a['emoji'] as String,
+                      style: const TextStyle(fontSize: 36),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade200),
+                    const SizedBox(height: 6),
+                    Text(
+                      a['title'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          a['emoji'] as String,
-                          style: const TextStyle(fontSize: 36),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          a['title'] as String,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          a['sub'] as String,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: a['progress'] as double,
-                            backgroundColor: Colors.grey[200],
-                            color: primaryGreen,
-                            minHeight: 5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            a['progressLabel'] as String,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      a['sub'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: a['progress'] as double,
+                        backgroundColor: Colors.grey[200],
+                        color: primaryGreen,
+                        minHeight: 5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        a['progressLabel'] as String,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

@@ -31,10 +31,10 @@ class GCCHomeScreen extends StatefulWidget {
   const GCCHomeScreen({super.key});
 
   @override
-  State<GCCHomeScreen> createState() => _GCCHomeScreenState();
+  State<GCCHomeScreen> createState() => GCCHomeScreenState();
 }
 
-class _GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
+class GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
   static const Color primaryGreen = Color(0xFF1B6B2F);
   static const Color lightGreen = Color(0xFF4CAF50);
   static const Color bgColor = Color(0xFFF5F5F5);
@@ -84,10 +84,21 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
     super.dispose();
   }
 
+  void refreshData() {
+    _refreshData();
+  }
   // ─── Refresh notification count when we come back ──────────────────
   @override
   void didPopNext() {
+    _refreshData();
     _fetchNotificationCount();
+  }
+
+  // ─── Pull‑to‑Refresh method ────────────────────────────────────────
+  Future<void> _refreshData() async {
+    // Reload everything
+    await _loadHomeScreen();
+    await _fetchNotificationCount();
   }
 
   // ─── Load home screen data ────────────────────────────────────────────
@@ -178,18 +189,23 @@ class _GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
                 ),
               ),
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    _buildHeroForestCard(),
-                    const SizedBox(height: 12),
-                    _buildGCCUnitsCard(),
-                    const SizedBox(height: 12),
-                    _buildQuickActionsSection(),
-                    const SizedBox(height: 12),
-                  ],
+              child: RefreshIndicator(
+                onRefresh: _refreshData,
+                color: primaryGreen,
+                backgroundColor: Colors.white,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildHeroForestCard(),
+                      const SizedBox(height: 12),
+                      _buildGCCUnitsCard(),
+                      const SizedBox(height: 12),
+                      _buildQuickActionsSection(),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
                 ),
               ),
             ),

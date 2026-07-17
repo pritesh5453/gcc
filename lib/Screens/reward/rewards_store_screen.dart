@@ -7,16 +7,25 @@ import 'package:gcc/Models_nServices/Coupons/coupons_svc.dart';
 import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
+import 'package:gcc/main.dart';
+
+// ─── Theme colors ────────────────────────────────────────────────────────
+const Color kPrimaryGreen = Color(0xFF1B6B2F);
+const Color kPrimaryGreenDark = Color(0xFF0F4D1F);
+const Color kBg = Color(0xFFF6F8F6);
+
+// ─── Helper enum for coupon status ──────────────────────────────────────
+enum _CouponStatus { available, needMore, claimed }
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 class ScratchCardScreen extends StatefulWidget {
   const ScratchCardScreen({super.key});
 
   @override
-  State<ScratchCardScreen> createState() => _ScratchCardScreenState();
+  ScratchCardScreenState createState() => ScratchCardScreenState();
 }
 
-class _ScratchCardScreenState extends State<ScratchCardScreen> {
+class ScratchCardScreenState extends State<ScratchCardScreen> with RouteAware {
   final CouponService _couponService = CouponService();
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -25,12 +34,41 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   int total_cashback_earned = 0;
   List<CouponData> _coupons = [];
 
-  final Map<int, int> _claimedRewards = {};
+  // ─── Responsive helpers ────────────────────────────────────────────────
+  double get _width => MediaQuery.of(context).size.width;
+  double get _height => MediaQuery.of(context).size.height;
+  double rw(double value) => value * (_width / 375);
+  double rh(double value) => value * (_height / 812);
+  double rs(double value) => value * (_width / 375);
 
   @override
   void initState() {
     super.initState();
     _fetchCoupons(showLoading: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _fetchCoupons(showLoading: false);
+  }
+
+  void refreshData() {
+    _fetchCoupons(showLoading: false);
   }
 
   Future<void> _fetchCoupons({bool showLoading = true}) async {
@@ -59,6 +97,12 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
 
       final response = await _couponService.getCoupons(token: token);
       if (response != null && response.status) {
+        // 🔍 Debug: print all coupons to verify required_reward_points
+        print('📦 Coupons received:');
+        for (var c in response.data) {
+          print('id: ${c.id}, name: ${c.couponName}, required: ${c.requiredRewardPoints}, '
+              'isScratch: ${c.isScratch}, isEligible: ${c.isEligible}, earned: ${c.earnedAmount}');
+        }
         setState(() {
           _rewardPoints = response.rewardPoints;
           total_cashback_earned = response.total_cashback_earned;
@@ -68,10 +112,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
         });
       } else {
         setState(() {
-          _errorMessage =
-              response?.status == false
-                  ? 'Failed to load coupons'
-                  : 'No coupons available';
+          _errorMessage = response?.status == false ? 'Failed to load coupons' : 'No coupons available';
           if (showLoading) _isLoading = false;
           _isRefreshing = false;
         });
@@ -89,77 +130,96 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     await _fetchCoupons(showLoading: false);
   }
 
-  void _onCouponClaimed(int couponId, int rewardAmountWon, int newPoints) {
-    setState(() {
-      _claimedRewards[couponId] = rewardAmountWon;
-      _rewardPoints = newPoints;
-      total_cashback_earned = newPoints;
-      final index = _coupons.indexWhere((c) => c.id == couponId);
-      if (index != -1) {
-        _coupons[index] = CouponData(
-          id: _coupons[index].id,
-          couponName: _coupons[index].couponName,
-          couponImage: _coupons[index].couponImage,
-          requiredRewardPoints: _coupons[index].requiredRewardPoints,
-          minRewardAmount: _coupons[index].minRewardAmount,
-          maxRewardAmount: _coupons[index].maxRewardAmount,
-          isEligible: false,
-          isScratch: _coupons[index].isScratch,
-        );
+  // ─── Determine status ─────────────────────────────────────────────────
+  // isScratch == true  → claimed
+  // isScratch == false → not claimed; use isEligible to distinguish available/needMore
+  _CouponStatus _getStatus(CouponData c) {
+    if (c.isScratch) return _CouponStatus.claimed;
+    if (c.isEligible) return _CouponStatus.available;
+    return _CouponStatus.needMore;
+  }
+
+  // ─── Sorted list: all coupons, grouped & sorted ──────────────────────
+  List<CouponData> get _sortedCoupons {
+    final available = <CouponData>[];
+    final needMore = <CouponData>[];
+    final claimed = <CouponData>[];
+
+    for (final c in _coupons) {
+      switch (_getStatus(c)) {
+        case _CouponStatus.available:
+          available.add(c);
+          break;
+        case _CouponStatus.needMore:
+          needMore.add(c);
+          break;
+        case _CouponStatus.claimed:
+          claimed.add(c);
+          break;
       }
-    });
+    }
+
+    // Sort each group by required points ascending
+    available.sort((a, b) => a.requiredRewardPoints.compareTo(b.requiredRewardPoints));
+    needMore.sort((a, b) => a.requiredRewardPoints.compareTo(b.requiredRewardPoints));
+    claimed.sort((a, b) => a.requiredRewardPoints.compareTo(b.requiredRewardPoints));
+
+    return [...available, ...needMore, ...claimed];
+  }
+
+  int get _scratchableCount => _sortedCoupons
+      .where((c) => _getStatus(c) == _CouponStatus.available)
+      .length;
+
+  void _onCouponClaimed(int couponId, int rewardAmountWon, int newPoints) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('🎉 You won ₹$rewardAmountWon!'),
+        backgroundColor: kPrimaryGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+    _fetchCoupons(showLoading: false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: kBg,
       body: SafeArea(
         child: Column(
           children: [
             _buildAppBar(context),
             Expanded(
-              child:
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _errorMessage != null
-                      ? _buildErrorWidget()
-                      : _coupons.isEmpty
-                      ? _buildEmptyState()
-                      : RefreshIndicator(
-                        onRefresh: _onRefresh,
-                        color: const Color(0xFF1B6B2F),
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 12),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                ),
-                                child: _buildBalanceCard(),
-                              ),
-                              const SizedBox(height: 18),
-                              _buildSectionHeader(),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 14),
-                                child: Text(
-                                  'Finger se scratch karo to reveal karo',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.white54,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildGrid(),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: kPrimaryGreen))
+                  : _errorMessage != null
+                  ? _buildErrorWidget()
+                  : _coupons.isEmpty
+                  ? _buildEmptyState()
+                  : RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      color: kPrimaryGreen,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: rh(14)),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: rw(16)),
+                              child: _buildBalanceCard(),
+                            ),
+                            SizedBox(height: rh(22)),
+                            _buildSectionHeader(),
+                            SizedBox(height: rh(14)),
+                            _buildGrid(),
+                            SizedBox(height: rh(24)),
+                          ],
                         ),
                       ),
+                    ),
             ),
           ],
         ),
@@ -167,37 +227,57 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     );
   }
 
+  // ─── Empty state, error, app bar, balance card ──────────────────────
   Widget _buildEmptyState() {
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF1B6B2F),
+      color: kPrimaryGreen,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: _height * 0.7,
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('🎯', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 16),
-                const Text(
-                  'No coupons available',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                Container(
+                  width: rw(96),
+                  height: rw(96),
+                  decoration: BoxDecoration(
+                    color: kPrimaryGreen.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text('🎯', style: TextStyle(fontSize: rs(46))),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: rh(20)),
+                Text(
+                  'No scratch cards available',
+                  style: TextStyle(
+                    fontSize: rs(18),
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: rh(6)),
                 Text(
                   'Check back later for new offers',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: rs(13), color: Colors.grey[600]),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: rh(26)),
                 ElevatedButton(
                   onPressed: () => _fetchCoupons(showLoading: true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B6B2F),
+                    backgroundColor: kPrimaryGreen,
                     foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(horizontal: rw(28), vertical: rh(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                  child: const Text('Refresh'),
+                  child: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -210,27 +290,45 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   Widget _buildErrorWidget() {
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF1B6B2F),
+      color: kPrimaryGreen,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: _height * 0.7,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(rw(24)),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(_errorMessage!, textAlign: TextAlign.center),
-                  const SizedBox(height: 20),
+                  Container(
+                    width: rw(72),
+                    height: rw(72),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.error_outline, size: 36, color: Colors.red),
+                  ),
+                  SizedBox(height: rh(18)),
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: rs(14), color: Colors.black87),
+                  ),
+                  SizedBox(height: rh(22)),
                   ElevatedButton(
                     onPressed: () => _fetchCoupons(showLoading: true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B6B2F),
+                      backgroundColor: kPrimaryGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(horizontal: rw(28), vertical: rh(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                    child: const Text('Retry'),
+                    child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -244,23 +342,25 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   Widget _buildAppBar(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: rw(16), vertical: rh(14)),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               children: [
                 Text(
                   'Scratch Cards',
                   style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    fontSize: rs(18),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.2,
                   ),
                 ),
+                SizedBox(height: rh(2)),
                 Text(
                   'Scratch to reveal your rewards',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: rs(11.5), color: Colors.black45),
                 ),
               ],
             ),
@@ -270,208 +370,157 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     );
   }
 
-  // ─── Updated Balance Card with Red Gift Box ─────────────────────────────
   Widget _buildBalanceCard() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: EdgeInsets.fromLTRB(rw(18), rh(18), rw(18), rh(16)),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B6B2F),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          // Heading Row
-          Row(
-            children: const [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  "Reward Points",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: SizedBox.shrink(),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  "Cashback",
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-            ],
+        gradient: const LinearGradient(
+          colors: [kPrimaryGreen, kPrimaryGreenDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(rw(22)),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimaryGreen.withOpacity(0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(height: 5),
-          // Values Row with Red Gift Box
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  _rewardPoints.toString(),
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    height: 1,
-                  ),
-                ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -rw(20),
+            top: -rh(20),
+            child: Container(
+              width: rw(90),
+              height: rw(90),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.06),
+                shape: BoxShape.circle,
               ),
-              Expanded(
-                flex: 1,
-                child: Center(
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Stack(
-                      alignment: Alignment.center,
+            ),
+          ),
+          Positioned(
+            left: -rw(30),
+            bottom: -rh(30),
+            child: Container(
+              width: rw(70),
+              height: rw(70),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // ─── Gift Box ───────────────────────────────────
-                        // Box body
                         Container(
-                          width: 50,
-                          height: 42,
+                          padding: EdgeInsets.all(rw(8)),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFD32F2F), // Dark Red
-                                Color(0xFFB71C1C), // Deeper Red
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(rw(12)),
                           ),
+                          child: Icon(Icons.stars_rounded, color: Colors.amber[300], size: rs(20)),
                         ),
-                        // ─── Ribbon (Vertical) ──────────────────────────
-                        Container(
-                          width: 8,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFFFD700), // Gold
-                                Color(0xFFFFC107), // Light Gold
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
+                        SizedBox(width: rw(10)),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Reward Points",
+                              style: TextStyle(fontSize: rs(11.5), color: Colors.white70),
                             ),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        // ─── Ribbon (Horizontal) ────────────────────────
-                        Container(
-                          width: 50,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFFFD700), // Gold
-                                Color(0xFFFFC107), // Light Gold
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
+                            SizedBox(height: rh(2)),
+                            Text(
+                              _rewardPoints.toString(),
+                              style: TextStyle(
+                                fontSize: rs(30),
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                height: 1,
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        // ─── Bow on Top ──────────────────────────────────
-                        Positioned(
-                          top: -4,
-                          child: const Text(
-                            '🎀',
-                            style: TextStyle(
-                              fontSize: 24,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black26,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // ─── Sparkle (small) ─────────────────────────────
-                        Positioned(
-                          top: -6,
-                          right: -4,
-                          child: const Text(
-                            '✨',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -4,
-                          left: -6,
-                          child: const Text(
-                            '✨',
-                            style: TextStyle(fontSize: 10),
-                          ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
+                  Container(
+                    width: 1,
+                    height: rh(40),
+                    color: Colors.white.withOpacity(0.18),
+                    margin: EdgeInsets.symmetric(horizontal: rw(8)),
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Cashback",
+                              style: TextStyle(fontSize: rs(11.5), color: Colors.white70),
+                            ),
+                            SizedBox(height: rh(2)),
+                            Text(
+                              '₹$total_cashback_earned',
+                              style: TextStyle(
+                                fontSize: rs(24),
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: rw(8)),
+                        Container(
+                          padding: EdgeInsets.all(rw(8)),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(rw(12)),
+                          ),
+                          child: Icon(Icons.card_giftcard_rounded, color: Colors.pinkAccent[100], size: rs(20)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  '₹' + total_cashback_earned.toString(),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    height: 1,
+              SizedBox(height: rh(14)),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: rh(6)),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Colors.white.withOpacity(0.14), width: 1),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Labels Row
-          Row(
-            children: const [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  "Available",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: SizedBox.shrink(),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  "Total Earned",
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Available balance",
+                        style: TextStyle(fontSize: rs(11.5), color: Colors.white60),
+                      ),
+                    ),
+                    Text(
+                      "Total earned so far",
+                      textAlign: TextAlign.right,
+                      style: TextStyle(fontSize: rs(11.5), color: Colors.white60),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -483,21 +532,42 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
 
   Widget _buildSectionHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: EdgeInsets.fromLTRB(rw(16), 0, rw(16), 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your scratch cards',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1B6B2F),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Your scratch cards',
+                style: TextStyle(
+                  fontSize: rs(16),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: rw(10), vertical: rh(4)),
+                decoration: BoxDecoration(
+                  color: kPrimaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$_scratchableCount available',
+                  style: TextStyle(
+                    fontSize: rs(11),
+                    fontWeight: FontWeight.w600,
+                    color: kPrimaryGreen,
+                  ),
+                ),
+              ),
+            ],
           ),
+          SizedBox(height: rh(4)),
           Text(
-            '${_coupons.length} available',
-            style: const TextStyle(fontSize: 11, color: Color(0xFF1B6B2F)),
+            'Scratch to reveal your reward.',
+            style: TextStyle(fontSize: rs(11.5), color: Colors.black45),
           ),
         ],
       ),
@@ -505,28 +575,28 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   }
 
   Widget _buildGrid() {
+    final coupons = _sortedCoupons;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.symmetric(horizontal: rw(12)),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final cardWidth = (constraints.maxWidth - 12) / 2;
+          int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+          final cardWidth = (constraints.maxWidth - (crossAxisCount - 1) * 12) / crossAxisCount;
           return Wrap(
             spacing: 12,
             runSpacing: 12,
-            children:
-                _coupons
-                    .map(
-                      (coupon) => SizedBox(
-                        width: cardWidth,
-                        child: _ScratchCard(
-                          coupon: coupon,
-                          userPoints: _rewardPoints,
-                          onClaimed: _onCouponClaimed,
-                          claimedReward: _claimedRewards[coupon.id],
-                        ),
-                      ),
-                    )
-                    .toList(),
+            children: coupons.map((coupon) {
+              return SizedBox(
+                key: ValueKey(coupon.id),
+                width: cardWidth,
+                child: _ScratchCard(
+                  coupon: coupon,
+                  userPoints: _rewardPoints,
+                  onClaimed: _onCouponClaimed,
+                  cardWidth: cardWidth,
+                ),
+              );
+            }).toList(),
           );
         },
       ),
@@ -539,13 +609,13 @@ class _ScratchCard extends StatefulWidget {
   final CouponData coupon;
   final int userPoints;
   final void Function(int couponId, int rewardAmount, int newPoints) onClaimed;
-  final int? claimedReward;
+  final double cardWidth;
 
   const _ScratchCard({
     required this.coupon,
     required this.userPoints,
     required this.onClaimed,
-    this.claimedReward,
+    required this.cardWidth,
   });
 
   @override
@@ -561,6 +631,7 @@ class _ScratchCardState extends State<_ScratchCard>
   late Animation<double> _fadeAnim;
 
   bool get _canScratch =>
+      !widget.coupon.isScratch &&
       widget.coupon.isEligible &&
       widget.userPoints >= widget.coupon.requiredRewardPoints &&
       !_isClaiming;
@@ -572,9 +643,11 @@ class _ScratchCardState extends State<_ScratchCard>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _fadeAnim = Tween<double>(begin: 1, end: 0).animate(_fadeCtrl);
+    _fadeAnim = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut),
+    );
 
-    if (!widget.coupon.isEligible || widget.claimedReward != null) {
+    if (widget.coupon.isScratch || !widget.coupon.isEligible) {
       _revealed = true;
       _fadeCtrl.value = 0;
     }
@@ -627,222 +700,307 @@ class _ScratchCardState extends State<_ScratchCard>
 
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF1B6B2F)),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: kPrimaryGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
+  }
+
+  // ─── 🌈 Vibrant gradient palette ──────────────────────────────────
+  final List<List<Color>> _gradientColors = [
+    [Color(0xFFFF7675), Color(0xFFD63031)],
+    [Color(0xFFFF9F43), Color(0xFFE67E22)],
+    [Color(0xFFFFA502), Color(0xFFF0932B)],
+    [Color(0xFFF368E0), Color(0xFF6C5CE7)],
+    [Color(0xFFFD79A8), Color(0xFFE84393)],
+    [Color(0xFFA29BFE), Color(0xFF6C5CE7)],
+    [Color(0xFFD980FA), Color(0xFF6C5CE7)],
+    [Color(0xFF74B9FF), Color(0xFF0984E3)],
+    [Color(0xFF00CEC9), Color(0xFF00B894)],
+    [Color(0xFF55EFC4), Color(0xFF00B894)],
+    [Color(0xFF00BFFF), Color(0xFF0066CC)],
+    [Color(0xFF7BED9F), Color(0xFF2ECC71)],
+    [Color(0xFF2ECC71), Color(0xFF1B5E20)],
+    [Color(0xFFFFD93D), Color(0xFFF9CA24)],
+    [Color(0xFF00CEC9), Color(0xFF0984E3)],
+    [Color(0xFFFF6B6B), Color(0xFFFECA57)],
+    [Color(0xFFA29BFE), Color(0xFFFD79A8)],
+    [Color(0xFF74B9FF), Color(0xFFF368E0)],
+  ];
+
+  List<Color> _getGradient(int id) {
+    return _gradientColors[id % _gradientColors.length];
   }
 
   @override
   Widget build(BuildContext context) {
     final c = widget.coupon;
     final bool hasEnoughPoints = widget.userPoints >= c.requiredRewardPoints;
-    final bool isEligible = c.isEligible && hasEnoughPoints;
+    final bool isEligible = c.isEligible && hasEnoughPoints && !c.isScratch;
+    final bool isClaimed = c.isScratch;
 
-    String rewardDisplay;
-    String rewardLabel;
-    String icon;
+    final double cardHeight = widget.cardWidth * 0.8;
+    final double fontSize = widget.cardWidth * 0.09;
+    final double smallFont = widget.cardWidth * 0.05;
+    final double pad = widget.cardWidth * 0.07;
 
-    if (widget.claimedReward != null) {
-      rewardDisplay = '₹${widget.claimedReward}';
-      rewardLabel = 'Won!';
-      icon = '🎉';
-    } else if (isEligible) {
-      rewardDisplay = '₹${c.minRewardAmount} - ₹${c.maxRewardAmount}';
-      rewardLabel = 'Scratch to win';
-      icon = '🎁';
-    } else {
-      if (!hasEnoughPoints) {
-        rewardDisplay = '—';
-        rewardLabel = 'Not enough points';
-        icon = '🔒';
-      } else {
-        rewardDisplay = '—';
-        rewardLabel = 'Already Claimed';
-        icon = '✅';
-      }
-    }
-
-    final bgColor = isEligible ? const Color(0xFFE8F5E9) : Colors.grey[200]!;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: SizedBox(
-              height: 140,
-              child: Stack(
-                children: [
-                  Container(
-                    color: bgColor,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(icon, style: const TextStyle(fontSize: 36)),
-                          const SizedBox(height: 4),
-                          Text(
-                            rewardDisplay,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1B6B2F),
-                            ),
-                          ),
-                          Text(
-                            rewardLabel,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (isEligible && widget.claimedReward == null && !_revealed)
-                    FadeTransition(
-                      opacity: _fadeAnim,
-                      child: _ScratchLayer(
-                        scratchColor: _getScratchColor(c.id),
-                        onRevealed: _onScratchComplete,
-                      ),
-                    ),
-                  if (!isEligible)
-                    Container(
-                      color: Colors.black.withOpacity(0.4),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              hasEnoughPoints
-                                  ? 'Already Claimed'
-                                  : 'Not enough points',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            if (!hasEnoughPoints)
-                              Text(
-                                'Need ${c.requiredRewardPoints} pts',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (_isClaiming)
-                    Container(
-                      color: Colors.black.withOpacity(0.5),
-                      child: const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+    // ─── Claimed card ────────────────────────────────────────────────────
+    if (isClaimed) {
+      return Opacity(
+        opacity: 0.55,
+        child: Container(
+          height: cardHeight,
+          decoration: BoxDecoration(
+            color: Colors.grey[400],
+            borderRadius: BorderRadius.circular(18),
           ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: _revealed ? 28 : 0,
-            color: const Color(0xFFE8F5E9),
-            child:
-                _revealed
-                    ? const Center(
-                      child: Text(
-                        '🎉  Reward revealed!',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF2E7D32),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )
-                    : const SizedBox.shrink(),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 11),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 3),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: fontSize * 1.5,
+                ),
+                SizedBox(height: 6),
                 Text(
-                  c.couponName.length > 20
-                      ? '${c.couponName.substring(0, 20)}...'
-                      : c.couponName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                  'Won ₹${c.earnedAmount}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: fontSize * 0.7,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1B6B2F),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 9,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      '${c.requiredRewardPoints} points',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF1B6B2F),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                SizedBox(height: 4),
+                Text(
+                  'Required: ${c.requiredRewardPoints} pts',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: smallFont * 0.9,
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+      );
+    }
+
+    // ─── Build card content for available / need more ──────────────────
+    String discountText;
+    String description;
+    Color badgeColor;
+    String badgeText;
+    IconData? badgeIcon;
+    bool showScratchLayer;
+
+    if (isEligible) {
+      discountText = '₹${c.minRewardAmount} - ₹${c.maxRewardAmount}';
+      description = c.couponName;
+      badgeColor = const Color(0xFFE84118);
+      badgeText = 'NEW';
+      badgeIcon = Icons.bolt_rounded;
+      showScratchLayer = true;
+    } else {
+      discountText = '';
+      description = 'Need ${c.requiredRewardPoints} pts';
+      badgeColor = Colors.black45;
+      badgeText = 'LOCKED';
+      badgeIcon = Icons.lock_rounded;
+      showScratchLayer = false;
+    }
+
+    final gradientColors = _getGradient(c.id);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[1].withOpacity(0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: cardHeight,
+          child: Stack(
+            children: [
+              // ─── Always colorful background ────────────────────────────
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                padding: EdgeInsets.all(pad),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // ─── Badge ──────────────────────────────────────────
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: badgeColor.withOpacity(0.4),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(badgeIcon, color: Colors.white, size: smallFont * 1.1),
+                              SizedBox(width: 3),
+                              Text(
+                                badgeText,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: smallFont * 0.85,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (showScratchLayer)
+                          Container(
+                            padding: EdgeInsets.all(smallFont * 0.5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.22),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.credit_card_rounded,
+                              color: Colors.white,
+                              size: smallFont * 1.3,
+                            ),
+                          ),
+                      ],
+                    ),
+                    // ─── Discount Amount ──────────────────────────────
+                    if (discountText.isNotEmpty)
+                      Text(
+                        discountText,
+                        style: TextStyle(
+                          fontSize: fontSize * 1.25,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    // ─── Description ────────────────────────────────────
+                    Text(
+                      description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: smallFont,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    // ─── Required points (visible only when overlay is NOT showing) ──
+                    // But we also show them inside overlay, so this is backup.
+                    if (isEligible) ...[
+                      Text(
+                        'Min. spend ₹${c.minRewardAmount}',
+                        style: TextStyle(
+                          fontSize: smallFont * 0.8,
+                          color: Colors.white.withOpacity(0.65),
+                        ),
+                      ),
+                      Text(
+                        'Required: ${c.requiredRewardPoints} pts',
+                        style: TextStyle(
+                          fontSize: smallFont * 0.9,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // ─── Scratch overlay (only for active cards) ──────────────
+              if (showScratchLayer && !_revealed)
+                FadeTransition(
+                  opacity: _fadeAnim,
+                  child: _ScratchLayer(
+                    onRevealed: _onScratchComplete,
+                    requiredPoints: c.requiredRewardPoints,
+                  ),
+                ),
+              if (_isClaiming)
+                Container(
+                  color: Colors.black.withOpacity(0.55),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.6),
+                  ),
+                ),
+              // ─── Dim overlay for locked cards ──────────────────────
+              if (!showScratchLayer && !_revealed)
+                Container(
+                  color: Colors.black.withOpacity(0.45),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white,
+                          size: fontSize * 1.6,
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Locked',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: fontSize * 0.7,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
-  }
-
-  Color _getScratchColor(int id) {
-    final colors = [
-      const Color(0xFFB8860B),
-      const Color(0xFF388E3C),
-      const Color(0xFF5E35B1),
-      const Color(0xFF1565C0),
-      const Color(0xFFC2185B),
-      const Color(0xFF33691E),
-      const Color(0xFFE65100),
-      const Color(0xFF00838F),
-      const Color(0xFF6A1B9A),
-      const Color(0xFFF57F17),
-    ];
-    return colors[id % colors.length];
   }
 }
 
 // ─── Scratch Layer (CustomPainter) ────────────────────────────────────────
 class _ScratchLayer extends StatefulWidget {
-  final Color scratchColor;
   final VoidCallback onRevealed;
+  final int requiredPoints;
 
-  const _ScratchLayer({required this.scratchColor, required this.onRevealed});
+  const _ScratchLayer({
+    required this.onRevealed,
+    required this.requiredPoints,
+  });
 
   @override
   State<_ScratchLayer> createState() => _ScratchLayerState();
@@ -891,7 +1049,7 @@ class _ScratchLayerState extends State<_ScratchLayer> {
             size: _lastSize,
             painter: _ScratchPainter(
               points: _points,
-              scratchColor: widget.scratchColor,
+              requiredPoints: widget.requiredPoints,
             ),
           );
         },
@@ -902,69 +1060,171 @@ class _ScratchLayerState extends State<_ScratchLayer> {
 
 class _ScratchPainter extends CustomPainter {
   final List<Offset> points;
-  final Color scratchColor;
+  final int requiredPoints;
 
-  _ScratchPainter({required this.points, required this.scratchColor});
+  _ScratchPainter({
+    required this.points,
+    required this.requiredPoints,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final basePaint = Paint()..color = scratchColor;
+    // ─── Base metallic gradient ────────────────────────────────────
+    final basePaint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, 0),
+        Offset(size.width, size.height),
+        [
+          const Color(0xFF9AA0A6),
+          const Color(0xFF6B7280),
+          const Color(0xFF4B5563),
+        ],
+        [0.0, 0.5, 1.0],
+      );
     canvas.drawRect(Offset.zero & size, basePaint);
 
-    final dotPaint = Paint()..color = Colors.white.withOpacity(0.15);
+    // ─── Diagonal shine streaks ─────────────────────────────────────────
+    final shinePaint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, 0),
+        Offset(size.width, size.height),
+        [
+          Colors.white.withOpacity(0.08),
+          Colors.white.withOpacity(0.22),
+          Colors.white.withOpacity(0.08),
+        ],
+        [0.0, 0.5, 1.0],
+      );
+    canvas.drawRect(Offset.zero & size, shinePaint);
+
+    // ─── Dots pattern ──────────────────────────────────────────────────
+    final dotPaint = Paint()..color = Colors.white.withOpacity(0.10);
     final cols = 6;
     for (int i = 0; i < cols; i++) {
       final x = (size.width / cols) * i + size.width / (cols * 2);
       canvas.drawCircle(Offset(x, size.height / 2), 18, dotPaint);
     }
 
+    // ─── Bold "SCRATCH HERE" title ────────────────────────────────────
+    final titleTp = TextPainter(
+      text: const TextSpan(
+        text: 'SCRATCH HERE',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.1,
+          shadows: [
+            Shadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    titleTp.layout(maxWidth: size.width - 16);
+    final titleY = size.height * 0.16;
+    titleTp.paint(
+      canvas,
+      Offset((size.width - titleTp.width) / 2, titleY),
+    );
+
+    // underline accent
+    final underlinePaint = Paint()
+      ..color = Colors.white.withOpacity(0.8)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    final underlineY = titleY + titleTp.height + 6;
+    canvas.drawLine(
+      Offset(size.width / 2 - 16, underlineY),
+      Offset(size.width / 2 + 16, underlineY),
+      underlinePaint,
+    );
+
+    // ─── Coin icon + supporting text ──────────────────────────────────
+    final centerY = size.height / 2 + 6;
+
+    final coinPaint = Paint()..color = Colors.white.withOpacity(0.25);
+    canvas.drawCircle(Offset(size.width / 2, centerY - 14), 14, coinPaint);
+    final coinBorder = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    canvas.drawCircle(Offset(size.width / 2, centerY - 14), 14, coinBorder);
+
+    final coinText = TextPainter(
+      text: const TextSpan(
+        text: '₹',
+        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    coinText.layout();
+    coinText.paint(
+      canvas,
+      Offset(size.width / 2 - coinText.width / 2, centerY - 14 - coinText.height / 2),
+    );
+
+    // "to reveal reward" text
     final tp = TextPainter(
       text: TextSpan(
-        children: [
-          const TextSpan(
-            text: 'Scratch here\n',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
-            ),
-          ),
-          TextSpan(
-            text: 'to reveal reward',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 10,
-            ),
-          ),
-        ],
+        text: 'to reveal reward',
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.8),
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     );
     tp.layout(maxWidth: size.width);
+    final tpY = centerY + 6;
     tp.paint(
       canvas,
-      Offset((size.width - tp.width) / 2, (size.height - tp.height) / 2),
+      Offset((size.width - tp.width) / 2, tpY),
     );
 
+    // ─── 👇 REQUIRED POINTS AT THE BOTTOM ──────────────────────────────
+    final reqTp = TextPainter(
+      text: TextSpan(
+        text: 'Required: $requiredPoints pts',
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.95),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          shadows: [
+            Shadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    reqTp.layout(maxWidth: size.width - 16);
+    // Place it below "to reveal reward" with some padding
+    final reqY = tpY + tp.height + 8;
+    reqTp.paint(
+      canvas,
+      Offset((size.width - reqTp.width) / 2, reqY),
+    );
+
+    // ─── Erase (scratch) with blend mode ──────────────────────────────
     if (points.isEmpty) return;
 
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawRect(Offset.zero & size, basePaint);
 
-    final erasePaint =
-        Paint()
-          ..blendMode = BlendMode.clear
-          ..style = PaintingStyle.fill;
+    final erasePaint = Paint()
+      ..blendMode = BlendMode.clear
+      ..style = PaintingStyle.fill;
 
     for (int i = 0; i < points.length; i++) {
       canvas.drawCircle(points[i], 22, erasePaint);
       if (i > 0) {
-        final path =
-            Path()
-              ..moveTo(points[i - 1].dx, points[i - 1].dy)
-              ..lineTo(points[i].dx, points[i].dy);
+        final path = Path()
+          ..moveTo(points[i - 1].dx, points[i - 1].dy)
+          ..lineTo(points[i].dx, points[i].dy);
         canvas.drawPath(
           path,
           erasePaint

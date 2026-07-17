@@ -28,12 +28,13 @@ class CouponsResponse {
 class CouponData {
   final int id;
   final String couponName;
-  final String couponImage;
+  final String? couponImage; // now nullable
   final int requiredRewardPoints;
   final int minRewardAmount;
   final int maxRewardAmount;
   final bool isEligible;
-  final bool isScratch; // 👈 NEW field
+  final bool isScratch;
+  final int earnedAmount; // NEW
 
   CouponData({
     required this.id,
@@ -44,20 +45,20 @@ class CouponData {
     required this.maxRewardAmount,
     required this.isEligible,
     required this.isScratch,
-    
+    required this.earnedAmount,
   });
 
   factory CouponData.fromJson(Map<String, dynamic> json) {
     return CouponData(
       id: json['id'] ?? 0,
       couponName: json['coupon_name'] ?? '',
-      couponImage: json['coupon_image'] ?? '',
+      couponImage: json['coupon_image'], // can be null
       requiredRewardPoints: json['required_reward_points'] ?? 0,
       minRewardAmount: json['min_reward_amount'] ?? 0,
       maxRewardAmount: json['max_reward_amount'] ?? 0,
       isEligible: json['is_eligible'] ?? false,
-      isScratch: json['is_scratch'] ?? false, // key must match API
-    
+      isScratch: json['is_scratch'] ?? false,
+      earnedAmount: json['earned_amount'] ?? 0,
     );
   }
 }

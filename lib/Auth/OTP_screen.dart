@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:gcc/Auth/login.dart';
+import 'package:gcc/Auth/signup.dart';
 import 'package:gcc/Models_nServices/resend_otp_login/resend_otp_svc.dart'; // new
 import 'package:gcc/Models_nServices/signup_resend_otp/signup_resend_otp_svc.dart';
 import 'package:gcc/Models_nServices/verify_otp/verify_services.dart';
@@ -417,12 +419,24 @@ class _OtpScreenState extends State<OtpScreen> {
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  if (widget.isLoginFlow) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MobileLoginScreen(),
+                      ),
+                    );
+                  } else {
+                    print("Edit clicked");
+                    print("Can Pop: ${Navigator.canPop(context)}");
+
+                    Navigator.pop(context);
+                  }
                 },
-                child: Text(
+                child: const Text(
                   'Edit Mobile Number',
                   style: TextStyle(
-                    color: const Color(0xFF2E7D32),
+                    color: Color(0xFF2E7D32),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),

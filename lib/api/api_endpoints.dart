@@ -46,6 +46,7 @@ class ApiEndpoints {
   static const String claimTrackImpact = "$baseUrl/claim-track-your-impact";
   static const String trackImpact = "$baseUrl/track-your-impact";
   static const String claimBuyReward = "$baseUrl/claim-buy-reward";
+  static const String claimReferral = "$baseUrl/claim-referral";
 
   // Reward Status Summary (replaces old daily login status)
   static const String rewardStatusSummary = "$baseUrl/reward-status-summary";

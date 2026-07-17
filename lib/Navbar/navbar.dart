@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- for SystemNavigator
+import 'package:flutter/services.dart'; // for SystemNavigator
 import 'package:gcc/Screens/contribute/contribute_screen.dart';
 import 'package:gcc/Screens/profile/profile.dart';
 import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
@@ -18,27 +18,44 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
-  bool _isShowingDialog = false; // prevent multiple dialogs
+  bool _isShowingDialog = false;
 
-  final List<Widget> _screens = const [
-    GCCHomeScreen(), // index 0 - Home
-    EarnRewardsScreen(), // index 1 - Earn
-    PortfolioScreen(), // index 2 - Contribute/Portfolio
-    ScratchCardScreen(), // index 3 - Rewards
-    ProfileScreen(), // index 4 - Profile
-  ];
+  // ─── GlobalKey to access home screen state ────────────────
+  final GlobalKey<GCCHomeScreenState> _homeKey = GlobalKey<GCCHomeScreenState>();
+  final GlobalKey<PortfolioScreenState> _portfolioKey = GlobalKey<PortfolioScreenState>();
+  final GlobalKey<ScratchCardScreenState> _scratchKey = GlobalKey<ScratchCardScreenState>();
+
+  // ─── Screens list with home key ───────────────────────────
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+
+    // Initialize screens with the home key
+    _screens = [
+      GCCHomeScreen(key: _homeKey), // Home – with key
+      const EarnRewardsScreen(),
+      PortfolioScreen(key: _portfolioKey),
+      ScratchCardScreen(key: _scratchKey),
+      const ProfileScreen(),
+    ];
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+  setState(() {
+    _currentIndex = index;
+  });
+
+  if (index == 0) {
+    _homeKey.currentState?.refreshData();
+  } else if (index == 2) {
+    _portfolioKey.currentState?.refreshData();
+  } else if (index == 3) {
+    _scratchKey.currentState?.refreshData();
   }
+}
 
   // ─── EXIT CONFIRMATION DIALOG ─────────────────────────────────────────────
   Future<bool> _showExitConfirmation(BuildContext context) async {
@@ -76,13 +93,11 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap Scaffold with PopScope to intercept system back button
     return PopScope(
-      canPop: false, // we handle it ourselves
+      canPop: false,
       onPopInvoked: (didPop) async {
         if (didPop || !mounted) return;
 
-        // ONLY show confirmation if we are on the HOME tab (index 0)
         if (_currentIndex == 0) {
           final shouldExit = await _showExitConfirmation(context);
           if (shouldExit) {
@@ -103,30 +118,30 @@ class _MainScreenState extends State<MainScreen> {
         bottomNavigationBar:
             widget.child == null
                 ? Container(
-                  height: 90,
-                  margin: const EdgeInsets.fromLTRB(15, 0, 15, 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(Icons.home_outlined, "Home", 0),
-                      _buildNavItem(Icons.stars_outlined, "Earn", 1),
-                      _buildCenterNavItem(2),
-                      _buildNavItem(Icons.card_giftcard_outlined, "Rewards", 3),
-                      _buildNavItem(Icons.person_outline, "Profile", 4),
-                    ],
-                  ),
-                )
+                    height: 90,
+                    margin: const EdgeInsets.fromLTRB(15, 0, 15, 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(Icons.home_outlined, "Home", 0),
+                        _buildNavItem(Icons.stars_outlined, "Earn", 1),
+                        _buildCenterNavItem(2),
+                        _buildNavItem(Icons.card_giftcard_outlined, "Rewards", 3),
+                        _buildNavItem(Icons.person_outline, "Profile", 4),
+                      ],
+                    ),
+                  )
                 : null,
       ),
     );

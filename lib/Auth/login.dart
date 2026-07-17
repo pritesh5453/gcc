@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -33,21 +34,21 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       });
       return false;
     }
-    
+
     if (mobile.length != 10) {
       setState(() {
         _errorMessage = 'Please enter a valid 10-digit mobile number';
       });
       return false;
     }
-    
+
     if (!RegExp(r'^[0-9]+$').hasMatch(mobile)) {
       setState(() {
         _errorMessage = 'Please enter only numbers';
       });
       return false;
     }
-    
+
     setState(() {
       _errorMessage = null;
     });
@@ -55,67 +56,84 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   }
 
   Future<void> loginApi() async {
-    // Clear previous error
-    setState(() {
-      _errorMessage = null;
-    });
+  setState(() {
+    _errorMessage = null;
+  });
 
-    // Validate mobile number
-    if (!_validateMobileNumber(_mobilecontroller.text.trim())) {
-      return;
-    }
-
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-final authApiService = AuthApiService();
-
-final firebaseToken =
-    await FirebaseMessaging.instance.getToken();
-
-debugPrint("Firebase Token => $firebaseToken");
-
-final response = await authApiService.login(
-  phone: _mobilecontroller.text.trim(),
-  firebaseToken: firebaseToken ?? "",
-);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response.status == true) {
-        if (response.phone != null && response.phone!.isNotEmpty) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OtpScreen(
-                mobileNumber: response.phone!,
-                sessionId: response.sessionId ?? "",
-                isLoginFlow: true,
-              ),
-            ),
-          );
-        } else {
-          setState(() {
-            _errorMessage = 'Invalid response from server';
-          });
-        }
-      } else {
-        setState(() {
-          _errorMessage = response.message ?? 'Login failed. Please try again.';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Network error. Please check your connection and try again.';
-      });
-      debugPrint('Login Error: $e');
-    }
+  if (!_validateMobileNumber(_mobilecontroller.text.trim())) {
+    return;
   }
 
+  try {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authApiService = AuthApiService();
+    final firebaseToken = await FirebaseMessaging.instance.getToken();
+
+    final response = await authApiService.login(
+      phone: _mobilecontroller.text.trim(),
+      firebaseToken: firebaseToken ?? "",
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (response.status == true) {
+      if (response.phone != null && response.phone!.isNotEmpty) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(
+              mobileNumber: response.phone!,
+              sessionId: response.sessionId ?? "",
+              isLoginFlow: true,
+            ),
+          ),
+        );
+      } else {
+        setState(() {
+          _errorMessage = 'Invalid response from server';
+        });
+      }
+    } else {
+      // Backend returned status false – show its message
+      setState(() {
+        _errorMessage = response.message ?? 'Login failed. Please try again.';
+      });
+    }
+  } on DioException catch (e) {
+  String errorMsg;
+  if (e.response != null && e.response?.data != null) {
+    try {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        errorMsg = data['message']?.toString() ?? e.message ?? 'Something went wrong.';
+      } else if (data is String) {
+        errorMsg = data;
+      } else {
+        errorMsg = e.message ?? 'Something went wrong.';
+      }
+    } catch (_) {
+      errorMsg = e.message ?? 'Something went wrong.';
+    }
+  } else {
+    errorMsg = 'Network error. Please check your connection and try again.';
+  }
+  setState(() {
+    _isLoading = false;
+    _errorMessage = errorMsg;
+  });
+} catch (e) {
+  // Koi aur unexpected error
+  setState(() {
+    _isLoading = false;
+    _errorMessage = 'Something went wrong. Please try again.';
+  });
+}
+}
   // Social login placeholder
   void _handleSocialLogin(String provider) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -236,7 +254,13 @@ final response = await authApiService.login(
                             controller: _mobilecontroller,
                             keyboardType: TextInputType.phone,
                             maxLength: 10,
-                            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null,
                             decoration: InputDecoration(
                               hintText: 'Enter Mobile Number',
                               hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -314,19 +338,25 @@ final response = await authApiService.login(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Continue with OTP',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Continue with OTP',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -344,15 +374,16 @@ final response = await authApiService.login(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignupScreen(),
-                              ),
-                            );
-                          },
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignupScreen(),
+                                  ),
+                                );
+                              },
                       ),
                     ],
                   ),
@@ -363,10 +394,7 @@ final response = await authApiService.login(
               Row(
                 children: [
                   Expanded(
-                    child: Divider(
-                      color: Colors.grey.shade300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Colors.grey.shade300, thickness: 1),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -379,10 +407,7 @@ final response = await authApiService.login(
                     ),
                   ),
                   Expanded(
-                    child: Divider(
-                      color: Colors.grey.shade300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Colors.grey.shade300, thickness: 1),
                   ),
                 ],
               ),

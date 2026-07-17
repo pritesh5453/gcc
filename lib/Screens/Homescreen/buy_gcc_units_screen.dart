@@ -615,7 +615,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Price is fixed and not an investment.',
+            'Price is varying but not an investment.',
             style: TextStyle(fontSize: 11, color: Colors.grey),
           ),
         ],
@@ -915,8 +915,8 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 30,
+                  height: 30,
                   decoration: const BoxDecoration(
                     color: Color(0xFFF0FAF2),
                     shape: BoxShape.circle,
@@ -941,7 +941,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -981,7 +981,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B6B2F),
                   ),
@@ -1017,7 +1017,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
   // ── Impact Card ───────────────────────────────────────────────────────────
   Widget _buildImpactCard() {
     final units = _selectedUnits;
-    final treesSupported = (units * 0.5).toInt(); // floor to whole trees
+    final treesSupported = (units * 0.10).toInt(); // floor to whole trees
 
     return Container(
       height: 140,

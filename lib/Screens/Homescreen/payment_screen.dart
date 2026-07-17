@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 import 'package:gcc/Models_nServices/deposite/deposite_model.dart';
+import 'package:gcc/Navbar/navbar.dart';
+import 'package:gcc/Screens/earn/earn_rewards_screen.dart';
 import 'package:gcc/Screens/profile/my_impacts.dart';
+import 'package:gcc/Screens/profile/referral_screen.dart';
+import 'package:gcc/Screens/reward/rewards_store_screen.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final Transaction? transactionData; // Only buy transaction
@@ -129,10 +133,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.close, color: Colors.black54, size: 24),
-          ),
+          // GestureDetector(
+          //   onTap: () => Navigator.pop(context),
+          //   child: const Icon(Icons.close, color: Colors.black54, size: 24),
+          // ),
         ],
       ),
     );
@@ -342,8 +346,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     final String co2Display = co2Kg.toStringAsFixed(2); // 2 decimals
 
     // Units for the third stat (already a string from previous)
-    final String unitDisplay =
-        widget.transactionData?.amountCoin?.toStringAsFixed(0) ?? '0';
+    final amount = widget.transactionData?.amountCoin ?? 0;
+
+final String unitDisplay = amount % 1 == 0
+    ? amount.toStringAsFixed(0)
+    : amount.toString();
 
     return Container(
       decoration: BoxDecoration(
@@ -406,7 +413,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                   child: _ImpactStat(
                     emoji: '🍃',
                     value: unitDisplay,
-                    unit: 'Trees',   // as in original, kept
+                    unit: 'Units',   // as in original, kept
                     label: 'GCC Units\nAdded to your account',
                     isGreen: true,
                   ),
@@ -446,21 +453,26 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         'emoji': '🌱',
         'title': 'Track Your\nImpact',
         'sub': 'See your trees\nand CO₂ saved',
+        'screen': const MyImpactScreen(),
+
       },
       {
         'emoji': '🎁',
         'title': 'Earn\nRewards',
         'sub': 'Complete tasks\nand earn points',
+        'screen': const MainScreen(initialIndex: 1),
       },
       {
         'emoji': '🛍️',
         'title': 'Redeem\nOffers',
         'sub': 'Use your points\non exciting offers',
+        'screen': const MainScreen(initialIndex: 3),
       },
       {
         'emoji': '👥',
         'title': 'Invite\nFriends',
         'sub': 'Invite and earn\nmore rewards',
+        'screen': const ReferralGrowthScreen(),
       },
     ];
 
@@ -477,51 +489,61 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
         ),
         const SizedBox(height: 12),
         Row(
-          children: items.map((item) {
-            return Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      item['emoji']!,
-                      style: const TextStyle(fontSize: 28),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item['title']!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item['sub']!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Colors.grey,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
+  children: items.map((item) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          // ─── Navigate to the screen stored in the item ───
+          final screen = item['screen'] as Widget;
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => screen),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 12,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            children: [
+              Text(
+                item['emoji']as String,
+                style: const TextStyle(fontSize: 28),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                item['title']as String,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  height: 1.3,
                 ),
               ),
-            );
-          }).toList(),
+              const SizedBox(height: 4),
+              Text(
+                item['sub']as String,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }).toList(),
+)
       ],
     );
   }

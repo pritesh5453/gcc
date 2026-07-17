@@ -1,5 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:gcc/Navbar/navbar.dart'; // Adjust path as needed
+import 'package:gcc/Navbar/navbar.dart';
 import 'package:gcc/Models_nServices/login/login_services.dart';
 import 'package:gcc/Auth/OTP_screen.dart';
 
@@ -15,6 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _mobileController = TextEditingController();
+  final _referralController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -29,6 +31,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _mobileController.dispose();
+    _referralController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -48,6 +51,9 @@ class _SignupScreenState extends State<SignupScreen> {
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _mobileController.text.trim(),
+        referralCode: _referralController.text.trim().isEmpty
+            ? null
+            : _referralController.text.trim(),
       );
 
       setState(() {
@@ -55,7 +61,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
 
       if (resp.status == true && resp.phone != null) {
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => OtpScreen(
@@ -70,6 +76,14 @@ class _SignupScreenState extends State<SignupScreen> {
           _errorMessage = resp.message ?? 'Registration failed. Please try again.';
         });
       }
+    } on DioException catch (e) {
+      // Show backend error message
+      String errorMsg = e.response?.data['message'] ?? 'Network error. Please check your connection.';
+      setState(() {
+        _isLoading = false;
+        _errorMessage = errorMsg;
+      });
+      debugPrint('DioException: ${e.message}');
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -97,10 +111,9 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top spacing
                 SizedBox(height: screenHeight * 0.04),
 
-                // Welcome header (same as login)
+                // Header
                 Center(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -122,7 +135,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Tree image and tagline row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -157,7 +169,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 SizedBox(height: screenHeight * 0.05),
 
-                // Full Name Field
+                // Full Name
                 _buildTextField(
                   controller: _nameController,
                   hintText: 'Full Name',
@@ -171,7 +183,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email Field
+                // Email
                 _buildTextField(
                   controller: _emailController,
                   hintText: 'Email Address',
@@ -189,7 +201,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Mobile Number with Country Code (same as login)
+                // Mobile Number
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -244,67 +256,76 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password Field
+                // ─── Referral Code (optional) ────────────────────────────
                 _buildTextField(
-                  controller: _passwordController,
-                  hintText: 'Password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _isPasswordObscured,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordObscured
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordObscured = !_isPasswordObscured;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  controller: _referralController,
+                  hintText: 'Referral Code (optional)',
+                  prefixIcon: Icons.emoji_people_outlined,
+                  validator: (value) => null, // always valid
                 ),
                 const SizedBox(height: 16),
 
-                // Confirm Password Field
-                _buildTextField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Confirm Password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _isConfirmPasswordObscured,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isConfirmPasswordObscured
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isConfirmPasswordObscured =
-                            !_isConfirmPasswordObscured;
-                      });
-                    },
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
+                // Password (optional – comment out if not needed)
+                // _buildTextField(
+                //   controller: _passwordController,
+                //   hintText: 'Password',
+                //   prefixIcon: Icons.lock_outline,
+                //   obscureText: _isPasswordObscured,
+                //   suffixIcon: IconButton(
+                //     icon: Icon(
+                //       _isPasswordObscured
+                //           ? Icons.visibility_off_outlined
+                //           : Icons.visibility_outlined,
+                //       color: Colors.grey.shade600,
+                //     ),
+                //     onPressed: () {
+                //       setState(() {
+                //         _isPasswordObscured = !_isPasswordObscured;
+                //       });
+                //     },
+                //   ),
+                //   validator: (value) {
+                //     if (value == null || value.isEmpty) {
+                //       return 'Please enter a password';
+                //     }
+                //     if (value.length < 6) {
+                //       return 'Password must be at least 6 characters';
+                //     }
+                //     return null;
+                //   },
+                // ),
+                // const SizedBox(height: 16),
+
+                // // Confirm Password
+                // _buildTextField(
+                //   controller: _confirmPasswordController,
+                //   hintText: 'Confirm Password',
+                //   prefixIcon: Icons.lock_outline,
+                //   obscureText: _isConfirmPasswordObscured,
+                //   suffixIcon: IconButton(
+                //     icon: Icon(
+                //       _isConfirmPasswordObscured
+                //           ? Icons.visibility_off_outlined
+                //           : Icons.visibility_outlined,
+                //       color: Colors.grey.shade600,
+                //     ),
+                //     onPressed: () {
+                //       setState(() {
+                //         _isConfirmPasswordObscured =
+                //             !_isConfirmPasswordObscured;
+                //       });
+                //     },
+                //   ),
+                //   validator: (value) {
+                //     if (value == null || value.isEmpty) {
+                //       return 'Please confirm your password';
+                //     }
+                //     if (value != _passwordController.text) {
+                //       return 'Passwords do not match';
+                //     }
+                //     return null;
+                //   },
+                // ),
                 const SizedBox(height: 24),
 
                 // Sign Up Button
@@ -349,7 +370,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 8),
                 ],
 
-                // OR Divider (same as login)
+                // OR divider & social buttons
                 Row(
                   children: [
                     Expanded(
@@ -371,14 +392,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // Social Sign-up Buttons
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // Handle Google sign-up
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Google sign-up coming soon!'),
@@ -414,7 +432,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // Handle Apple sign-up
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Apple sign-up coming soon!'),
@@ -438,11 +455,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Already have an account - Login link
+                // Already have account
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      Navigator.pop(context); // Go back to login screen
+                      Navigator.pop(context);
                     },
                     child: RichText(
                       text: TextSpan(
@@ -464,10 +481,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Footer text (same as login)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -489,7 +503,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // Helper widget to maintain consistent text field styling
+  // ─── Helper text field ──────────────────────────────────────────────
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
