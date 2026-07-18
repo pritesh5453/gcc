@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gcc/Models_nServices/Notification_count/count_svc.dart';
@@ -58,7 +59,7 @@ class GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
 
   // 🔄 Alternative if you don't have DioClient:
   // final NotificationService _notificationService = NotificationService(
-  //   Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl)),
+  //   Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl)), 
   //   AppPreference(),
   // );
 
@@ -102,55 +103,69 @@ class GCCHomeScreenState extends State<GCCHomeScreen> with RouteAware {
   }
 
   // ─── Load home screen data ────────────────────────────────────────────
-  Future<void> _loadHomeScreen() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+ Future<void> _loadHomeScreen() async {
+  setState(() {
+    _isLoading = true;
+    _errorMessage = null;
+  });
 
-    try {
-      final response = await fetchHomeScreen();
-      if (response.success == true && response.data != null) {
-        setState(() {
-          _homeScreenData = response.data!.homeScreen;
-          _homeScreenUser = response.data!.user;
-          _userName =
-              response.data!.user?.name ??
-              AppPreference().getString(PreferencesKey.userName);
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.message ?? 'Failed to load home data';
-        });
-      }
-    } catch (error) {
+  try {
+    final response = await fetchHomeScreen();
+    if (response.success == true && response.data != null) {
       setState(() {
-        _errorMessage = error.toString();
+        _homeScreenData = response.data!.homeScreen;
+        _homeScreenUser = response.data!.user;
+        _userName =
+            response.data!.user?.name ??
+            AppPreference().getString(PreferencesKey.userName);
       });
-    } finally {
+    } else {
+      setState(() {
+        _errorMessage = response.message ?? 'Failed to load home data';
+      });
+    }
+  } catch (error) {
+    // ─── NEW: Check for 401 ──────────────────────────────
+    if (error is DioException && error.response?.statusCode == 401) {
+      // Interceptor already handles logout; just stop loading
+      setState(() => _isLoading = false);
+      return;
+    }
+    // For all other errors, show a message
+    setState(() {
+      _errorMessage = error.toString();
+    });
+  } finally {
+    // Only set isLoading false if it hasn't been set already (to avoid conflict)
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
-
+}
   // ─── Fetch unread notification count ────────────────────────────────
   Future<void> _fetchNotificationCount() async {
-    try {
-      final response = await _notificationService.fetchUnreadCount();
-      if (mounted) {
-        setState(() {
-          _notificationCount = response.data.unreadCount;
-        });
-      }
-    } catch (e) {
-      // Silently fail – keep existing count or set to 0
-      print('Notification count error: $e');
-      if (mounted) {
-        setState(() => _notificationCount = 0);
-      }
+  try {
+    final response = await _notificationService.fetchUnreadCount();
+    if (mounted) {
+      setState(() {
+        _notificationCount = response.data.unreadCount;
+      });
+    }
+  } catch (e) {
+    // ─── NEW: Ignore 401 errors ──────────────────────────
+    if (e is DioException && e.response?.statusCode == 401) {
+      // Interceptor already handles logout
+      return;
+    }
+    // For other errors, fallback to 0
+    print('Notification count error: $e');
+    if (mounted) {
+      setState(() => _notificationCount = 0);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

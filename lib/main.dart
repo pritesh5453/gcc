@@ -3,14 +3,18 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:gcc/Auth/login.dart';
 import 'package:gcc/firebase_options.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
 import 'package:gcc/splash_screen.dart';
 import 'package:gcc/local_notification_service.dart';
 
-// Global RouteObserver
+// Global RouteObserver (keep as is)
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
+// Global Navigator Key – used by interceptors to navigate without context
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // Authentication Provider
 final authProvider = StateProvider<bool>((ref) => false);
@@ -22,13 +26,13 @@ final authStateProvider = FutureProvider<bool>((ref) async {
 });
 
 /// Background Notification Handler
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (Firebase.apps.isEmpty) {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-}
-
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   debugPrint("========== Background Notification ==========");
   debugPrint("Title : ${message.notification?.title}");
   debugPrint("Body  : ${message.notification?.body}");
@@ -38,18 +42,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Firebase Initialize
- if (Firebase.apps.isEmpty) {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+  await LocalNotificationService.initialize();
+
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
   );
-}
-await LocalNotificationService.initialize();
-
-FirebaseMessaging.onBackgroundMessage(
-  _firebaseMessagingBackgroundHandler,
-);
-
-
 
   await AppPreference().initialAppPreference();
 
@@ -83,7 +85,6 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-
     _isLoggedIn = widget.initiallyLoggedIn;
 
     Future.microtask(() {
@@ -110,36 +111,27 @@ class _MyAppState extends ConsumerState<MyApp> {
     // Get Device Token
     String? token = await FirebaseMessaging.instance.getToken();
 
-debugPrint("==========================================");
-debugPrint("FCM TOKEN => $token");
-debugPrint("==========================================");
-
-    /// TODO:
-    /// Send this token to your backend API
-    ///
-    /// Example
-    /// await ApiService.saveFcmToken(token);
+    debugPrint("==========================================");
+    debugPrint("FCM TOKEN => $token");
+    debugPrint("==========================================");
 
     // Foreground Notification
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-  debugPrint("========== Foreground ==========");
-  debugPrint("Title : ${message.notification?.title}");
-  debugPrint("Body  : ${message.notification?.body}");
+      debugPrint("========== Foreground ==========");
+      debugPrint("Title : ${message.notification?.title}");
+      debugPrint("Body  : ${message.notification?.body}");
 
-  if (message.notification != null) {
-    await LocalNotificationService.showNotification(
-      title: message.notification?.title ?? "",
-      body: message.notification?.body ?? "",
-    );
-  }
-});
+      if (message.notification != null) {
+        await LocalNotificationService.showNotification(
+          title: message.notification?.title ?? "",
+          body: message.notification?.body ?? "",
+        );
+      }
+    });
 
     // Notification Click
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint("Notification Clicked");
-
-      // Navigate if required
-      // Navigator.push(...)
     });
 
     // App opened from terminated state
@@ -153,9 +145,6 @@ debugPrint("==========================================");
     // Token Refresh
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
       debugPrint("New FCM Token : $newToken");
-
-      /// Update Backend
-      /// ApiService.saveFcmToken(newToken);
     });
   }
 
@@ -172,10 +161,15 @@ debugPrint("==========================================");
     return MaterialApp(
       title: 'GreenChain',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey, // ⬅️ Added this line
       navigatorObservers: [routeObserver],
       home: SplashScreen(
         isLoggedIn: _isLoggedIn,
       ),
+      // Optional: Define named routes if you prefer
+      routes: {
+        '/login': (context) => const MobileLoginScreen(), 
+      },
     );
   }
 }

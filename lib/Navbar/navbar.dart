@@ -24,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   final GlobalKey<GCCHomeScreenState> _homeKey = GlobalKey<GCCHomeScreenState>();
   final GlobalKey<PortfolioScreenState> _portfolioKey = GlobalKey<PortfolioScreenState>();
   final GlobalKey<ScratchCardScreenState> _scratchKey = GlobalKey<ScratchCardScreenState>();
+  final GlobalKey<EarnRewardsScreenState> _earnKey = GlobalKey<EarnRewardsScreenState>();
 
   // ─── Screens list with home key ───────────────────────────
   late final List<Widget> _screens;
@@ -36,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
     // Initialize screens with the home key
     _screens = [
       GCCHomeScreen(key: _homeKey), // Home – with key
-      const EarnRewardsScreen(),
+      EarnRewardsScreen(key: _earnKey),
       PortfolioScreen(key: _portfolioKey),
       ScratchCardScreen(key: _scratchKey),
       const ProfileScreen(),
@@ -50,6 +51,8 @@ class _MainScreenState extends State<MainScreen> {
 
   if (index == 0) {
     _homeKey.currentState?.refreshData();
+  } else if (index == 1) {
+    _earnKey.currentState?.refreshData();
   } else if (index == 2) {
     _portfolioKey.currentState?.refreshData();
   } else if (index == 3) {

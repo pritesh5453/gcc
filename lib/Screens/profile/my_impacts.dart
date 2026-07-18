@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:gcc/Models_nServices/Impact_Screen/impact_model.dart';
 import 'package:gcc/Models_nServices/Impact_Screen/impact_svc.dart';
 import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
 import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
+import 'package:gcc/main.dart'; // for routeObserver
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
 
@@ -14,7 +16,7 @@ class MyImpactScreen extends StatefulWidget {
   State<MyImpactScreen> createState() => _MyImpactScreenState();
 }
 
-class _MyImpactScreenState extends State<MyImpactScreen> {
+class _MyImpactScreenState extends State<MyImpactScreen> with RouteAware {
   ImpactSummaryResponse? _impactData;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -25,7 +27,37 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
     _fetchImpactSummary();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _fetchImpactSummary(); // reload when returning
+  }
+
+  // ─── Public refresh method for tab switch ──────────────────────────
+  void refreshData() {
+    _fetchImpactSummary();
+  }
+
   Future<void> _fetchImpactSummary() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     final appPref = AppPreference();
     await appPref.initialAppPreference();
     final token = appPref.getString(PreferencesKey.authToken);
@@ -46,6 +78,11 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -574,8 +611,8 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(context, 
-              MaterialPageRoute(builder: (context) => const BuyGCCUnitsScreen()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const BuyGCCUnitsScreen()));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E7D32),
@@ -597,6 +634,8 @@ class _MyImpactScreenState extends State<MyImpactScreen> {
     );
   }
 }
+
+// ─── Donut chart painter (unchanged) ──────────────────────────────────────
 
 class DonutChartPainter extends CustomPainter {
   final double unitsPercent;

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gcc/Models_nServices/Coupons/coupons_model.dart';
@@ -118,6 +119,16 @@ class ScratchCardScreenState extends State<ScratchCardScreen> with RouteAware {
         });
       }
     } catch (e) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        if (mounted) {
+          setState(() {
+            if (showLoading) _isLoading = false;
+            _isRefreshing = false;
+          });
+        }
+        return;
+      }
       setState(() {
         _errorMessage = 'Error: $e';
         if (showLoading) _isLoading = false;
@@ -693,6 +704,11 @@ class _ScratchCardState extends State<_ScratchCard>
         _showError(response?.message ?? 'Failed to claim reward');
       }
     } catch (e) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        setState(() => _isClaiming = false);
+        return;
+      }
       setState(() => _isClaiming = false);
       _showError('Error: $e');
     }

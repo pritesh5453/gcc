@@ -14,22 +14,21 @@ class EarnRewardsScreen extends StatefulWidget {
   const EarnRewardsScreen({super.key});
 
   @override
-  State<EarnRewardsScreen> createState() => _EarnRewardsScreenState();
+  State<EarnRewardsScreen> createState() => EarnRewardsScreenState();
 }
 
-class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
+class EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   static const Color primaryGreen = Color(0xFF1B6B2F);
   static const Color lightGreenBg = Color(0xFFF0FAF2);
 
   final EarnRewardsService _rewardsService = EarnRewardsService();
-  final ReferralService _referralService = ReferralService(); // 👈 new
+  final ReferralService _referralService = ReferralService();
 
   bool _isLoading = true;
   String? _errorMessage;
   int _rewardPointsBalance = 0;
   List<EarnRewardsActivity> _activities = [];
 
-  // Reward statuses
   bool _isDailyLoginClaimed = false;
   bool _isBuyRewardClaimed = false;
   bool _isReferralRewardClaimed = false;
@@ -38,16 +37,17 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
 
   bool _isClaiming = false;
   bool _isProcessingImpact = false;
-  bool _isClaimingReferral = false; // 👈 new
+  bool _isClaimingReferral = false;
 
   @override
   void initState() {
     super.initState();
+    // Initial load – will also be triggered by didPush/didPopNext
     _fetchRewardsData();
     _fetchRewardStatuses();
   }
 
-  // ─── Refresh method (fixed) ──────────────────────────────────────────
+  // ─── Refresh method (called on navigation) ──────────────────────────
   void refreshData() {
     _fetchRewardsData();
     _fetchRewardStatuses();
@@ -65,10 +65,16 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
     super.dispose();
   }
 
+  // ─── Called when the screen is pushed ────────────────────────────────
+  @override
+  void didPush() {
+    refreshData();
+  }
+
+  // ─── Called when returning from another screen (pop) ────────────────
   @override
   void didPopNext() {
-    _fetchRewardStatuses();
-    _fetchRewardsData();
+    refreshData();
   }
 
   // ─── Fetch Rewards Data ────────────────────────────────────────────────
@@ -96,7 +102,12 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         _setError(response?.message ?? 'Failed to load rewards data');
       }
     } catch (e) {
-      _handleError(e);
+      // ─── 401: interceptor handles logout ─────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+      _setError(e.toString());
     }
   }
 
@@ -120,54 +131,20 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         });
       }
     } catch (e) {
+      // ─── Ignore 401 (interceptor handles logout) ─────────────────────
+      if (e is DioException && e.response?.statusCode == 401) return;
       debugPrint('Error fetching reward statuses: $e');
     }
   }
 
-  // ─── Error Helpers ──────────────────────────────────────────────────────
+  // ─── Error Helper ──────────────────────────────────────────────────────
   void _setError(String message) {
-    setState(() {
-      _errorMessage = message;
-      _isLoading = false;
-    });
-  }
-
-  void _handleError(dynamic error) {
-    String message = error.toString();
-    if (message.contains('401') || message.contains('Unauthenticated')) {
-      message = 'Session expired. Please login again.';
-      _showSessionExpiredDialog();
+    if (mounted) {
+      setState(() {
+        _errorMessage = message;
+        _isLoading = false;
+      });
     }
-    _setError(message);
-  }
-
-  void _showSessionExpiredDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Session Expired'),
-        content: const Text('Your session has expired. Please login again.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _logoutAndGoToLogin();
-            },
-            child: const Text('Login Again'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _logoutAndGoToLogin() async {
-    await AppPreference().clearSharedPreferences();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const MobileLoginScreen()),
-      (route) => false,
-    );
   }
 
   // ─── Impact Flow ────────────────────────────────────────────────────────
@@ -194,9 +171,10 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         _showSnackBar(response?.message ?? 'Failed to track impact');
       }
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) return;
       _showSnackBar('Error: $e');
     } finally {
-      setState(() => _isProcessingImpact = false);
+      if (mounted) setState(() => _isProcessingImpact = false);
     }
   }
 
@@ -220,9 +198,10 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         _showSnackBar(response?.message ?? 'Claim failed');
       }
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) return;
       _showSnackBar('Error: $e');
     } finally {
-      setState(() => _isProcessingImpact = false);
+      if (mounted) setState(() => _isProcessingImpact = false);
     }
   }
 
@@ -248,9 +227,10 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         _showSnackBar(response?.message ?? 'Claim failed');
       }
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) return;
       _showSnackBar('Error: $e');
     } finally {
-      setState(() => _isClaiming = false);
+      if (mounted) setState(() => _isClaiming = false);
     }
   }
 
@@ -274,13 +254,14 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         _showSnackBar(response.message ?? 'Claim failed');
       }
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) return;
       _showSnackBar('Error: $e');
     } finally {
-      setState(() => _isClaiming = false);
+      if (mounted) setState(() => _isClaiming = false);
     }
   }
 
-  // ─── Claim Referral Reward (new) ──────────────────────────────────────
+  // ─── Claim Referral Reward ─────────────────────────────────────────────
   Future<void> _claimReferralReward() async {
     if (_isReferralRewardClaimed) return;
     setState(() => _isClaimingReferral = true);
@@ -299,15 +280,18 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
           'Referral reward claimed! +${response.claimedPoints} points & 🌳 ${response.treesAwarded} tree${response.treesAwarded > 1 ? 's' : ''} awarded!',
         );
       } else {
-        _showSnackBar(response.message.isNotEmpty ? response.message : 'Claim failed');
+        _showSnackBar(
+          response.message.isNotEmpty ? response.message : 'Claim failed',
+        );
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401) return;
       String errorMsg = e.response?.data['message'] ?? 'Something went wrong';
       _showSnackBar(errorMsg);
     } catch (e) {
       _showSnackBar('Error: $e');
     } finally {
-      setState(() => _isClaimingReferral = false);
+      if (mounted) setState(() => _isClaimingReferral = false);
     }
   }
 
@@ -344,33 +328,33 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMessage != null
-                  ? _buildErrorWidget()
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: _buildBalanceCard(),
+                      ? _buildErrorWidget()
+                      : SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                child: _buildBalanceCard(),
+                              ),
+                              const SizedBox(height: 14),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                child: Column(
+                                  children: [
+                                    _buildTasksSection(),
+                                    const SizedBox(height: 14),
+                                    _buildAchievementsSection(),
+                                    const SizedBox(height: 14),
+                                    _buildBottomBannerCard(),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 14),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Column(
-                              children: [
-                                _buildTasksSection(),
-                                const SizedBox(height: 14),
-                                _buildAchievementsSection(),
-                                const SizedBox(height: 14),
-                                _buildBottomBannerCard(),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
             ),
           ],
         ),
@@ -379,7 +363,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
   }
 
   Widget _buildErrorWidget() {
-    final isSessionExpired = _errorMessage?.contains('Session expired') ?? false;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -390,21 +373,14 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
             const SizedBox(height: 16),
             Text(_errorMessage!, textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            if (isSessionExpired)
-              ElevatedButton(
-                onPressed: _logoutAndGoToLogin,
-                style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-                child: const Text('Login Again'),
-              )
-            else
-              ElevatedButton(
-                onPressed: () {
-                  _fetchRewardsData();
-                  _fetchRewardStatuses();
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-                child: const Text('Retry'),
-              ),
+            ElevatedButton(
+              onPressed: () {
+                _fetchRewardsData();
+                _fetchRewardStatuses();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -648,7 +624,6 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
         actionType = 'login_claim';
       }
     } else if (name.contains('invite')) {
-      // 👈 Changed: invite now shows Claim button (referral_claim)
       iconData = Icons.group_add_outlined;
       if (_isReferralRewardClaimed) {
         actionText = 'Claimed';
@@ -811,7 +786,7 @@ class _EarnRewardsScreenState extends State<EarnRewardsScreen> with RouteAware {
                       ),
               ),
             )
-          else if (actionType == 'referral_claim') // 👈 New case
+          else if (actionType == 'referral_claim')
             SizedBox(
               width: 70,
               height: 34,

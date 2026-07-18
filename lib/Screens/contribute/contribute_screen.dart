@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gcc/Screens/Homescreen/buy_gcc_units_screen.dart';
 import 'package:gcc/Screens/Homescreen/resell_&_exchange.dart';
@@ -8,7 +9,7 @@ import 'package:gcc/Screens/profile/referral_screen.dart';
 import 'package:gcc/Screens/profile/transaction_record_screen.dart';
 import 'package:gcc/prefs/PreferencesKey.dart';
 import 'package:gcc/prefs/app_preference.dart';
-import 'package:gcc/main.dart'; // ✅ import for routeObserver
+import 'package:gcc/main.dart';
 
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key});
@@ -20,9 +21,13 @@ class PortfolioScreen extends StatefulWidget {
 class PortfolioScreenState extends State<PortfolioScreen> with RouteAware {
   final PortfolioService _portfolioService = PortfolioService();
   final AppPreference _appPref = AppPreference();
-  late Future<PortfolioResponse> _portfolioFuture;
 
-  // Responsive helpers
+  // ─── State variables ────────────────────────────────────────────────
+  bool _isLoading = true;
+  String? _errorMessage;
+  PortfolioData? _portfolioData;
+
+  // Responsive helpers (unchanged)
   double get _width => MediaQuery.of(context).size.width;
   double get _height => MediaQuery.of(context).size.height;
   double rw(double value) => value * (_width / 375);
@@ -40,34 +45,64 @@ class PortfolioScreenState extends State<PortfolioScreen> with RouteAware {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
     if (route is PageRoute) {
-      routeObserver.subscribe(this, route); // ✅ subscribe
+      routeObserver.subscribe(this, route);
     }
   }
 
   @override
   void dispose() {
-    routeObserver.unsubscribe(this); // ✅ unsubscribe
+    routeObserver.unsubscribe(this);
     super.dispose();
   }
 
-  // ─── Refresh when returning from a pushed screen ──────────
   @override
   void didPopNext() {
-    _loadPortfolio(); // ✅ reload data
+    _loadPortfolio(); // reload on return
   }
 
-  // ─── Public refresh method for MainScreen tab switch ──────
+  // ─── Public refresh method for tab switch ──────────────────────────
   void refreshData() {
     _loadPortfolio();
   }
 
-  void _loadPortfolio() {
-    final token = _appPref.getString(PreferencesKey.authToken);
-    if (token.isEmpty) {
-      _portfolioFuture = Future.error('Authentication token missing');
-    } else {
+  // ─── Load Portfolio Data ────────────────────────────────────────────
+  Future<void> _loadPortfolio() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = _appPref.getString(PreferencesKey.authToken).trim();
+      if (token.isEmpty) {
+        _setError('Authentication token missing. Please login again.');
+        return;
+      }
+
+      final response = await _portfolioService.fetchPortfolio(token);
+      if (response != null && response.success) {
+        setState(() {
+          _portfolioData = response.data;
+          _isLoading = false;
+        });
+      } else {
+        _setError(response?.message ?? 'Failed to load portfolio');
+      }
+    } catch (e) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+      _setError(e.toString());
+    }
+  }
+
+  void _setError(String message) {
+    if (mounted) {
       setState(() {
-        _portfolioFuture = _portfolioService.fetchPortfolio(token);
+        _errorMessage = message;
+        _isLoading = false;
       });
     }
   }
@@ -77,6 +112,7 @@ class PortfolioScreenState extends State<PortfolioScreen> with RouteAware {
     return value.toStringAsFixed(2);
   }
 
+  // ─── Build ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,89 +140,70 @@ class PortfolioScreenState extends State<PortfolioScreen> with RouteAware {
         ),
         centerTitle: true,
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _loadPortfolio();
-          await _portfolioFuture; // wait for data load
-        },
-        color: const Color(0xFF1B5E20),
-        child: FutureBuilder<PortfolioResponse>(
-          future: _portfolioFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF1B5E20),
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    SizedBox(height: rh(16)),
-                    Text('Error: ${snapshot.error}'),
-                    SizedBox(height: rh(16)),
-                    ElevatedButton(
-                      onPressed: () => setState(() => _loadPortfolio()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B5E20),
-                      ),
-                      child: const Text(
-                        'Retry',
-                        style: TextStyle(color: Colors.white),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1B5E20)))
+          : _errorMessage != null
+              ? _buildErrorWidget()
+              : _portfolioData == null
+                  ? const Center(child: Text('No portfolio data found'))
+                  : RefreshIndicator(
+                      onRefresh: () async => _loadPortfolio(),
+                      color: const Color(0xFF1B5E20),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(rw(16), rh(8), rw(16), rh(16)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildMainCard(
+                              totalUnits: _portfolioData!.portfolio.totalUnits,
+                              unitPrice: _portfolioData!.portfolio.unitPrice,
+                              totalValue: _portfolioData!.portfolio.totalValue,
+                            ),
+                            SizedBox(height: rh(16)),
+                            _buildActionGrid(),
+                            SizedBox(height: rh(16)),
+                            _buildHoldingsSummary(
+                              totalUnits: _portfolioData!.holdingsSummary.totalUnits,
+                              totalValue: _portfolioData!.holdingsSummary.currentValue,
+                              unitPrice: _portfolioData!.portfolio.unitPrice,
+                            ),
+                            SizedBox(height: rh(16)),
+                            _buildKeepGrowingBanner(),
+                            SizedBox(height: rh(16)),
+                            _buildQuickStats(
+                              co2Offset: _portfolioData!.quickStats.co2Offset,
+                              waterSaved: _portfolioData!.quickStats.waterSaved,
+                              energySaved: _portfolioData!.quickStats.energySaved,
+                              treesPlanted: _portfolioData!.quickStats.treesPlanted,
+                            ),
+                            SizedBox(height: rh(16)),
+                            _buildDisclaimer(),
+                            SizedBox(height: rh(16)),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            } else if (snapshot.hasData) {
-              final portfolioData = snapshot.data!.data;
-              final portfolio = portfolioData.portfolio;
-              final holdingsSummary = portfolioData.holdingsSummary;
-              final quickStats = portfolioData.quickStats;
+    );
+  }
 
-              return SafeArea(
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(), // ✅ needed for RefreshIndicator
-                  padding: EdgeInsets.fromLTRB(rw(16), rh(8), rw(16), rh(16)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildMainCard(
-                        totalUnits: portfolio.totalUnits,
-                        unitPrice: portfolio.unitPrice,
-                        totalValue: portfolio.totalValue,
-                      ),
-                      SizedBox(height: rh(16)),
-                      _buildActionGrid(),
-                      SizedBox(height: rh(16)),
-                      _buildHoldingsSummary(
-                        totalUnits: holdingsSummary.totalUnits,
-                        totalValue: holdingsSummary.currentValue,
-                        unitPrice: portfolio.unitPrice,
-                      ),
-                      SizedBox(height: rh(16)),
-                      _buildKeepGrowingBanner(),
-                      SizedBox(height: rh(16)),
-                      _buildQuickStats(
-                        co2Offset: quickStats.co2Offset,
-                        waterSaved: quickStats.waterSaved,
-                        energySaved: quickStats.energySaved,
-                        treesPlanted: quickStats.treesPlanted,
-                      ),
-                      SizedBox(height: rh(16)),
-                      _buildDisclaimer(),
-                      SizedBox(height: rh(16)),
-                    ],
-                  ),
-                ),
-              );
-            } else {
-              return const Center(child: Text('No portfolio data found'));
-            }
-          },
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(_errorMessage!, textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadPortfolio,
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1B5E20)),
+              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         ),
       ),
     );

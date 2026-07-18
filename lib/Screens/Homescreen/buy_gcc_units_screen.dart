@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gcc/Screens/Homescreen/manual_deposite.dart';
 import 'package:gcc/Screens/Homescreen/payment_screen.dart';
@@ -7,6 +8,7 @@ import 'package:gcc/Models_nServices/Banner/banner_svc.dart';
 import 'package:gcc/Models_nServices/Trading_response/trading_model.dart';
 import 'package:gcc/Models_nServices/Trading_response/trading_svc.dart';
 import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
+import 'package:gcc/main.dart'; // for routeObserver
 
 class BuyGCCUnitsScreen extends StatefulWidget {
   const BuyGCCUnitsScreen({super.key});
@@ -15,43 +17,53 @@ class BuyGCCUnitsScreen extends StatefulWidget {
   State<BuyGCCUnitsScreen> createState() => _BuyGCCUnitsScreenState();
 }
 
-class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
+class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> with RouteAware {
   static const Color primaryGreen = Color(0xFF1B6B2F);
   static const Color lightGreenBg = Color(0xFFF0FAF2);
 
+  // ─── State variables ────────────────────────────────────────────────
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<BannerModel> _banners = [];
+  TradingCoinsData? _tradingData;
+  double currentUnitPrice = 0.0;
+  List<PackModel> packs = [];
+
+  // UI state
   int selectedIndex = 0;
   int _currentBannerIndex = 0;
-  late Future<List<BannerModel>> _bannerFuture;
-  late Future<TradingCoinsResponse> _tradingCoinsFuture;
   Timer? _autoSlideTimer;
   late PageController _pageController;
 
-  // Custom amount mode: true = Amount→Coins, false = Coins→Amount
   bool _isAmountToCoins = true;
   bool _isCustomAmount = false;
-
   final TextEditingController _customAmountController = TextEditingController();
   final FocusNode _customAmountFocusNode = FocusNode();
 
-  List<PackModel> packs = [];
-  double currentUnitPrice = 0.0;
-
-  // Calculated values – now units are double (fractional allowed)
-  double? _enteredAmount; // the value user typed (INR or Units)
-  double? _computedAmount; // the other value (INR)
-  double? _computedUnits; // units (can be fractional)
+  double? _enteredAmount;
+  double? _computedAmount;
+  double? _computedUnits;
 
   @override
   void initState() {
     super.initState();
-    _bannerFuture = fetchBanners();
-    _tradingCoinsFuture = fetchTradingCoins();
     _pageController = PageController();
     _customAmountController.addListener(_onCustomAmountChanged);
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
   }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _autoSlideTimer?.cancel();
     _pageController.dispose();
     _customAmountController.removeListener(_onCustomAmountChanged);
@@ -60,13 +72,88 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     super.dispose();
   }
 
+  @override
+  void didPopNext() {
+    _loadData(); // reload when returning from payment etc.
+  }
+
+  // ─── Public refresh method for external calls ──────────────────────
+  void refreshData() {
+    _loadData();
+  }
+
+  // ─── Load data ──────────────────────────────────────────────────────
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Fetch banners and trading data in parallel
+      final results = await Future.wait([
+        fetchBanners(),
+        fetchTradingCoins(),
+      ]);
+
+      final banners = results[0] as List<BannerModel>;
+      final tradingResponse = results[1] as TradingCoinsResponse;
+
+      if (tradingResponse.data != null) {
+        setState(() {
+          _banners = banners;
+          _tradingData = tradingResponse.data;
+          packs = _tradingData!.packs ?? [];
+          currentUnitPrice = _tradingData!.currentUnitPrice ?? 0.0;
+          _isLoading = false;
+        });
+        _startAutoSlide(banners);
+      } else {
+        _setError('No trading data available');
+      }
+    } catch (e) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (e is DioException && e.response?.statusCode == 401) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+      _setError(e.toString());
+    }
+  }
+
+  void _setError(String message) {
+    if (mounted) {
+      setState(() {
+        _errorMessage = message;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _startAutoSlide(List<BannerModel> banners) {
+    _autoSlideTimer?.cancel();
+    if (banners.length > 1) {
+      _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+        if (_pageController.hasClients && mounted) {
+          int nextPage = _currentBannerIndex + 1;
+          if (nextPage >= banners.length) nextPage = 0;
+          _pageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  // ─── Custom amount logic ────────────────────────────────────────────
   void _onCustomAmountChanged() {
     final text = _customAmountController.text;
     if (text.isNotEmpty && currentUnitPrice > 0) {
       final value = double.tryParse(text);
       if (value != null && value > 0) {
         if (_isAmountToCoins) {
-          // Amount → Units: user enters INR, compute units (fractional)
           final units = value / currentUnitPrice;
           setState(() {
             _enteredAmount = value;
@@ -74,8 +161,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
             _computedAmount = units * currentUnitPrice;
           });
         } else {
-          // Units → Amount: user enters units (fractional allowed)
-          final units = value; // can be decimal
+          final units = value;
           final amount = units * currentUnitPrice;
           setState(() {
             _enteredAmount = value;
@@ -95,23 +181,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         _enteredAmount = null;
         _computedUnits = null;
         _computedAmount = null;
-      });
-    }
-  }
-
-  void _startAutoSlide(List<BannerModel> banners) {
-    _autoSlideTimer?.cancel();
-    if (banners.length > 1) {
-      _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-        if (_pageController.hasClients && mounted) {
-          int nextPage = _currentBannerIndex + 1;
-          if (nextPage >= banners.length) nextPage = 0;
-          _pageController.animateToPage(
-            nextPage,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-        }
       });
     }
   }
@@ -152,7 +221,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     _customAmountFocusNode.requestFocus();
   }
 
-  // Current selected amount (INR) for summary
   double get _selectedAmount {
     if (_isCustomAmount && _computedAmount != null && _computedAmount! > 0) {
       return _computedAmount!;
@@ -163,7 +231,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     return 0;
   }
 
-  // Current selected units (double)
   double get _selectedUnits {
     if (_isCustomAmount && _computedUnits != null && _computedUnits! > 0) {
       return _computedUnits!;
@@ -187,106 +254,72 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
         (selectedIndex >= 0 && selectedIndex < packs.length);
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<TradingCoinsResponse>(
-      future: _tradingCoinsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF5F5F5),
-            body: const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B6B2F)),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF5F5F5),
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Text(
-                'Buy GCC Units',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            body: Center(child: Text('Error: ${snapshot.error}')),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data?.data == null) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF5F5F5),
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Text(
-                'Buy GCC Units',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            body: const Center(child: Text('No packs available')),
-          );
-        }
-
-        packs = snapshot.data!.data!.packs ?? [];
-        currentUnitPrice = snapshot.data!.data!.currentUnitPrice ?? 0.0;
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFF5F5F5),
-          body: SafeArea(
-            child: Column(
-              children: [
-                const CommonAppBar(title: 'Buy GCC Units', subtitle: ''),
-                _buildTrustBar(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Column(
-                      children: [
-                        _buildBannerSection(),
-                        const SizedBox(height: 12),
-                        _buildPriceCard(currentUnitPrice),
-                        const SizedBox(height: 12),
-                        _buildPackSelector(),
-                        const SizedBox(height: 12),
-                        if (_hasSelection) ...[
-                          _buildSummaryCard(),
-                          const SizedBox(height: 12),
-                          _buildImpactCard(),
-                        ],
-                        const SizedBox(height: 12),
-                        _buildFeatureBadges(),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF1B6B2F)))
+            : _errorMessage != null
+                ? _buildErrorWidget()
+                : Column(
+                    children: [
+                      const CommonAppBar(title: 'Buy GCC Units', subtitle: ''),
+                      _buildTrustBar(),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          child: Column(
+                            children: [
+                              _buildBannerSection(),
+                              const SizedBox(height: 12),
+                              _buildPriceCard(currentUnitPrice),
+                              const SizedBox(height: 12),
+                              _buildPackSelector(),
+                              const SizedBox(height: 12),
+                              if (_hasSelection) ...[
+                                _buildSummaryCard(),
+                                const SizedBox(height: 12),
+                                _buildImpactCard(),
+                              ],
+                              const SizedBox(height: 12),
+                              _buildFeatureBadges(),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                      _buildBottomBar(),
+                    ],
                   ),
-                ),
-                _buildBottomBar(),
-              ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(_errorMessage!, textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadData,
+              style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+              child: const Text('Retry', style: TextStyle(color: Colors.white)),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
@@ -326,108 +359,83 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
   // ── Banner Section ────────────────────────────────────────────────────────
   Widget _buildBannerSection() {
-    return FutureBuilder<List<BannerModel>>(
-      future: _bannerFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 160,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B6B2F)),
-            ),
-          );
-        }
+    if (_banners.isEmpty) {
+      return _buildHeroBanner();
+    }
 
-        if (snapshot.hasError ||
-            snapshot.data == null ||
-            snapshot.data!.isEmpty) {
-          return _buildHeroBanner();
-        }
-
-        final banners = snapshot.data!;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _startAutoSlide(banners);
-        });
-
-        return Column(
-          children: [
-            Container(
-              height: 160,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Stack(
-                children: [
-                  PageView.builder(
-                    controller: _pageController,
-                    itemCount: banners.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentBannerIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final banner = banners[index];
-                      return Image.network(
-                        banner.image ?? '',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Colors.grey[200],
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF1B6B2F),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildHeroBanner();
-                        },
+    return Column(
+      children: [
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                itemCount: _banners.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentBannerIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final banner = _banners[index];
+                  return Image.network(
+                    banner.image ?? '',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF1B6B2F),
+                          ),
+                        ),
                       );
                     },
-                  ),
-                ],
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildHeroBanner();
+                    },
+                  );
+                },
               ),
-            ),
-            if (banners.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    banners.length,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: _currentBannerIndex == index ? 20 : 8,
-                      height: 8,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        color:
-                            _currentBannerIndex == index
-                                ? const Color(0xFF1B6B2F)
-                                : Colors.grey[400],
-                      ),
-                    ),
+            ],
+          ),
+        ),
+        if (_banners.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _banners.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: _currentBannerIndex == index ? 20 : 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color:
+                        _currentBannerIndex == index
+                            ? const Color(0xFF1B6B2F)
+                            : Colors.grey[400],
                   ),
                 ),
               ),
-          ],
-        );
-      },
+            ),
+          ),
+      ],
     );
   }
 
-  // ── Hero Banner ───────────────────────────────────────────────────────────
+  // ── Hero Banner (fallback) ──────────────────────────────────────────────
   Widget _buildHeroBanner() {
     return Container(
       height: 160,
@@ -719,7 +727,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Custom Amount Card (now with fractional units) ──────────────────────
+  // ── Custom Amount Card ──────────────────────────────────────────────────
   Widget _buildCustomAmountCard() {
     final bool showResult = _computedUnits != null && _computedUnits! > 0;
     final bool showWarning =
@@ -746,7 +754,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Mode toggle
           Row(
             children: [
               Expanded(
@@ -799,7 +806,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Input field
           TextField(
             controller: _customAmountController,
             focusNode: _customAmountFocusNode,
@@ -838,7 +844,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Result display
           if (showResult && resultValue.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(12),
@@ -898,7 +903,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Summary Card (units displayed with 2 decimals) ──────────────────────
+  // ── Summary Card ──────────────────────────────────────────────────────
   Widget _buildSummaryCard() {
     final totalAmount = _selectedAmount.toStringAsFixed(2);
     final units = _selectedUnits;
@@ -1014,10 +1019,10 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Impact Card ───────────────────────────────────────────────────────────
+  // ── Impact Card ──────────────────────────────────────────────────────
   Widget _buildImpactCard() {
     final units = _selectedUnits;
-    final treesSupported = (units * 0.10).toInt(); // floor to whole trees
+    final treesSupported = (units * 0.10).toInt();
 
     return Container(
       height: 140,
@@ -1145,7 +1150,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Feature Badges ────────────────────────────────────────────────────────
+  // ── Feature Badges ──────────────────────────────────────────────────
   Widget _buildFeatureBadges() {
     final features = [
       {'icon': Icons.verified_user_outlined, 'label': 'Secure\nPayments'},
@@ -1188,7 +1193,7 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
     );
   }
 
-  // ── Bottom Bar ────────────────────────────────────────────────────────────
+  // ── Bottom Bar ──────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     String? validationMessage;
     if (_isCustomAmount) {
@@ -1283,7 +1288,6 @@ class _BuyGCCUnitsScreenState extends State<BuyGCCUnitsScreen> {
 
     debugPrint('Buy request amount: $amount, units: $units');
 
-    // ⚠️ You must change BuyGCCScreen's `gccUnits` parameter from `int` to `double`
     Navigator.push(
       context,
       MaterialPageRoute(

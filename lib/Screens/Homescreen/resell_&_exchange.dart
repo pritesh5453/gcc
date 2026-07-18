@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gcc/Screens/Homescreen/exchange_review.dart';
 import 'package:gcc/Models_nServices/Coin_sunmary/coin_summary_svc.dart';
-import 'package:gcc/Screens/comman_appbar/comman_appbar.dart'; // adjust path
+import 'package:gcc/Screens/comman_appbar/comman_appbar.dart';
+import 'package:gcc/main.dart'; // for routeObserver
 
 class ExchangeGCCScreen extends StatefulWidget {
   const ExchangeGCCScreen({super.key});
@@ -10,7 +12,7 @@ class ExchangeGCCScreen extends StatefulWidget {
   State<ExchangeGCCScreen> createState() => _ExchangeGCCScreenState();
 }
 
-class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
+class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> with RouteAware {
   final TextEditingController _unitsController = TextEditingController();
   bool _isLoading = true;
   String? _errorMessage;
@@ -28,11 +30,32 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _unitsController.dispose();
     super.dispose();
   }
 
+  @override
+  void didPopNext() {
+    _fetchCoinSummary(); // reload when returning from review or other screens
+  }
+
+  // ─── Public refresh method for tab switch ──────────────────────────
+  void refreshData() {
+    _fetchCoinSummary();
+  }
+
+  // ─── Load Coin Summary ──────────────────────────────────────────────
   Future<void> _fetchCoinSummary() async {
     setState(() {
       _isLoading = true;
@@ -50,6 +73,11 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
         _isLoading = false;
       });
     } catch (error) {
+      // ─── 401: interceptor handles logout ────────────────────────────
+      if (error is DioException && error.response?.statusCode == 401) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
       setState(() {
         _errorMessage = error.toString();
         _isLoading = false;
@@ -82,14 +110,11 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
       backgroundColor: const Color(0xFFF8FAF8),
       body: Column(
         children: [
-          // Fixed app bar (already has SafeArea inside)
           const CommonAppBar(
             title: 'Exchange GCC Units',
             subtitle: 'Resell your GCC Units securely',
             showHelp: true,
-            // onHelpTap: () {}, // optional
           ),
-          // Scrollable content area
           Expanded(child: _buildBodyContent()),
         ],
       ),
@@ -102,37 +127,9 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchCoinSummary,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32),
-              ),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorWidget();
     }
 
-    // Main content
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -373,32 +370,32 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
             height: 45,
             child: ElevatedButton(
               onPressed: _enteredUnits > 0
-    ? () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ExchangeReviewScreen(
-              coinId: 8,
-              enteredUnits: _enteredUnits,
-              currentPrice: _currentPrice,
-              estimatedPayout: _estimatedPayout,
-              availableUnits: _availableUnits,
-              grossAmount: _grossAmount,
-              serviceCharge: _serviceCharge,
-              gstCharge: _gstCharge,
-            ),
-          ),
-        );
-      }
-    : null,
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ExchangeReviewScreen(
+                            coinId: 8,
+                            enteredUnits: _enteredUnits,
+                            currentPrice: _currentPrice,
+                            estimatedPayout: _estimatedPayout,
+                            availableUnits: _availableUnits,
+                            grossAmount: _grossAmount,
+                            serviceCharge: _serviceCharge,
+                            gstCharge: _gstCharge,
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
-  backgroundColor: _enteredUnits > 0
-      ? const Color(0xFF2E7D32)
-      : Colors.grey.shade400,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
-  ),
-),
+                backgroundColor: _enteredUnits > 0
+                    ? const Color(0xFF2E7D32)
+                    : Colors.grey.shade400,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -421,6 +418,37 @@ class _ExchangeGCCScreenState extends State<ExchangeGCCScreen> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _fetchCoinSummary,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+            ),
+            child: const Text('Retry'),
           ),
         ],
       ),
